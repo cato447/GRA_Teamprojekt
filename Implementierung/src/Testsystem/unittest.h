@@ -2,7 +2,7 @@
 #define UNITTEST_H_
 
 #include <stdbool.h>
-#include <stdint.h>
+#include <inttypes.h>
 
 // Data
 struct TestResults {

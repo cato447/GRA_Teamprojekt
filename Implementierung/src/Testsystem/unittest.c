@@ -13,7 +13,7 @@ void stopTesting() {
     printf("%d of %d Tests passed\n", testResults.testsPassed, testResults.testsRun);
 }
 
-printSuccessMessage(const char *funcName, int fileNum) {
+void printSuccessMessage(const char *funcName, int fileNum) {
     printf("PASS %s:%d\n", funcName, fileNum);
 }
 
@@ -27,8 +27,10 @@ void runTest(int (*f)()) {
 int unitAssert(bool condition, const char *funcName, int fileNum) {
     if (condition) {
         printSuccessMessage(funcName, fileNum);
+	return 0;
     } else {
-        printf("Fail %s:%d\n");
+        printf("Fail %s:%d\n", funcName, fileNum);
+	return 1;
     }
 }
 
@@ -124,7 +126,7 @@ int unitAssertEqualUInt32(const uint32_t expected, const uint32_t actual, const 
 
 int unitAssertEqualInt64(const int64_t expected, const int64_t actual, const char *funcName, int fileNum) {
     if (expected != actual) {
-        printf("FAIL %s:%d Expected %lld but was %lld\n", funcName, fileNum, expected, actual);
+        printf("FAIL %s:%d Expected %" PRId64 " but was %" PRId64 "\n", funcName, fileNum, expected, actual);
         return 1;
     } else {
         printSuccessMessage(funcName, fileNum);
@@ -134,7 +136,7 @@ int unitAssertEqualInt64(const int64_t expected, const int64_t actual, const cha
 
 int unitAssertEqualUInt64(const uint64_t expected, const uint64_t actual, const char *funcName, int fileNum) {
     if (expected != actual) {
-        printf("FAIL %s:%d Expected %llu but was %llu\n", funcName, fileNum, expected, actual);
+        printf("FAIL %s:%d Expected %" PRIu64 " but was %" PRIu64 "\n", funcName, fileNum, expected, actual);
         return 1;
     } else {
         printSuccessMessage(funcName, fileNum);
