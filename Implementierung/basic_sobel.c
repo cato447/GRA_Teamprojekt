@@ -1,10 +1,6 @@
+#include "basic_sobel.h"
+
 #include <math.h>
-#include <stdint.h>
-
-enum Color { RED, GREEN, BLUE };
-
-uint8_t colorOfPixel(const uint8_t* img, size_t width, size_t x, size_t y, enum Color color);
-void setPixelAt(uint8_t* img, size_t width, size_t x, size_t y, uint8_t red, uint8_t green, uint8_t blue);
 
 const int8_t M_v[3][3] = { { 1, 0, -1 }, { 2, 0, -2 }, { 1, 0, -1 } };
 const int8_t M_h[3][3] = { { 1, 2, 1 }, { 0, 0, 0 }, { -1, -2, -1 } };
