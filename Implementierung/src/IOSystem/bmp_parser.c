@@ -59,42 +59,58 @@ Pixelarray starts in bottom left of picture.
 */
 int parseBMPFile(const void* buf, size_t bufSize, uBMPImage* bmpImgBuf) {
     if (bufSize < 26) {
-        fprintf(stderr, "File too small\n");
+        fprintf(stderr, "Error: file too small\n");
         return -1;
     }
 
     if (*(uint16_t*) buf != BMP_HEADER_SIGN) {
-        fprintf(stderr, "Incorrect file header signature\n");
+        fprintf(stderr, "Error: incorrect file header signature\n");
         return -1;
     }
 
     if (*(uint32_t*)(buf + FILESIZE_OFFS) != bufSize) {
-        fprintf(stderr, "File size not matching size specified in file info\n");
+        fprintf(stderr, "Error: file size not matching size specified in file info\n");
         return -1;
     }
 
-    uint32_t dataOffset = *(uint32_t*)(buf + DATAOFFS_OFFS);
     int32_t pxWidth = *(int32_t*)(buf + PXWIDTH_OFFS);
+    if (pxWidth < 0) {
+        fprintf(stderr, "Error: image width must't be negative");
+        return -1;
+    }
+
+    int negHeight = 0;
     int32_t pxHeight = *(int32_t*)(buf + PXHEIGHT_OFFS);
+    if (pxHeight < 0) {
+        pxHeight = -pxHeight;
+        negHeight = -1;
+    }
+
+    uint32_t dataOffset = *(uint32_t*)(buf + DATAOFFS_OFFS);
 
     int32_t byteWidth = pxWidth * sizeof(pixel24_t);
     int32_t byteWidthPadded = (byteWidth & 0x3) ? ((byteWidth & ~0x3) + 4) : byteWidth;
 
     if (dataOffset + byteWidthPadded * pxHeight > bufSize) {
-        fprintf(stderr, "File size doesn't match file info\n");
+        fprintf(stderr, "Error: file size doesn't match file info\n");
         return -1;
     }
     
     pixel24_t* pxArray = malloc(byteWidth * pxHeight);
     if (!pxArray) {
-        fprintf(stderr, "Failed allocating memory for pixel array\n");
+        fprintf(stderr, "Error: failed allocating memory for pixel array\n");
         return -1;
     }
     
     pixel24_t* pxArrayEnd = pxArray + pxWidth * pxHeight;
-    buf += dataOffset;
-    for (pixel24_t* dest = pxArray; dest < pxArrayEnd; dest += pxWidth, buf += byteWidthPadded) {
-        memcpy(dest, buf, byteWidth);
+    if (negHeight) {
+        for (pixel24_t* dest = pxArrayEnd - pxWidth; dest >= pxArray; dest -= pxWidth, buf += byteWidthPadded) {
+            memcpy(dest, buf + dataOffset, byteWidth);
+        }
+    } else {
+        for (pixel24_t* dest = pxArray; dest < pxArrayEnd; dest += pxWidth, buf += byteWidthPadded) {
+            memcpy(dest, buf + dataOffset, byteWidth);
+        }
     }
 
     bmpImgBuf->pxArray = pxArray;
