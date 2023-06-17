@@ -8,17 +8,11 @@ typedef struct pixel24_t {
 } pixel24_t;
 
 typedef struct uBMPImage {
-    uint32_t width;
-    uint32_t height;
+    uint32_t pxWidth;
+    uint32_t pxHeight;
     pixel24_t* pxArray;
 } uBMPImage;
 
-struct BMPFile {
-    size_t size;
-    void* buf;
-};
+void* readBMPFile (const char* path, size_t* bufSize);
 
-
-struct BMPFile* readBMPFile (const char* path);
-
-uBMPImage* parseBMPFile (struct BMPFile* bmpFile);
+int parseBMPFile (const void* buf, size_t bufSize, uBMPImage* bmpImgBuf);

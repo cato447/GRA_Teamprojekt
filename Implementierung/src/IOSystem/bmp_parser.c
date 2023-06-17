@@ -1,80 +1,94 @@
 #include "bmp_parser.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <stdlib.h>
-
-#define BMP_FILE_ERROR_VAL &(struct BMPFile) {.size = 0, .buf = NULL}
-#define BMP_PARSE_ERROR_VAL &(uBMPImage) {.width = 0, .height = 0, .pxArray = NULL}
+#include <errno.h>
 
 /*
-Returns the size and a pointer to the data buffer of the file read at parameter "path"
+Returns a pointer to the data buffer of the file read at parameter "path" and sets "bufSize" accordingly on successful read.
 */
-struct BMPFile* readBMPFile(const char* path) {
+void* readBMPFile(const char* path, size_t* bufSize) {
     FILE* file = fopen(path, "r");
     if (!file) {
-        fprintf(stderr, "Error trying to open file at %s!\n", path);
-        return BMP_FILE_ERROR_VAL;
+        fprintf(stderr, "Error trying to open file at \"%s\": %s\n", path, strerror(errno));
+        return NULL;
     }
 
     struct stat statbuf;
-
     if (fstat(fileno(file), &statbuf)) {
-        fprintf(stderr, "Error trying to check stats of file at %s!\n", path);
+        fprintf(stderr, "Error trying to check stats of file at %s: %s\n", path, strerror(errno));
         fclose(file);
-        return BMP_FILE_ERROR_VAL;
+        return NULL;
     }
     if (!S_ISREG(statbuf.st_mode)) {
-        fprintf(stderr, "File at %s isn't a regular file!\n", path);
+        fprintf(stderr, "Error: file at %s isn't a regular file\n", path);
         fclose(file);
-        return BMP_FILE_ERROR_VAL;
+        return NULL;
     }
 
     void* buf = malloc(statbuf.st_size);
     if (!buf) {
-        fprintf(stderr, "Failed allocating memory for file buffer!\n");
+        fprintf(stderr, "Error: failed allocating memory for file buffer\n");
         fclose(file);
-        return BMP_FILE_ERROR_VAL;
+        return NULL;
     }
 
     if (fread(buf, 1, statbuf.st_size, file) != statbuf.st_size) {
-        fprintf(stderr, "Error trying to read file at %s!\n", path);
+        fprintf(stderr, "Error: failed reading file data at %s\n", path);
         fclose(file);
         free(buf);
-        return BMP_FILE_ERROR_VAL;
+        return NULL;
     }
-    return &(struct BMPFile) {.size = statbuf.st_size, .buf = buf};
+    
+    *bufSize = statbuf.st_size;
+    return buf;
 }
 
-/*
-Returns width, height and an unpadded copy of the pixelarray of the parameter "bmpFile"
-*/
-uBMPImage* parseBMPFile(struct BMPFile* bmpFile) {
-    void* buf = bmpFile->buf;
-    size_t size = bmpFile->size;
 
-    if (size < 26 || 
-        *(uint32_t*)(buf + 0x02) != size) {
-        fprintf(stderr, "File too small / size not matching file info!\n");
-        return BMP_PARSE_ERROR_VAL;
+#define BMP_HEADER_SIGN 0x4d42
+#define FILESIZE_OFFS 0x02
+#define DATAOFFS_OFFS 0x0a
+#define PXWIDTH_OFFS 0x12
+#define PXHEIGHT_OFFS 0x16
+/*
+Returns 0 on success and -1 on failure.
+Sets "width", "height" and "pxArray" of "bmpImgBuf" to an unpadded copy of the of the parameter "bmpFile".
+Pixelarray starts in bottom left of picture.
+*/
+int parseBMPFile(const void* buf, size_t bufSize, uBMPImage* bmpImgBuf) {
+    if (bufSize < 26) {
+        fprintf(stderr, "File too small\n");
+        return -1;
     }
 
-    uint32_t dataOffset = *(uint32_t*)(buf + 0x0a);
-    int32_t pxWidth = *(int32_t*)(buf + 0x12);
-    int32_t pxHeight = *(int32_t*)(buf + 0x16);
+    if (*(uint16_t*) buf != BMP_HEADER_SIGN) {
+        fprintf(stderr, "Incorrect file header signature\n");
+        return -1;
+    }
+
+    if (*(uint32_t*)(buf + FILESIZE_OFFS) != bufSize) {
+        fprintf(stderr, "File size not matching size specified in file info\n");
+        return -1;
+    }
+
+    uint32_t dataOffset = *(uint32_t*)(buf + DATAOFFS_OFFS);
+    int32_t pxWidth = *(int32_t*)(buf + PXWIDTH_OFFS);
+    int32_t pxHeight = *(int32_t*)(buf + PXHEIGHT_OFFS);
 
     int32_t byteWidth = pxWidth * sizeof(pixel24_t);
     int32_t byteWidthPadded = (byteWidth & 0x3) ? ((byteWidth & ~0x3) + 4) : byteWidth;
 
-    if (dataOffset + byteWidthPadded * pxHeight > size) {
-        fprintf(stderr, "File size doesn't match file info!\n");
-        return BMP_PARSE_ERROR_VAL;
+    if (dataOffset + byteWidthPadded * pxHeight > bufSize) {
+        fprintf(stderr, "File size doesn't match file info\n");
+        return -1;
     }
     
     pixel24_t* pxArray = malloc(byteWidth * pxHeight);
     if (!pxArray) {
-        fprintf(stderr, "Failed allocating memory for pixel array");
-        return BMP_PARSE_ERROR_VAL;
+        fprintf(stderr, "Failed allocating memory for pixel array\n");
+        return -1;
     }
     
     pixel24_t* pxArrayEnd = pxArray + pxWidth * pxHeight;
@@ -83,5 +97,8 @@ uBMPImage* parseBMPFile(struct BMPFile* bmpFile) {
         memcpy(dest, buf, byteWidth);
     }
 
-    return &(uBMPImage) {.width = pxWidth, .height = pxHeight, .pxArray = pxArray};
+    bmpImgBuf->pxArray = pxArray;
+    bmpImgBuf->pxWidth = pxWidth;
+    bmpImgBuf->pxHeight = pxHeight;
+    return 0;
 }
