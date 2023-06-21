@@ -4,7 +4,6 @@ CC = gcc
 CFLAGS = -g -std=c17 -Wall
 
 OUTDIR = ./build
-DATADIR = ./data
 SUBDIR = src/Implementierung src/IOSystem src/Testsystem
 DIR_OBJ = ./obj
 
@@ -23,6 +22,6 @@ $(DIR_OBJ)/%.o: %.c $(INCS)
 
 PHONY += clean
 clean:
-	rm -rf $(OUTDIR)/* $(DATADIR)/* $(DIR_OBJ)/*
+	rm -rf $(OUTDIR)/* $(DIR_OBJ)/*
 
 .PHONY = $(PHONY)
