@@ -1,51 +1,6 @@
 #include "bmp_parser.h"
 
 #include <stdio.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <stdlib.h>
-#include <errno.h>
-
-/*
-Returns a pointer to the data buffer of the file read at parameter "path" and sets "bufSize" accordingly on successful read.
-*/
-void* readBMPFile(const char* path, size_t* bufSize) {
-    FILE* file = fopen(path, "r");
-    if (!file) {
-        fprintf(stderr, "Error trying to open file at \"%s\": %s\n", path, strerror(errno));
-        return NULL;
-    }
-
-    struct stat statbuf;
-    if (fstat(fileno(file), &statbuf)) {
-        fprintf(stderr, "Error trying to check stats of file at %s: %s\n", path, strerror(errno));
-        fclose(file);
-        return NULL;
-    }
-    if (!S_ISREG(statbuf.st_mode)) {
-        fprintf(stderr, "Error: file at %s isn't a regular file\n", path);
-        fclose(file);
-        return NULL;
-    }
-
-    void* buf = malloc(statbuf.st_size);
-    if (!buf) {
-        fprintf(stderr, "Error: failed allocating memory for file buffer\n");
-        fclose(file);
-        return NULL;
-    }
-
-    if (fread(buf, 1, statbuf.st_size, file) != statbuf.st_size) {
-        fprintf(stderr, "Error: failed reading file data at %s\n", path);
-        fclose(file);
-        free(buf);
-        return NULL;
-    }
-    
-    *bufSize = statbuf.st_size;
-    return buf;
-}
-
 
 #define BMP_HEADER_SIGN 0x4d42
 #define FILESIZE_OFFS 0x02
@@ -57,7 +12,7 @@ Returns 0 on success and -1 on failure.
 Sets "width", "height" and "pxArray" of "bmpImgBuf" to an unpadded copy of the of the parameter "bmpFile".
 Pixelarray starts in bottom left of picture.
 */
-int parseBMPFile(const void* buf, size_t bufSize, uBMPImage* bmpImgBuf) {
+int bmpToArray(const void* buf, size_t bufSize, uBMPImage* bmpImgBuf) {
     if (bufSize < 26) {
         fprintf(stderr, "Error: file too small\n");
         return -1;
@@ -116,5 +71,9 @@ int parseBMPFile(const void* buf, size_t bufSize, uBMPImage* bmpImgBuf) {
     bmpImgBuf->pxArray = pxArray;
     bmpImgBuf->pxWidth = pxWidth;
     bmpImgBuf->pxHeight = pxHeight;
+    return 0;
+}
+
+void* arrayToBmp(const uBMPImage *bmpImgBuf, size_t *bufSize) {
     return 0;
 }
