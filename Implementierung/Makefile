@@ -1,23 +1,28 @@
+TARGET = program
+
 CC = gcc
-CFLAGS  = -g -std=c17 -Wall
+CFLAGS = -g -std=c17 -Wall
 
-SOURCEDIR = src/Testsystem
-BUILDDIR = build
+OUTDIR = ./build
+DATADIR = ./data
+SUBDIR = src/Implementierung src/IOSystem src/Testsystem
+DIR_OBJ = ./obj
 
-EXECUTABLE = program
-SOURCES = $(wildcard $(SOURCEDIR)/*.c)
-OBJECTS = $(patsubst $(SOURCEDIR)/%.c,$(BUILDDIR)/%.o,$(SOURCES))
+INCS = $(wildcard *.h $(foreach path, $(SUBDIR), $(path)/*.h))
+SRCS = $(wildcard *.c $(foreach path, $(SUBDIR), $(path)/*.c))
+OBJS = $(addprefix $(DIR_OBJ)/, $(SRCS:c=o))
+INC_DIRS = -I./ $(addprefix -I, $(SUBDIR))
 
-all: dir $(BUILDDIR)/$(EXECUTABLE)
+PHONY := $(TARGET)
+$(TARGET): $(OBJS)
+	$(CC) -o $(OUTDIR)/$@ $(OBJS)
 
-dir:
-	mkdir -p $(BUILDDIR)
+$(DIR_OBJ)/%.o: %.c $(INCS)
+	mkdir -p $(@D)
+	$(CC) -o $@ $(CFLAGS) -c $< $(INC_DIRS)
 
-$(BUILDDIR)/$(EXECUTABLE): $(OBJECTS)
-	$(CC) $^ -o $@
-
-$(OBJECTS): $(BUILDDIR)/%.o : $(SOURCEDIR)/%.c
-	$(CC) $(CFLAGS) $< -c -o $@
-
+PHONY += clean
 clean:
-	rm -f $(BUILDDIR)/*o $(BUILDDIR)/$(EXECUTABLE)
+	rm -rf $(OUTDIR)/* $(DATADIR)/* $(DIR_OBJ)/*
+
+.PHONY = $(PHONY)
