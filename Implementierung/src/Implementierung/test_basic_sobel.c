@@ -1,6 +1,7 @@
 #include "basic_sobel.h"
 #include "../IOSystem/bmp_parser.h"
 #include "../Testsystem/unittest.h"
+#include "../IOSystem/libbmp.h"
 
 #include "stdio.h"
 #include "stdlib.h"
@@ -42,13 +43,27 @@ int testSetColorOfPixel() {
 }
 
 int testSobelSmall() {
-    sobel(bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, bmpImage->pxArray);
+    pixel24_t* newPixels = malloc(sizeof(bmpImage->pxArray));
+    sobel(bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, newPixels);
+    bmp_img img;
+    bmp_img_init_df(&img, bmpImage->pxWidth, bmpImage->pxHeight);
+    for (size_t y = 0; y < bmpImage->pxWidth; y++)
+    {
+        for (size_t x = 0; x < bmpImage->pxHeight; x++)
+        {
+            bmp_pixel_init (&img.img_pixels[x][y], newPixels->r, newPixels->g, newPixels->b);
+            newPixels++;
+        }
+    }
+    bmp_img_write (&img, "test.bmp");
+    bmp_img_free (&img);
+    return 0;
 }
 
 
 
 int setUp() {
-    char* path = "../res/muster.bmp";
+    char* path = "../res/johnmuirtrail.bmp";
     fprintf(stdout, "Loading BMP File: %s for test data\n", path);
     raw_img_data = readBMPFile(path, &buffer_size);
 
@@ -84,6 +99,7 @@ int runTests(void){
     runTest(testColorOfPixelBlue);
     runTest(testColorOfPixelGreen);
     runTest(testSetColorOfPixel);
+    testSobelSmall();
     stopTesting();
     tearDown();
     return 0;
@@ -91,6 +107,7 @@ int runTests(void){
 
 int main(void){
     runTests();
+
 }
 
 
