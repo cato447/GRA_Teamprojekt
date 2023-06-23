@@ -4,8 +4,7 @@ CC = gcc
 CFLAGS = -g -std=c17 -Wall
 
 OUTDIR = ./build
-DATADIR = ./data
-SUBDIR = src/Implementierung src/IOSystem src/Testsystem
+SUBDIR = src src/Implementierung src/IOSystem src/Testsystem
 DIR_OBJ = ./obj
 
 INCS = $(wildcard *.h $(foreach path, $(SUBDIR), $(path)/*.h))
