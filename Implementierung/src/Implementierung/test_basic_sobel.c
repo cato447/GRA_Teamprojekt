@@ -1,5 +1,4 @@
-#include "basic_sobel.h"
-#include "../IOSystem/bmp_parser.h"
+#include "../Implementierung/basic_sobel.h"
 #include "../Testsystem/unittest.h"
 
 #include "stdio.h"
@@ -42,7 +41,7 @@ int testSetColorOfPixel() {
 }
 
 int testSobelSmall() {
-    sobel(bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, bmpImage->pxArray);
+    sobel(bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, (malloc((bmpImage->pxHeight + bmpImage->pxHeight) * sizeof(pixel24_t))));
 }
 
 
@@ -84,6 +83,7 @@ int runTests(void){
     runTest(testColorOfPixelBlue);
     runTest(testColorOfPixelGreen);
     runTest(testSetColorOfPixel);
+    testSobelSmall();
     stopTesting();
     tearDown();
     return 0;
