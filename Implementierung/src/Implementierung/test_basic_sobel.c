@@ -73,7 +73,7 @@ int testSetColorOfPixel() {
 }
 
 int generateBMPofSobel() {
-    pixel24_t *newPixels = malloc(sizeof(bmpImage->pxArray));
+    pixel24_t *newPixels = malloc(bmpImage->pxHeight * bmpImage->pxWidth * sizeof(pixel24_t));
     sobel((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, (uint8_t *) newPixels);
     bmp_img img;
     bmp_img_init_df(&img, bmpImage->pxWidth, bmpImage->pxHeight);
@@ -89,7 +89,7 @@ int generateBMPofSobel() {
 }
 
 int testSobel() {
-    pixel24_t *newPixels = malloc(sizeof(bmpImage->pxArray));
+    pixel24_t *newPixels = malloc(bmpImage->pxHeight * bmpImage->pxWidth * sizeof(pixel24_t));
     sobel((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, (uint8_t *) newPixels);
 
     char *reference_path = "../res/johnmuirtrail_correct_opencv.bmp";
@@ -160,4 +160,6 @@ int runTestsSobel(void) {
     return 0;
 }
 
-
+int main() {
+    runTestsSobel();
+}
