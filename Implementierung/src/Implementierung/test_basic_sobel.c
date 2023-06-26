@@ -1,6 +1,5 @@
 #include "basic_sobel.h"
 #include "../IOSystem/bmp_parser.h"
-#include "../IOSystem/libbmp.h"
 #include "../Testsystem/unittest.h"
 #include "../Testsystem/image_similarity.h"
 
@@ -72,27 +71,12 @@ int testSetColorOfPixel() {
     return passed;
 }
 
-int generateBMPofSobel() {
-    pixel24_t *newPixels = malloc(bmpImage->pxHeight * bmpImage->pxWidth * sizeof(pixel24_t));
-    sobel((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, (uint8_t *) newPixels);
-    bmp_img img;
-    bmp_img_init_df(&img, bmpImage->pxWidth, bmpImage->pxHeight);
-    for (size_t y = bmpImage->pxHeight - 1; y > 0; y--) {
-        for (size_t x = 0; x < bmpImage->pxWidth; x++) {
-            bmp_pixel_init(&img.img_pixels[y][x], newPixels->r, newPixels->g, newPixels->b);
-            newPixels++;
-        }
-    }
-    bmp_img_write(&img, "test.bmp");
-    bmp_img_free(&img);
-    return 0;
-}
-
 int testSobel() {
+    //TODO: Get real testing data
     pixel24_t *newPixels = malloc(bmpImage->pxHeight * bmpImage->pxWidth * sizeof(pixel24_t));
     sobel((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, (uint8_t *) newPixels);
 
-    char *reference_path = "../res/johnmuirtrail_correct_opencv.bmp";
+    char *reference_path = "../res/muster.bmp";
 
     size_t reference_buffer_size;
     uBMPImage *reference_bmpImage = malloc(sizeof(uBMPImage));
@@ -116,18 +100,13 @@ int testSobel() {
                                       (uint8_t *) reference_bmpImage->pxArray,
                                       reference_bmpImage->pxWidth * reference_bmpImage->pxHeight * 3);
     printf("similarity: %3.3f %%\n", (similarity * 100));
-    double similarity_without_hue = compareImages((uint8_t *) bmpImage->pxArray,
-                                                  bmpImage->pxWidth * bmpImage->pxHeight * 3,
-                                                  (uint8_t *) reference_bmpImage->pxArray,
-                                                  reference_bmpImage->pxWidth * reference_bmpImage->pxHeight * 3);
-    printf("similarity_without_hue: %3.3f %%\n", (similarity_without_hue * 100));
     freeBmpImg(reference_bmpImage);
     free(newPixels);
     return 0;
 }
 
 int setUp() {
-    char *path = "../res/johnmuirtrail.bmp";
+    char *path = "../res/muster.bmp";
     bmpImage = malloc(sizeof(uBMPImage));
     img_size = loadPicture(path, bmpImage);
     if (img_size == 0) {
@@ -135,8 +114,6 @@ int setUp() {
     }
     return 0;
 }
-
-
 
 int tearDown() {
     freeBmpImg(bmpImage);
@@ -153,13 +130,8 @@ int runTestsSobel(void) {
     runTest(testColorOfPixelBlue);
     runTest(testColorOfPixelGreen);
     runTest(testSetColorOfPixel);
-    generateBMPofSobel();
     testSobel();
     stopTesting();
     tearDown();
     return 0;
-}
-
-int main() {
-    runTestsSobel();
 }
