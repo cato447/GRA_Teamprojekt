@@ -44,11 +44,13 @@ void sobel(const uint8_t* img_in, size_t width, size_t height, uint8_t* img_out)
 }
 
 uint8_t colorOfPixel(const uint8_t* img, size_t width, size_t x, size_t y, enum Color color) {
-    return *(img + width * y + x + color);
+    // Pixel are 24 bit wide to compensate this we multiply x and y by 3
+    return *(img + width * (y * 3) + x * 3 + color);
 }
 
 void setPixelAt(uint8_t* img, size_t width, size_t x, size_t y, uint8_t red, uint8_t green, uint8_t blue) {
-    *(img + width * y + x) = red;
-    *(img + width * y + x + 1) = green;
-    *(img + width * y + x + 2) = blue;
+    // Pixel are 24 bit wide to compensate this we multiply x and y by 3
+    *(img + width * (y * 3) + x * 3 + BLUE) = blue;
+    *(img + width * (y * 3) + x * 3 + GREEN) = green;
+    *(img + width * (y * 3) + x * 3 + RED) = red;
 }

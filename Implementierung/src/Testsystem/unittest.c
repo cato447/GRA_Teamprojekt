@@ -4,9 +4,11 @@
 
 struct TestResults testResults;
 
-void startTesting() {
+void startTesting(char* fileName) {
     testResults.testsRun = 0;
     testResults.testsPassed = 0;
+    printf("--------------------\n");
+    printf("Running tests of %s\n", fileName);
 }
 
 void stopTesting() {
