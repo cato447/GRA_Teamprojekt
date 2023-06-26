@@ -17,6 +17,7 @@ int testAssertEqualTrue() {
     return ASSERT(condition);
 }
 
+/*
 int main(void) {
     startTesting();
     runTest(testAssertEqualInt);
@@ -24,3 +25,4 @@ int main(void) {
     runTest(testAssertEqualTrue);
     stopTesting();
 }
+ */

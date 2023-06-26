@@ -12,7 +12,7 @@ struct TestResults {
 
 // Controls
 
-void startTesting();
+void startTesting(char* fileName);
 
 void stopTesting();
 
