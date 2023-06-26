@@ -7,8 +7,9 @@
 #include "stdio.h"
 #include "stdlib.h"
 
-size_t img_size;
-uBMPImage *bmpImage;
+// Data tests are run on
+static size_t img_size;
+static uBMPImage *bmpImage;
 
 size_t loadPicture(char *path, uBMPImage *img) {
     void *buffer;
@@ -31,6 +32,12 @@ size_t loadPicture(char *path, uBMPImage *img) {
     }
     free(buffer);
     return buffer_size;
+}
+
+int freeBmpImg(uBMPImage *img){
+    free(img->pxArray);
+    free(img);
+    return 0;
 }
 
 int testColorOfPixelRed() {
@@ -91,6 +98,7 @@ int testSobel() {
     uBMPImage *reference_bmpImage = malloc(sizeof(uBMPImage));
     if (reference_bmpImage == NULL) {
         fprintf(stderr, "Couldn't allocated reference_bmpImage\n");
+        free(newPixels);
         return 1;
     }
 
@@ -98,7 +106,8 @@ int testSobel() {
 
     if (reference_buffer_size == 0) {
         fprintf(stderr, "Couldn't load picture\n");
-        free(reference_bmpImage);
+        free(newPixels);
+        freeBmpImg(reference_bmpImage);
         return 1;
     }
 
@@ -112,6 +121,8 @@ int testSobel() {
                                                   (uint8_t *) reference_bmpImage->pxArray,
                                                   reference_bmpImage->pxWidth * reference_bmpImage->pxHeight * 3);
     printf("similarity_without_hue: %3.3f %%\n", (similarity_without_hue * 100));
+    freeBmpImg(reference_bmpImage);
+    free(newPixels);
     return 0;
 }
 
@@ -125,12 +136,14 @@ int setUp() {
     return 0;
 }
 
+
+
 int tearDown() {
-    free(bmpImage);
+    freeBmpImg(bmpImage);
     return 0;
 }
 
-int runTests(void) {
+int runTestsSobel(void) {
     startTesting(__BASE_FILE__);
     if (setUp() == 1) {
         tearDown();
@@ -145,10 +158,6 @@ int runTests(void) {
     stopTesting();
     tearDown();
     return 0;
-}
-
-int main(void) {
-    runTests();
 }
 
 
