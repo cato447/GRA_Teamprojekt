@@ -1,3 +1,5 @@
+#include "test_basic_sobel.h"
+
 #include "../Implementierung/basic_sobel.h"
 #include "../Testsystem/unittest.h"
 #include "../Testsystem/image_similarity.h"

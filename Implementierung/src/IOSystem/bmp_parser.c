@@ -24,17 +24,17 @@ Pixelarray starts in bottom left of picture.
 int bmpToArray(void* buf, size_t bufSize, uBMPImage* bmpImgBuf) {
     if (bufSize < 26) {
         fprintf(stderr, "Error: file too small\n");
-        return -1;
+        return 1;
     }
 
     if (*(uint16_t*) buf != BMP_HEADER_SIGN) {
         fprintf(stderr, "Error: incorrect file header signature\n");
-        return -1;
+        return 1;
     }
 
     if (*(uint32_t*)(buf + FILESIZE_OFFS) != bufSize) {
         fprintf(stderr, "Error: file size not matching size specified in file info\n");
-        return -1;
+        return 1;
     }
 
     int32_t pxWidth = *(int32_t*)(buf + PXWIDTH_OFFS);
@@ -57,7 +57,7 @@ int bmpToArray(void* buf, size_t bufSize, uBMPImage* bmpImgBuf) {
 
     if (dataOffset + byteWidthPadded * pxHeight > bufSize) {
         fprintf(stderr, "Error: file size doesn't match file info\n");
-        return -1;
+        return 1;
     }
 
     // We allocate additional memory for an extra frame of black pixels to simplify further optimizations
