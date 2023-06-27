@@ -101,6 +101,12 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
     uint8_t *newPixels = malloc(bmpImage->pxHeight * bmpImage->pxWidth * sizeof(pixel24_t));
+    if (newPixels == NULL){
+        fprintf(stderr, "Couldn't allocate memory for newPixels\n");
+        free(bmpImage);
+        free(config_params);
+        exit(1);
+    }
     if (config_params->run_unit_tests){
         runTestsSobel();
     }
