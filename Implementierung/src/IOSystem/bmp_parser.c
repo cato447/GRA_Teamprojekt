@@ -17,29 +17,29 @@
 #define INFO_HEADER_SIZE 40
 
 /*
-Returns 0 on success and 1 on failure.
+Returns 0 on success and -1 on failure.
 Sets "width", "height" and "pxArray" of "bmpImgBuf" to an unpadded copy of the of the parameter "bmpFile".
 Pixelarray starts in bottom left of picture.
 */
 int bmpToArray(void* buf, size_t bufSize, uBMPImage* bmpImgBuf) {
     if (bufSize < 26) {
         fprintf(stderr, "Error: file too small\n");
-        return 1;
+        return -1;
     }
 
     if (*(uint16_t*) buf != BMP_HEADER_SIGN) {
         fprintf(stderr, "Error: incorrect file header signature\n");
-        return 1;
+        return -1;
     }
 
     if (*(uint32_t*)(buf + FILESIZE_OFFS) != bufSize) {
         fprintf(stderr, "Error: file size not matching size specified in file info\n");
-        return 1;
+        return -1;
     }
 
     int32_t pxWidth = *(int32_t*)(buf + PXWIDTH_OFFS);
     if (pxWidth < 0) {
-        fprintf(stderr, "Error: image width must'nt be negative");
+        fprintf(stderr, "Error: image width mustn't be negative");
         return 1;
     }
 
@@ -57,30 +57,33 @@ int bmpToArray(void* buf, size_t bufSize, uBMPImage* bmpImgBuf) {
 
     if (dataOffset + byteWidthPadded * pxHeight > bufSize) {
         fprintf(stderr, "Error: file size doesn't match file info\n");
-        return 1;
+        return -1;
     }
-    
-    pixel24_t* pxArray = malloc(byteWidth * pxHeight);
+
+    // We allocate additional memory for an extra frame of black pixels to simplify further optimizations
+
+    pixel24_t* pxArray = calloc(byteWidth * (pxHeight + 2) + (2 * (byteWidth + 2 * sizeof(pixel24_t))), sizeof(uint8_t));
     if (!pxArray) {
         fprintf(stderr, "Error: failed allocating memory for pixel array\n");
         return 1;
     }
-    
-    pixel24_t* pxArrayEnd = pxArray + pxWidth * pxHeight;
+    //+ 2 because of black frame
+    pixel24_t* pxArrayEnd = pxArray + (pxWidth + 2) * (pxHeight + 2);
     void* bufInc = buf;
+
     if (negHeight) {
-        for (pixel24_t* dest = pxArrayEnd - pxWidth; dest >= pxArray; dest -= pxWidth, bufInc += byteWidthPadded) {
+        for (pixel24_t* dest = pxArrayEnd - (pxWidth - 1); dest >= (pxArray - (byteWidth + 2 * sizeof(pixel24_t))); dest -= pxWidth + 2, bufInc += byteWidthPadded) {
             memcpy(dest, bufInc + dataOffset, byteWidth);
         }
     } else {
-        for (pixel24_t* dest = pxArray; dest < pxArrayEnd; dest += pxWidth, bufInc += byteWidthPadded) {
+        for (pixel24_t* dest = pxArray + pxWidth + 3; dest < pxArrayEnd - pxWidth - 3; dest += pxWidth + 2, bufInc += byteWidthPadded) {
             memcpy(dest, bufInc + dataOffset, byteWidth);
         }
     }
 
     bmpImgBuf->pxArray = pxArray;
-    bmpImgBuf->pxWidth = pxWidth;
-    bmpImgBuf->pxHeight = pxHeight;
+    bmpImgBuf->pxWidth = pxWidth+2;
+    bmpImgBuf->pxHeight = pxHeight+2;
     bmpImgBuf->buf = buf;
     return 0;
 }

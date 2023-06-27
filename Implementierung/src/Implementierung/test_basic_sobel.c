@@ -1,5 +1,4 @@
-#include "basic_sobel.h"
-#include "../IOSystem/bmp_parser.h"
+#include "../Implementierung/basic_sobel.h"
 #include "../Testsystem/unittest.h"
 #include "../Testsystem/image_similarity.h"
 
