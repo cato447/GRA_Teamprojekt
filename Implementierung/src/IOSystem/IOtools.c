@@ -10,7 +10,7 @@
 Returns a pointer to the data buffer of the file read at parameter "path" and sets "bufSize" accordingly on successful read.
 */
 void* readFile(const char* path, size_t* bufSize) {
-    FILE* file = fopen(path, "r");
+    FILE* file = fopen(path, "rb");
     if (!file) {
         fprintf(stderr, "Error trying to open file at \"%s\": %s\n", path, strerror(errno));
         return NULL;
@@ -48,7 +48,7 @@ void* readFile(const char* path, size_t* bufSize) {
 }
 
 void writeFile(const char* path, void* buffer, size_t bufSize) {
-    FILE* file = fopen(path, "w+");
+    FILE* file = fopen(path, "wb+");
     if (!file) {
         fprintf(stderr, "Error trying to create/overwrite file at \"%s\": %s\n", path, strerror(errno));
         return;
