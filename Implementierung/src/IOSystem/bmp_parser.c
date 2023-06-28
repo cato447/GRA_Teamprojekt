@@ -90,6 +90,10 @@ int bmpToArray(char* buf, size_t bufSize, uBMPImage* bmpImgBuf) {
     return 0;
 }
 
+/*
+Return a pointer to a buffer containing a complete BMP image.
+Writes size of buffer to parameter "size".
+*/
 char* arrayToBmp(const uBMPImage* bmpImg, size_t* size) {
     uint32_t byteWidth = bmpImg->pxWidth * sizeof(pixel24_t) - 2 * sizeof(pixel24_t);
     uint32_t byteWidthPadded = (byteWidth & 0x3) ? ((byteWidth & ~0x3) + 4) : byteWidth;

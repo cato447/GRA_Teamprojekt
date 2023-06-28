@@ -52,14 +52,17 @@ char* readFile(const char* path, size_t* bufSize) {
     return buf;
 }
 
-void writeFile(const char* path, char* buffer, size_t bufSize) {
+/*
+Writes "bufSize" bytes from buffer at parameter "buf" to file at location "path", creates files if doesn't exist prior.
+*/
+void writeFile(const char* path, char* buf, size_t bufSize) {
     FILE* file = fopen(path, "wb+");
     if (!file) {
         fprintf(stderr, "Error trying to create/overwrite file at \"%s\": %s\n", path, strerror(errno));
         return;
     }
 
-    if (fwrite(buffer, 1, bufSize, file) != bufSize) {
+    if (fwrite(buf, 1, bufSize, file) != bufSize) {
         fprintf(stderr, "Error: failed writing buffer data to %s\n", path);
     }
 
