@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <getopt.h>
 #include <stdlib.h>
+#include <string.h>
+#include <alloca.h>
 
 #include "bmp_definitions.h"
 #include "launcher.h"
@@ -92,6 +94,10 @@ void parseArgs(int argc, char *argv[]) {
 
 int main(int argc, char *argv[]) {
     config_params = malloc(sizeof(config));
+
+    //Please change me
+    config_params->outputFilePath = NULL;
+
     parseArgs(argc, argv);
     uBMPImage *bmpImage = malloc(sizeof(uBMPImage));
     size_t img_size = loadPicture(config_params->inputFilePath, bmpImage);
@@ -122,6 +128,16 @@ int main(int argc, char *argv[]) {
     bmpImage->pxArray = (pixel24_t*) newPixels;
     size_t newSize;
     char* newBuf = arrayToBmp(bmpImage, &newSize);
+
+    //Set outputFilePath if not given
+    if (config_params->outputFilePath == NULL) {
+        char* outStr = alloca(strlen(config_params->inputFilePath) + 8 + 1);
+        strcpy(outStr, config_params->inputFilePath);    
+        strcat(outStr, "_out.bmp");
+        config_params->outputFilePath = outStr;
+    }
+
+
     writeFile(config_params->outputFilePath, newBuf, newSize);
     free(newBuf);
     //#---------------------
