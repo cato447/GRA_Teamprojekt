@@ -1,7 +1,7 @@
 TARGET = program
 
 CC = gcc
-CFLAGS = -g -std=c17 -Wall
+CFLAGS = -g -std=c17 -Wall -Wpedantic
 
 OUTDIR = ./build
 SUBDIR = src src/Implementierung src/IOSystem src/Testsystem
