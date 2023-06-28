@@ -95,11 +95,11 @@ void parseArgs(int argc, char *argv[], config *config_params) {
 
     //Set outputFilePath if not given
     if (config_params->outputFilePath == NULL) {
-        size_t len_input_name = input_path_len - 4;
+        size_t len_input_name = input_path_len - 4 - 1;
         char* output_mark = "_out.bmp";
         config_params->outputFilePath = malloc(len_input_name + strlen(output_mark));
         strncpy(config_params->outputFilePath, config_params->inputFilePath, len_input_name);
-        strncat(config_params->outputFilePath, output_mark, len_input_name + strlen(output_mark));
+        strncat(config_params->outputFilePath, output_mark, strlen(output_mark));
     }
 }
 
