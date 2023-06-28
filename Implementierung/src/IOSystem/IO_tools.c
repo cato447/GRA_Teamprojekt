@@ -1,6 +1,10 @@
-#include "IOtools.h"
+#include "IO_tools.h"
+
+//POSIX function fileno() not part of C17 standard
+#define _POSIX_C_SOURCE 200809L
 
 #include <stdio.h>
+#include <sys/types.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <stdlib.h>
@@ -9,7 +13,7 @@
 /*
 Returns a pointer to the data buffer of the file read at parameter "path" and sets "bufSize" accordingly on successful read.
 */
-void* readFile(const char* path, size_t* bufSize) {
+char* readFile(const char* path, size_t* bufSize) {
     FILE* file = fopen(path, "rb");
     if (!file) {
         fprintf(stderr, "Error trying to open file at \"%s\": %s\n", path, strerror(errno));
@@ -17,12 +21,13 @@ void* readFile(const char* path, size_t* bufSize) {
     }
 
     struct stat statbuf;
+    
     if (fstat(fileno(file), &statbuf)) {
         fprintf(stderr, "Error trying to check stats of file at %s: %s\n", path, strerror(errno));
         fclose(file);
         return NULL;
     }
-    if (!S_ISREG(statbuf.st_mode)) {
+    if (!S_ISREG(statbuf.st_mode) || (statbuf.st_size <= 0)) {
         fprintf(stderr, "Error: file at %s isn't a regular file\n", path);
         fclose(file);
         return NULL;
@@ -35,7 +40,7 @@ void* readFile(const char* path, size_t* bufSize) {
         return NULL;
     }
 
-    if (fread(buf, 1, statbuf.st_size, file) != statbuf.st_size) {
+    if (fread(buf, 1, statbuf.st_size, file) != (size_t) statbuf.st_size) {
         fprintf(stderr, "Error: failed reading file data at %s\n", path);
         fclose(file);
         free(buf);
@@ -47,7 +52,7 @@ void* readFile(const char* path, size_t* bufSize) {
     return buf;
 }
 
-void writeFile(const char* path, void* buffer, size_t bufSize) {
+void writeFile(const char* path, char* buffer, size_t bufSize) {
     FILE* file = fopen(path, "wb+");
     if (!file) {
         fprintf(stderr, "Error trying to create/overwrite file at \"%s\": %s\n", path, strerror(errno));

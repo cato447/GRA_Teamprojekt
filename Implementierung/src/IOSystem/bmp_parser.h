@@ -1,5 +1,5 @@
-#include "../bmpDefinitions.h"
+#include "../bmp_definitions.h"
 #include <stddef.h>
 
-int bmpToArray (void* buf, size_t bufSize, uBMPImage* bmpImgBuf);
-void* arrayToBmp (const uBMPImage* bmpImgBuf, size_t* bufSize);
+int bmpToArray (char* buf, size_t bufSize, uBMPImage* bmpImgBuf);
+char* arrayToBmp (const uBMPImage* bmpImgBuf, size_t* bufSize);

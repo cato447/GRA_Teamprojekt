@@ -7,7 +7,7 @@
 
 #include <stddef.h>
 #include "../IOSystem/bmp_parser.h"
-#include "../IOSystem/IOtools.h"
+#include "../IOSystem/IO_tools.h"
 
 int runTestsSobel(void);
 
