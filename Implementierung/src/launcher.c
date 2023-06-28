@@ -30,7 +30,7 @@ void print_arg_error(char *errorMsg) {
     exit(1);
 }
 
-void parseArgs(int argc, char *argv[]) {
+void parseArgs(int argc, char *argv[], config *config_params) {
     static struct option longopts[] = {
             {"help", no_argument, NULL, 'h'},
             {NULL, 0,             NULL, 0}
@@ -103,8 +103,14 @@ void parseArgs(int argc, char *argv[]) {
 }
 
 int main(int argc, char *argv[]) {
-    config_params = malloc(sizeof(config));
-    parseArgs(argc, argv);
+    config *config_params = malloc(sizeof(config));
+    if (config_params == NULL){
+        fprintf(stderr, "Couldn't allocate memory for config parameters\n");
+        exit(1);
+    }
+    //If this is not present the memory of outputFilePath will be used for other stuff
+    config_params->outputFilePath = NULL;
+    parseArgs(argc, argv, config_params);
     uBMPImage *bmpImage = malloc(sizeof(uBMPImage));
     size_t img_size = loadPicture(config_params->inputFilePath, bmpImage);
     if (img_size == 0){
@@ -128,6 +134,7 @@ int main(int argc, char *argv[]) {
 
     if (config_params->version == 0){
         sobel((uint8_t*) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, newPixels);
+        printf("Calculated sobel for image %s with naive implementation\n", config_params->inputFilePath);
     }
 
     //#---------------------
