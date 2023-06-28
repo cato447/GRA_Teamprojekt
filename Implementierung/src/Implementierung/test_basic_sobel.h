@@ -9,6 +9,7 @@
 #include "../IOSystem/bmp_parser.h"
 #include "../IOSystem/IO_tools.h"
 
+size_t loadPicture(char *path, uBMPImage *img);
 int runTestsSobel(void);
 
 #endif //IMPLEMENTIERUNG_TEST_BASIC_SOBEL_H
