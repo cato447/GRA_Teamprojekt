@@ -89,16 +89,17 @@ void parseArgs(int argc, char *argv[], config *config_params) {
         print_arg_error("Multiple input path were given");
     }
 
-    config_params->inputFilePath = argv[0];
+    size_t input_path_len = strlen(argv[0]) + 1;
+    config_params->inputFilePath = malloc(input_path_len);
+    strlcpy(config_params->inputFilePath, argv[0], input_path_len);
 
     //Set outputFilePath if not given
     if (config_params->outputFilePath == NULL) {
-        size_t len_input_name = strlen(config_params->inputFilePath) - 4;
+        size_t len_input_name = input_path_len - 4;
         char* output_mark = "_out.bmp";
-        char outStr[len_input_name + sizeof(output_mark)];
-        strlcpy(outStr, config_params->inputFilePath, len_input_name);
-        strlcat(outStr, output_mark, sizeof(outStr));
-        config_params->outputFilePath = outStr;
+        config_params->outputFilePath = malloc(len_input_name + sizeof(output_mark));
+        strlcpy(config_params->outputFilePath, config_params->inputFilePath, len_input_name);
+        strlcat(config_params->outputFilePath, output_mark, len_input_name + sizeof(output_mark));
     }
 }
 
@@ -108,10 +109,9 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Couldn't allocate memory for config parameters\n");
         exit(1);
     }
-    //If this is not present the memory of outputFilePath will be used for other stuff
-    config_params->outputFilePath = NULL;
     parseArgs(argc, argv, config_params);
     uBMPImage *bmpImage = malloc(sizeof(uBMPImage));
+    printf("Loading image from inputFilePath\n");
     size_t img_size = loadPicture(config_params->inputFilePath, bmpImage);
     if (img_size == 0){
         fprintf(stderr, "Couldn't load picture from input file %s\n", config_params->inputFilePath);
@@ -129,6 +129,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (config_params->run_unit_tests){
+        printf("Running all available unit tests\n");
         runTestsSobel();
     }
 
@@ -144,6 +145,7 @@ int main(int argc, char *argv[]) {
     size_t newSize;
     char* newBuf = arrayToBmp(bmpImage, &newSize);
 
+    printf("Writing to file %s\n", config_params->outputFilePath);
     writeFile(config_params->outputFilePath, newBuf, newSize);
     free(newBuf);
     //#---------------------

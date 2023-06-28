@@ -64,7 +64,7 @@ int testSetColorOfPixel() {
     uint8_t blue = 52;
     int x = 6;
     int y = 7;
-    setPixelAt((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, 6, 7, red, green, blue);
+    setPixelAt((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, x, y, red, green, blue);
     int passed = 1;
     passed &= ASSERT_EQUAL_U_INT8(red, colorOfPixel((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, x, y, RED));
     passed &= ASSERT_EQUAL_U_INT8(green, colorOfPixel((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, x, y, GREEN));
