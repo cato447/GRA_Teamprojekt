@@ -62,7 +62,8 @@ int bmpToArray(char* buf, size_t bufSize, uBMPImage* bmpImgBuf) {
 
     // We allocate additional memory for an extra frame of black pixels to simplify further optimizations
 
-    pixel24_t* pxArray = calloc((pxWidth + 2) * (pxHeight + 2), sizeof(pixel24_t));
+    size_t pxArraySize = (pxWidth + 2) * (pxHeight + 2);
+    pixel24_t* pxArray = calloc(pxArraySize, sizeof(pixel24_t));
     if (!pxArray) {
         fprintf(stderr, "Error: failed allocating memory for pixel array\n");
         return 1;
@@ -70,9 +71,6 @@ int bmpToArray(char* buf, size_t bufSize, uBMPImage* bmpImgBuf) {
     //+ 2 because of black frame
     pixel24_t* pxArrayEnd = pxArray + (pxWidth + 2) * (pxHeight + 2);
     char* bufInc = buf + dataOffset;
-    printf("%i\n", dataOffset);
-
-    printf("%i %i %i\n", ((uint8_t*)bufInc)[0], ((uint8_t*)bufInc)[1], ((uint8_t*)bufInc)[2]);
 
     if (negHeight) {
         for (pixel24_t* dest = pxArrayEnd - (pxWidth - 1); dest >= (pxArray - pxWidth - 2); dest -= pxWidth + 2, bufInc += byteWidthPadded) {
@@ -87,6 +85,8 @@ int bmpToArray(char* buf, size_t bufSize, uBMPImage* bmpImgBuf) {
     bmpImgBuf->pxArray = pxArray;
     bmpImgBuf->pxWidth = pxWidth+2;
     bmpImgBuf->pxHeight = pxHeight+2;
+    bmpImgBuf->pxArraySize = pxArraySize;
+
     return 0;
 }
 
@@ -105,14 +105,16 @@ char* arrayToBmp(const uBMPImage* bmpImg, size_t* size) {
     *(uint32_t*)(buf + 0x16) = bmpImg->pxHeight - 2;
     *(uint16_t*)(buf + 0x1A) = 1;
     *(uint16_t*)(buf + 0x1C) = 24;
-    *(uint32_t*)(buf + 0x26) = 256;
-    *(uint32_t*)(buf + 0x2A) = 256;
+    *(uint32_t*)(buf + 0x26) = 3800;
+    *(uint32_t*)(buf + 0x2A) = 3800;
     *(uint32_t*)(buf + 0x2E) = 256 * 256 * 256;
 
     char* pxData = buf + HEADER_SIZE + INFO_HEADER_SIZE;
     pixel24_t* pxArraySrc = bmpImg->pxArray + bmpImg->pxWidth;
     pixel24_t* pxArrayEnd = bmpImg->pxArray + bmpImg->pxArraySize - bmpImg->pxWidth;
+    printf("%li\n", bmpImg->pxArraySize);
 
+    int i = 0;
     while (pxArraySrc < pxArrayEnd) {
         memcpy(pxData, pxArraySrc + 1, byteWidth);
         pxArraySrc += bmpImg->pxWidth;
