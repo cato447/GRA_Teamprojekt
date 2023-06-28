@@ -1,4 +1,4 @@
-#include "../bmp_definitions.h"
+#include "bmp_definitions.h"
 #include <stddef.h>
 
 int bmpToArray (char* buf, size_t bufSize, uBMPImage* bmpImgBuf);

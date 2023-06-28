@@ -8,7 +8,7 @@
 #include <string.h>
 #include <alloca.h>
 
-#include "bmp_definitions.h"
+#include "IOSystem/bmp_definitions.h"
 #include "launcher.h"
 #include "Implementierung/basic_sobel.h"
 #include "Implementierung/test_basic_sobel.h"
@@ -90,14 +90,20 @@ void parseArgs(int argc, char *argv[]) {
     }
 
     config_params->inputFilePath = argv[0];
+
+    //Set outputFilePath if not given
+    if (config_params->outputFilePath == NULL) {
+        size_t len_input_name = strlen(config_params->inputFilePath) - 4;
+        char* output_mark = "_out.bmp";
+        char outStr[len_input_name + sizeof(output_mark)];
+        strlcpy(outStr, config_params->inputFilePath, len_input_name);
+        strlcat(outStr, output_mark, sizeof(outStr));
+        config_params->outputFilePath = outStr;
+    }
 }
 
 int main(int argc, char *argv[]) {
     config_params = malloc(sizeof(config));
-
-    //Please change me
-    config_params->outputFilePath = NULL;
-
     parseArgs(argc, argv);
     uBMPImage *bmpImage = malloc(sizeof(uBMPImage));
     size_t img_size = loadPicture(config_params->inputFilePath, bmpImage);
@@ -107,6 +113,7 @@ int main(int argc, char *argv[]) {
         free(config_params);
         exit(1);
     }
+
     uint8_t *newPixels = malloc(bmpImage->pxHeight * bmpImage->pxWidth * sizeof(pixel24_t));
     if (newPixels == NULL){
         fprintf(stderr, "Couldn't allocate memory for newPixels\n");
@@ -114,12 +121,13 @@ int main(int argc, char *argv[]) {
         free(config_params);
         exit(1);
     }
+
     if (config_params->run_unit_tests){
         runTestsSobel();
     }
+
     if (config_params->version == 0){
         sobel((uint8_t*) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, newPixels);
-        printf("Calculated sobel for image %s with naive implementation\n", config_params->inputFilePath);
     }
 
     //#---------------------
@@ -128,15 +136,6 @@ int main(int argc, char *argv[]) {
     bmpImage->pxArray = (pixel24_t*) newPixels;
     size_t newSize;
     char* newBuf = arrayToBmp(bmpImage, &newSize);
-
-    //Set outputFilePath if not given
-    if (config_params->outputFilePath == NULL) {
-        char* outStr = alloca(strlen(config_params->inputFilePath) + 8 + 1);
-        strcpy(outStr, config_params->inputFilePath);    
-        strcat(outStr, "_out.bmp");
-        config_params->outputFilePath = outStr;
-    }
-
 
     writeFile(config_params->outputFilePath, newBuf, newSize);
     free(newBuf);
