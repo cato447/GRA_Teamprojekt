@@ -112,9 +112,7 @@ char* arrayToBmp(const uBMPImage* bmpImg, size_t* size) {
     char* pxData = buf + HEADER_SIZE + INFO_HEADER_SIZE;
     pixel24_t* pxArraySrc = bmpImg->pxArray + bmpImg->pxWidth;
     pixel24_t* pxArrayEnd = bmpImg->pxArray + bmpImg->pxArraySize - bmpImg->pxWidth;
-    printf("%li\n", bmpImg->pxArraySize);
 
-    int i = 0;
     while (pxArraySrc < pxArrayEnd) {
         memcpy(pxData, pxArraySrc + 1, byteWidth);
         pxArraySrc += bmpImg->pxWidth;
