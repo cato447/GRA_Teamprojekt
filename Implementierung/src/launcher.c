@@ -91,15 +91,15 @@ void parseArgs(int argc, char *argv[], config *config_params) {
 
     size_t input_path_len = strlen(argv[0]) + 1;
     config_params->inputFilePath = malloc(input_path_len);
-    strlcpy(config_params->inputFilePath, argv[0], input_path_len);
+    strncpy(config_params->inputFilePath, argv[0], input_path_len);
 
     //Set outputFilePath if not given
     if (config_params->outputFilePath == NULL) {
         size_t len_input_name = input_path_len - 4;
         char* output_mark = "_out.bmp";
-        config_params->outputFilePath = malloc(len_input_name + sizeof(output_mark));
-        strlcpy(config_params->outputFilePath, config_params->inputFilePath, len_input_name);
-        strlcat(config_params->outputFilePath, output_mark, len_input_name + sizeof(output_mark));
+        config_params->outputFilePath = malloc(len_input_name + strlen(output_mark));
+        strncpy(config_params->outputFilePath, config_params->inputFilePath, len_input_name);
+        strncat(config_params->outputFilePath, output_mark, len_input_name + strlen(output_mark));
     }
 }
 
