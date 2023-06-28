@@ -75,7 +75,7 @@ int testSetColorOfPixel() {
 int testSobel() {
     //TODO: Get real testing data
     pixel24_t *newPixels = malloc(bmpImage->pxHeight * bmpImage->pxWidth * sizeof(pixel24_t));
-    sobel(bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, (uint8_t *) newPixels);
+    sobel((uint8_t*) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, (uint8_t *) newPixels);
 
     char *reference_path = "../res/muster.bmp";
 
