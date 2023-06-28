@@ -6,6 +6,7 @@
 #include <getopt.h>
 #include <stdlib.h>
 
+#include "bmp_definitions.h"
 #include "launcher.h"
 #include "Implementierung/basic_sobel.h"
 #include "Implementierung/test_basic_sobel.h"
@@ -114,6 +115,17 @@ int main(int argc, char *argv[]) {
         sobel((uint8_t*) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, newPixels);
         printf("Calculated sobel for image %s with naive implementation\n", config_params->inputFilePath);
     }
+
+    //#---------------------
+    //#Erste Output Integration im Launcher - up to change
+    //#
+    bmpImage->pxArray = (pixel24_t*) newPixels;
+    size_t newSize;
+    char* newBuf = arrayToBmp(bmpImage, &newSize);
+    writeFile(config_params->outputFilePath, newBuf, newSize);
+    free(newBuf);
+    //#---------------------
+
     free(newPixels);
     free(bmpImage);
     free(config_params);
