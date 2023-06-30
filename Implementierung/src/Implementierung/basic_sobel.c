@@ -7,9 +7,8 @@ const int8_t M_v[3][3] = { { 1, 0, -1 }, { 2, 0, -2 }, { 1, 0, -1 } };
 const int8_t M_h[3][3] = { { 1, 2, 1 }, { 0, 0, 0 }, { -1, -2, -1 } };
 
 void sobel(const uint8_t* img_in, size_t width, size_t height, uint8_t* img_out) {
-    for (size_t x = 1; x < width; ++x) {
-        for (size_t y = 1; y < height; ++y) {
-
+    for (size_t x = 1; x < width-1; ++x) {
+        for (size_t y = 1; y < height-1; ++y) {
             int32_t A_v_R = 0;
             int32_t A_h_R = 0;
 
