@@ -96,28 +96,26 @@ int parseBMPFile(const void* buf, size_t bufSize, uBMPImage* bmpImgBuf) {
         return -1;
     }
 
-    // We allocate additional memory for an extra frame of black pixels to simplify further optimizations
-
-    pixel24_t* pxArray = calloc(byteWidth * (pxHeight + 2) + (2 * (byteWidth + 2 * sizeof(pixel24_t))), sizeof(uint8_t));
+    pixel24_t* pxArray = calloc(byteWidth * pxHeight, sizeof(uint8_t));
     if (!pxArray) {
         fprintf(stderr, "Error: failed allocating memory for pixel array\n");
         return 1;
     }
-    //+ 2 because of black frame
-    pixel24_t* pxArrayEnd = pxArray + (pxWidth + 2) * (pxHeight + 2);
+
+    pixel24_t* pxArrayEnd = pxArray + pxWidth * pxHeight;
 
     if (negHeight) {
-        for (pixel24_t* dest = pxArrayEnd - (pxWidth - 1); dest >= (pxArray - (byteWidth + 2 * sizeof(pixel24_t))); dest -= pxWidth + 2, buf += byteWidthPadded) {
+        for (pixel24_t* dest = pxArrayEnd - pxWidth; dest >= pxArray; dest -= pxWidth, buf += byteWidthPadded) {
             memcpy(dest, buf + dataOffset, byteWidth);
         }
     } else {
-        for (pixel24_t* dest = pxArray + pxWidth + 3; dest < pxArrayEnd - pxWidth - 3; dest += pxWidth + 2, buf += byteWidthPadded) {
+        for (pixel24_t* dest = pxArray; dest < pxArrayEnd; dest += pxWidth, buf += byteWidthPadded) {
             memcpy(dest, buf + dataOffset, byteWidth);
         }
     }
 
     bmpImgBuf->pxArray = pxArray;
-    bmpImgBuf->pxWidth = pxWidth+2;
-    bmpImgBuf->pxHeight = pxHeight+2;
+    bmpImgBuf->pxWidth = pxWidth;
+    bmpImgBuf->pxHeight = pxHeight;
     return 0;
 }
