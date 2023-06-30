@@ -17,5 +17,4 @@ typedef struct config_ {
     char *inputFilePath;
 } config;
 
-config *config_params;
 #endif //IMPLEMENTIERUNG_LAUNCHER_H

@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stddef.h>
+#include "../IOSystem/bmp_definitions.h"
 
 enum Color { BLUE, GREEN, RED };
 

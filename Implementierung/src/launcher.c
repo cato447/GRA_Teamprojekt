@@ -5,7 +5,10 @@
 #include <stdio.h>
 #include <getopt.h>
 #include <stdlib.h>
+#include <string.h>
+#include <alloca.h>
 
+#include "IOSystem/bmp_definitions.h"
 #include "launcher.h"
 #include "Implementierung/basic_sobel.h"
 #include "Implementierung/test_basic_sobel.h"
@@ -27,7 +30,7 @@ void print_arg_error(char *errorMsg) {
     exit(1);
 }
 
-void parseArgs(int argc, char *argv[]) {
+void parseArgs(int argc, char *argv[], config *config_params) {
     static struct option longopts[] = {
             {"help", no_argument, NULL, 'h'},
             {NULL, 0,             NULL, 0}
@@ -86,13 +89,29 @@ void parseArgs(int argc, char *argv[]) {
         print_arg_error("Multiple input path were given");
     }
 
-    config_params->inputFilePath = argv[0];
+    size_t input_path_len = strlen(argv[0]) + 1;
+    config_params->inputFilePath = malloc(input_path_len);
+    strncpy(config_params->inputFilePath, argv[0], input_path_len);
+
+    //Set outputFilePath if not given
+    if (config_params->outputFilePath == NULL) {
+        size_t len_input_name = input_path_len - 4 - 1;
+        char* output_mark = "_out.bmp";
+        config_params->outputFilePath = malloc(len_input_name + strlen(output_mark));
+        strncpy(config_params->outputFilePath, config_params->inputFilePath, len_input_name);
+        strncat(config_params->outputFilePath, output_mark, strlen(output_mark));
+    }
 }
 
 int main(int argc, char *argv[]) {
-    config_params = malloc(sizeof(config));
-    parseArgs(argc, argv);
+    config *config_params = malloc(sizeof(config));
+    if (config_params == NULL){
+        fprintf(stderr, "Couldn't allocate memory for config parameters\n");
+        exit(1);
+    }
+    parseArgs(argc, argv, config_params);
     uBMPImage *bmpImage = malloc(sizeof(uBMPImage));
+    printf("Loading image from inputFilePath\n");
     size_t img_size = loadPicture(config_params->inputFilePath, bmpImage);
     if (img_size == 0){
         fprintf(stderr, "Couldn't load picture from input file %s\n", config_params->inputFilePath);
@@ -100,6 +119,7 @@ int main(int argc, char *argv[]) {
         free(config_params);
         exit(1);
     }
+
     uint8_t *newPixels = malloc(bmpImage->pxHeight * bmpImage->pxWidth * sizeof(pixel24_t));
     if (newPixels == NULL){
         fprintf(stderr, "Couldn't allocate memory for newPixels\n");
@@ -107,13 +127,29 @@ int main(int argc, char *argv[]) {
         free(config_params);
         exit(1);
     }
+
     if (config_params->run_unit_tests){
+        printf("Running all available unit tests\n");
         runTestsSobel();
     }
+
     if (config_params->version == 0){
         sobel((uint8_t*) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, newPixels);
         printf("Calculated sobel for image %s with naive implementation\n", config_params->inputFilePath);
     }
+
+    //#---------------------
+    //#Erste Output Integration im Launcher - up to change
+    //#
+    bmpImage->pxArray = (pixel24_t*) newPixels;
+    size_t newSize;
+    char* newBuf = arrayToBmp(bmpImage, &newSize);
+
+    printf("Writing to file %s\n", config_params->outputFilePath);
+    writeFile(config_params->outputFilePath, newBuf, newSize);
+    free(newBuf);
+    //#---------------------
+
     free(newPixels);
     free(bmpImage);
     free(config_params);

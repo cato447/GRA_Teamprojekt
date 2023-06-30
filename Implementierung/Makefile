@@ -6,6 +6,7 @@ CFLAGS = -g -std=c17 -Wall -Wpedantic
 OUTDIR = ./build
 SUBDIR = src src/Implementierung src/IOSystem src/Testsystem
 DIR_OBJ = ./obj
+LIBS = -lm
 
 INCS = $(wildcard *.h $(foreach path, $(SUBDIR), $(path)/*.h))
 SRCS = $(wildcard *.c $(foreach path, $(SUBDIR), $(path)/*.c))
@@ -14,7 +15,7 @@ INC_DIRS = -I./ $(addprefix -I, $(SUBDIR))
 
 PHONY := $(TARGET)
 $(TARGET): $(OBJS)
-	$(CC) -o $(OUTDIR)/$@ $(OBJS) -lm
+	$(CC) -o $(OUTDIR)/$@ $(OBJS) $(LIBS)
 
 $(DIR_OBJ)/%.o: %.c $(INCS)
 	mkdir -p $(@D)

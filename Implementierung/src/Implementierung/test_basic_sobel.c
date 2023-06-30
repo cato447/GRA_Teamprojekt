@@ -1,5 +1,6 @@
-#include "basic_sobel.h"
-#include "../IOSystem/bmp_parser.h"
+#include "test_basic_sobel.h"
+
+#include "../Implementierung/basic_sobel.h"
 #include "../Testsystem/unittest.h"
 #include "../Testsystem/image_similarity.h"
 
@@ -14,7 +15,7 @@ size_t loadPicture(char *path, uBMPImage *img) {
     void *buffer;
     size_t buffer_size;
     fprintf(stdout, "Loading BMP File: %s for test data\n", path);
-    buffer = readBMPFile(path, &buffer_size);
+    buffer = readFile(path, &buffer_size);
 
     if (buffer == NULL) {
         fprintf(stderr, "Couldn't read BMP File\n");
@@ -24,7 +25,7 @@ size_t loadPicture(char *path, uBMPImage *img) {
         fprintf(stderr, "img was not initialized\n");
         return 0;
     }
-    if (parseBMPFile(buffer, buffer_size, img) == 1) {
+    if (bmpToArray(buffer, buffer_size, img) == 1) {
         fprintf(stderr, "Couldn't parse BMP file");
         free(buffer);
         return 0;
@@ -63,7 +64,7 @@ int testSetColorOfPixel() {
     uint8_t blue = 52;
     int x = 6;
     int y = 7;
-    setPixelAt((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, 6, 7, red, green, blue);
+    setPixelAt((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, x, y, red, green, blue);
     int passed = 1;
     passed &= ASSERT_EQUAL_U_INT8(red, colorOfPixel((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, x, y, RED));
     passed &= ASSERT_EQUAL_U_INT8(green, colorOfPixel((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, x, y, GREEN));
@@ -74,7 +75,7 @@ int testSetColorOfPixel() {
 int testSobel() {
     //TODO: Get real testing data
     pixel24_t *newPixels = malloc(bmpImage->pxHeight * bmpImage->pxWidth * sizeof(pixel24_t));
-    sobel((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, (uint8_t *) newPixels);
+    sobel((uint8_t*) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, (uint8_t *) newPixels);
 
     char *reference_path = "../res/muster.bmp";
 
