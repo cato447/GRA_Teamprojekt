@@ -53,7 +53,7 @@ int bmpToArray(char* buf, size_t bufSize, uBMPImage* bmpImgBuf) {
     uint32_t dataOffset = *(uint32_t*)(buf + DATAOFFS_OFFS);
 
     int32_t byteWidth = pxWidth * sizeof(pixel24_t);
-    int32_t byteWidthPadded = (byteWidth & 0x3) ? ((byteWidth & ~0x3) + 4) : byteWidth;
+    int32_t byteWidthPadded = (byteWidth & 0x3) ? ((byteWidth & ~0x3)) : byteWidth;
 
     if (dataOffset + byteWidthPadded * pxHeight > bufSize) {
         fprintf(stderr, "Error: file size doesn't match file info\n");
@@ -115,22 +115,21 @@ Return a pointer to a buffer containing a complete BMP image.
 Writes size of buffer to parameter "size".
 */
 char* arrayToBmp(const uBMPImage* bmpImg, size_t* size) {
-    uint32_t byteWidth = bmpImg->pxWidth * sizeof(pixel24_t) - 2 * sizeof(pixel24_t);
-    uint32_t byteWidthPadded = (byteWidth & 0x3) ? ((byteWidth & ~0x3) + 4) : byteWidth;
+    uint32_t byteWidth = bmpImg->pxWidth * sizeof(pixel24_t);
 
-    *size = HEADER_SIZE + INFO_HEADER_SIZE + byteWidthPadded * (bmpImg->pxHeight - 2);
-    char* buf = calloc(*size, 1);
+    *size = HEADER_SIZE + INFO_HEADER_SIZE + byteWidth * (bmpImg->pxHeight);
+    char* buf = calloc(*size, sizeof(uint8_t));
 
-    generateHeaderInfoHeader(buf, *size, bmpImg->pxWidth - 2, bmpImg->pxHeight - 2);
+    generateHeaderInfoHeader(buf, *size, bmpImg->pxWidth, bmpImg->pxHeight);
 
     char* pxData = buf + HEADER_SIZE + INFO_HEADER_SIZE;
-    pixel24_t* pxArraySrc = bmpImg->pxArray + bmpImg->pxWidth;
-    pixel24_t* pxArrayEnd = bmpImg->pxArray + bmpImg->pxArraySize - bmpImg->pxWidth;
+    pixel24_t* pxArraySrc = bmpImg->pxArray;
+    pixel24_t* pxArrayEnd = bmpImg->pxArray + bmpImg->pxArraySize;
 
     while (pxArraySrc < pxArrayEnd) {
-        memcpy(pxData, pxArraySrc + 1, byteWidth);
+        memcpy(pxData, pxArraySrc, byteWidth);
         pxArraySrc += bmpImg->pxWidth;
-        pxData += byteWidthPadded;
+        pxData += byteWidth;
     }
     
     return buf;
