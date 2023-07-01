@@ -115,20 +115,20 @@ Return a pointer to a buffer containing a complete BMP image.
 Writes size of buffer to parameter "size".
 */
 char* arrayToBmp(const uBMPImage* bmpImg, size_t* size) {
-    uint32_t byteWidth = bmpImg->pxWidth * sizeof(pixel24_t) - 2 * sizeof(pixel24_t);
+    uint32_t byteWidth = bmpImg->pxWidth * sizeof(pixel24_t);
     uint32_t byteWidthPadded = (byteWidth & 0x3) ? ((byteWidth & ~0x3) + 4) : byteWidth;
 
-    *size = HEADER_SIZE + INFO_HEADER_SIZE + byteWidthPadded * (bmpImg->pxHeight - 2);
+    *size = HEADER_SIZE + INFO_HEADER_SIZE + byteWidthPadded * (bmpImg->pxHeight);
     char* buf = calloc(*size, 1);
 
-    generateHeaderInfoHeader(buf, *size, bmpImg->pxWidth - 2, bmpImg->pxHeight - 2);
+    generateHeaderInfoHeader(buf, *size, bmpImg->pxWidth, bmpImg->pxHeight);
 
     char* pxData = buf + HEADER_SIZE + INFO_HEADER_SIZE;
     pixel24_t* pxArraySrc = bmpImg->pxArray + bmpImg->pxWidth;
     pixel24_t* pxArrayEnd = bmpImg->pxArray + bmpImg->pxArraySize - bmpImg->pxWidth;
 
     while (pxArraySrc < pxArrayEnd) {
-        memcpy(pxData, pxArraySrc + 1, byteWidth);
+        memcpy(pxData, pxArraySrc, byteWidth);
         pxArraySrc += bmpImg->pxWidth;
         pxData += byteWidthPadded;
     }

@@ -7,8 +7,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <alloca.h>
+#include <time.h>
 
-#include "IOSystem/bmp_definitions.h"
+#include "IOSystem/IO_tools.h"
 #include "launcher.h"
 #include "Implementierung/basic_sobel.h"
 #include "Implementierung/test_basic_sobel.h"
@@ -24,9 +25,10 @@ void print_help_msg(void) {
     printf("\t-h | --help           Display this message\n");
 }
 
-void print_arg_error(char *errorMsg) {
+void print_arg_error(char *errorMsg, config *config_params) {
     fprintf(stderr, "%s\n", errorMsg);
     print_help_msg();
+    free(config_params);
     exit(1);
 }
 
@@ -42,20 +44,22 @@ void parseArgs(int argc, char *argv[], config *config_params) {
         switch (ch) {
             case 'V':
                 if (optarg[0] == '-') {
-                    print_arg_error("Version number can't start with a dash");
+                    print_arg_error("Version number can't start with a dash", config_params);
                 }
                 config_params->version = (uint8_t) strtoul(optarg, NULL, 10);
                 break;
             case 'B':
                 config_params->measure_performance = true;
-                // for optional arguments it is expected that the value follows the flag directly
-                // -B12 would be correct
-                // to allow for -B 12 we first check if another value is present in argv and test if it's a flag
-                if (optarg == NULL && argv[optind] != NULL && argv[optind][0] != '-') {
-                    config_params->measure_performance_cycles = strtoul(argv[optind], NULL, 10);
-                    ++optind;
-                    break;
+                if (optarg != NULL) {
+                    if (optarg[0] >= '0' && optarg[0] <= '9') {
+                        config_params->measure_performance_cycles = strtoul(optarg, NULL, 10);
+                    } else {
+                        print_arg_error("Optional argument cycles has to be a number", config_params);
+                    }
                 }
+                // enforce minimum of 3 cycles
+                config_params->measure_performance_cycles =
+                        config_params->measure_performance_cycles > 3 ? config_params->measure_performance_cycles : 3;
                 break;
             case 't':
                 config_params->run_unit_tests = true;
@@ -65,18 +69,18 @@ void parseArgs(int argc, char *argv[], config *config_params) {
                 exit(0);
             case 'o':
                 if (optarg[0] == '-') {
-                    print_arg_error("Output path can't start with a dash");
+                    print_arg_error("Output path can't start with a dash", config_params);
                 }
                 config_params->outputFilePath = optarg;
                 break;
             case '?':
-                print_arg_error("Unknown argument");
+                print_arg_error("Unknown argument", config_params);
             case ':':
                 switch (optopt) {
                     case 'V':
-                        print_arg_error("Missing version number -V version_num");
+                        print_arg_error("Missing version number -V version_num", config_params);
                     case 'o':
-                        print_arg_error("No output path for generated file was given -o output_path");
+                        print_arg_error("No output path for generated file was given -o output_path", config_params);
                 }
         }
     }
@@ -84,9 +88,9 @@ void parseArgs(int argc, char *argv[], config *config_params) {
     argv += optind;
 
     if (argc == 0) {
-        print_arg_error("No input path was given");
+        print_arg_error("No input path was given", config_params);
     } else if (argc > 1) {
-        print_arg_error("Multiple input path were given");
+        print_arg_error("Multiple input path were given", config_params);
     }
 
     size_t input_path_len = strlen(argv[0]) + 1;
@@ -96,7 +100,7 @@ void parseArgs(int argc, char *argv[], config *config_params) {
     //Set outputFilePath if not given
     if (config_params->outputFilePath == NULL) {
         size_t len_input_name = input_path_len - 4 - 1;
-        char* output_mark = "_out.bmp";
+        char *output_mark = "_out.bmp";
         config_params->outputFilePath = malloc(len_input_name + strlen(output_mark));
         strncpy(config_params->outputFilePath, config_params->inputFilePath, len_input_name);
         strncat(config_params->outputFilePath, output_mark, strlen(output_mark));
@@ -105,7 +109,7 @@ void parseArgs(int argc, char *argv[], config *config_params) {
 
 int main(int argc, char *argv[]) {
     config *config_params = malloc(sizeof(config));
-    if (config_params == NULL){
+    if (config_params == NULL) {
         fprintf(stderr, "Couldn't allocate memory for config parameters\n");
         exit(1);
     }
@@ -113,7 +117,7 @@ int main(int argc, char *argv[]) {
     uBMPImage *bmpImage = malloc(sizeof(uBMPImage));
     printf("Loading image from inputFilePath\n");
     size_t img_size = loadPicture(config_params->inputFilePath, bmpImage);
-    if (img_size == 0){
+    if (img_size == 0) {
         fprintf(stderr, "Couldn't load picture from input file %s\n", config_params->inputFilePath);
         free(bmpImage);
         free(config_params);
@@ -121,34 +125,59 @@ int main(int argc, char *argv[]) {
     }
 
     uint8_t *newPixels = malloc(bmpImage->pxHeight * bmpImage->pxWidth * sizeof(pixel24_t));
-    if (newPixels == NULL){
+    if (newPixels == NULL) {
         fprintf(stderr, "Couldn't allocate memory for newPixels\n");
         free(bmpImage);
         free(config_params);
         exit(1);
     }
 
-    if (config_params->run_unit_tests){
+    if (config_params->run_unit_tests) {
         printf("Running all available unit tests\n");
         runTestsSobel();
     }
 
-    if (config_params->version == 0){
-        sobel((uint8_t*) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, newPixels);
-        printf("Calculated sobel for image %s with naive implementation\n", config_params->inputFilePath);
+    double time = 0;
+    int num_of_execute_cycles = config_params->measure_performance ? config_params->measure_performance_cycles : 1;
+    for (int i = 1; i <= num_of_execute_cycles; ++i) {
+        printf("\rCycles run: %d/%d", i, num_of_execute_cycles);
+        fflush(stdout);
+        struct timespec start;
+        struct timespec end;
+        switch (config_params->version) {
+            case 0:
+                clock_gettime(CLOCK_MONOTONIC, &start);
+                sobel((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, newPixels);
+                clock_gettime(CLOCK_MONOTONIC, &end);
+                time += end.tv_sec - start.tv_sec + 1e-9 * (end.tv_nsec - start.tv_nsec);
+                break;
+            default:
+                fprintf(stderr, "Version %d not implemented", config_params->version);
+                free(config_params);
+                free(bmpImage);
+                free(newPixels);
+                exit(1);
+        }
     }
+
+    printf("\nCalculated sobel for image %s using version %d\n", config_params->inputFilePath, config_params->version);
 
     //#---------------------
     //#Erste Output Integration im Launcher - up to change
     //#
-    bmpImage->pxArray = (pixel24_t*) newPixels;
+    bmpImage->pxArray = (pixel24_t *) newPixels;
     size_t newSize;
-    char* newBuf = arrayToBmp(bmpImage, &newSize);
+    char *newBuf = arrayToBmp(bmpImage, &newSize);
 
     printf("Writing to file %s\n", config_params->outputFilePath);
     writeFile(config_params->outputFilePath, newBuf, newSize);
     free(newBuf);
     //#---------------------
+
+    if (config_params->measure_performance) {
+        printf("Sobel calculation from version %d took on average %f seconds\n", config_params->version,
+               time / config_params->measure_performance_cycles);
+    }
 
     free(newPixels);
     free(bmpImage);
