@@ -44,29 +44,28 @@ void simd_sobel(uint8_t* img_in, size_t width, size_t height, uint8_t* img_out) 
             lower = _mm_and_si128(_mm_srli_epi16(lower, SHIFT_BY), shrpi8Mask2);
             lowerRight = _mm_and_si128(_mm_srli_epi16(lowerRight, SHIFT_BY), shrpi8Mask2);
 
-
             // Multiplication with M_v for all color channels
             A_v = _mm_add_epi8(A_v, upperLeft);
-            A_v = _mm_sub_epi8(A_v,  upperRight);
+            A_v = _mm_sub_epi8(A_v,  lowerLeft);
 
-            A_v = _mm_add_epi8(A_v, left);
-            A_v = _mm_add_epi8(A_v, left);  //TODO: Test performance of double addition/subtraction vs. single addition/subtraction and left shift / only one right shift
-            A_v = _mm_sub_epi8(A_v, right);
-            A_v = _mm_sub_epi8(A_v, right);
+            A_v = _mm_add_epi8(A_v, upper);
+            A_v = _mm_add_epi8(A_v, upper);  //TODO: Test performance of double addition/subtraction vs. single addition/subtraction and left shift / only one right shift
+            A_v = _mm_sub_epi8(A_v, lower);
+            A_v = _mm_sub_epi8(A_v, lower);
 
-            A_v = _mm_add_epi8(A_v, lowerRight);
-            A_v = _mm_sub_epi8(A_v, lowerLeft);
+            A_v = _mm_add_epi8(A_v, upperRight);
+            A_v = _mm_sub_epi8(A_v, lowerRight);
 
             // Matrix multiplication with M_h for all color channels
             A_h = _mm_add_epi8(A_h, upperLeft);
-            A_h = _mm_sub_epi8(A_h, lowerLeft);
+            A_h = _mm_sub_epi8(A_h, upperRight);
 
-            A_h = _mm_add_epi8(A_h, upper);
-            A_h = _mm_add_epi8(A_h, upper);  //TODO: Test performance of double addition/subtraction vs. single addition/subtraction and left shift / only one right shift
-            A_h = _mm_sub_epi8(A_h, lower);
-            A_h = _mm_sub_epi8(A_h, lower);
+            A_h = _mm_add_epi8(A_h, left);
+            A_h = _mm_add_epi8(A_h, left);  //TODO: Test performance of double addition/subtraction vs. single addition/subtraction and left shift / only one right shift
+            A_h = _mm_sub_epi8(A_h, right);
+            A_h = _mm_sub_epi8(A_h, right);
 
-            A_h = _mm_add_epi8(A_h, upperRight);
+            A_h = _mm_add_epi8(A_h, lowerRight);
             A_h = _mm_sub_epi8(A_h, lowerLeft);
 
             A_v = _mm_abs_epi8(A_v);
