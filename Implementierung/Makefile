@@ -1,7 +1,7 @@
 TARGET = program
 
 CC = gcc
-CFLAGS = -g -std=c17 -Wall -Wpedantic -msse4.2
+CFLAGS = -O3 -g -std=c17 -Wall -Wpedantic -msse4.2
 
 OUTDIR = ./build
 SUBDIR = src src/Implementierung src/IOSystem src/Testsystem
@@ -24,5 +24,4 @@ $(DIR_OBJ)/%.o: %.c $(INCS)
 PHONY += clean
 clean:
 	rm -rf $(OUTDIR)/* $(DIR_OBJ)/*
-
 .PHONY = $(PHONY)

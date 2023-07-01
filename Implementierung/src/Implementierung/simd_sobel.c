@@ -73,7 +73,7 @@ void simd_sobel(uint8_t* img_in, size_t width, size_t height, uint8_t* img_out) 
             A_h = _mm_abs_epi8(A_h);
 
             // While it is still possible for this last sum to overflow, the chances are fairly low.
-            _mm_store_si128((__m128i*) (img_out + i), (_mm_add_epi8(A_v, A_h)));
+            _mm_storeu_si128((__m128i*) (img_out + i), (_mm_add_epi8(A_v, A_h)));
         }
     } else {
         sobel(img_in, width, height, img_out);

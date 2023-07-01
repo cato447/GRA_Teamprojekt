@@ -9,6 +9,7 @@
 #include <string.h>
 #include <time.h>
 
+
 #ifdef _WIN32
 #include <pthread_time.h>
 #endif
@@ -16,6 +17,7 @@
 #include "IOSystem/IO_tools.h"
 #include "launcher.h"
 #include "Implementierung/basic_sobel.h"
+#include "Implementierung/simd_sobel.h"
 #include "Implementierung/test_basic_sobel.h"
 
 void print_help_msg(void) {
@@ -152,6 +154,12 @@ int main(int argc, char *argv[]) {
             case 0:
                 clock_gettime(CLOCK_MONOTONIC, &start);
                 sobel((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, newPixels);
+                clock_gettime(CLOCK_MONOTONIC, &end);
+                time += end.tv_sec - start.tv_sec + 1e-9 * (end.tv_nsec - start.tv_nsec);
+                break;
+            case 1:
+                clock_gettime(CLOCK_MONOTONIC, &start);
+                simd_sobel((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, newPixels);
                 clock_gettime(CLOCK_MONOTONIC, &end);
                 time += end.tv_sec - start.tv_sec + 1e-9 * (end.tv_nsec - start.tv_nsec);
                 break;
