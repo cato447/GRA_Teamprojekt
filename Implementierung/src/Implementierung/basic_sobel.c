@@ -27,22 +27,24 @@ void sobel(const uint8_t* img_in, size_t width, size_t height, uint8_t* img_out)
             {
                 for (int8_t j = -1; j <= 1; j++)
                 {
-                    A_v_R += (int32_t)(M_v[1 + i][1 + j] * colorOfPixel(img_in, width, x + i, y + j, RED));
-                    A_h_R += (int32_t)(M_h[1 + i][1 + j] * colorOfPixel(img_in, width, x + i, y + j, RED));
+                    A_v_R += (int32_t)(M_v[1 + i][1 + j] * (colorOfPixel(img_in, width, x + i, y + j, RED)));
+                    A_h_R += (int32_t)(M_h[1 + i][1 + j] * (colorOfPixel(img_in, width, x + i, y + j, RED)));
 
-                    A_v_G += (int32_t)(M_v[1 + i][1 + j] * colorOfPixel(img_in, width, x + i, y + j, GREEN));
-                    A_h_G += (int32_t)(M_h[1 + i][1 + j] * colorOfPixel(img_in, width, x + i, y + j, GREEN));
+                    A_v_G += (int32_t)(M_v[1 + i][1 + j] * (colorOfPixel(img_in, width, x + i, y + j, GREEN)));
+                    A_h_G += (int32_t)(M_h[1 + i][1 + j] * (colorOfPixel(img_in, width, x + i, y + j, GREEN)));
 
-                    A_v_B += (int32_t)(M_v[1 + i][1 + j] * colorOfPixel(img_in, width, x + i, y + j, BLUE));
-                    A_h_B += (int32_t)(M_h[1 + i][1 + j] * colorOfPixel(img_in, width, x + i, y + j, BLUE));
+                    A_v_B += (int32_t)(M_v[1 + i][1 + j] * (colorOfPixel(img_in, width, x + i, y + j, BLUE)));
+                    A_h_B += (int32_t)(M_h[1 + i][1 + j] * (colorOfPixel(img_in, width, x + i, y + j, BLUE)));
                 }
             }
 
-            int32_t A_R = sqrt((A_v_R * A_v_R) + (A_h_R * A_h_R));
-            int32_t A_G = sqrt((A_v_G * A_v_G) + (A_h_G * A_h_G));
-            int32_t A_B = sqrt((A_v_B * A_v_B) + (A_h_B * A_h_B));
-
-            setPixelAt(img_out, width, x, y, A_R > 255 ? 255 : A_R, A_G > 255 ? 255 : A_G, A_B > 255 ? 255 : A_B);
+//            int32_t A_R = sqrt((A_v_R * A_v_R) + (A_h_R * A_h_R));
+//            int32_t A_G = sqrt((A_v_G * A_v_G) + (A_h_G * A_h_G));
+//            int32_t A_B = sqrt((A_v_B * A_v_B) + (A_h_B * A_h_B));
+            int32_t A_R = abs(A_v_R) + abs(A_h_R);
+            int32_t A_G = abs(A_v_G) + abs(A_h_G);
+            int32_t A_B = abs(A_v_B) + abs(A_h_B);
+            setPixelAt(img_out, width, x, y, A_R > 255 ? 255 : A_R, A_G  > 255 ? 255 : A_G, A_B  > 255 ? 255 : A_B);
         }
     }
 }
