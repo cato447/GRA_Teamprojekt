@@ -1,12 +1,12 @@
 TARGET = program
 
 CC = gcc
-CFLAGS = -g -std=c17 -Wall -Wpedantic
+CFLAGS = -g -std=c17 -Wall -Wpedantic -msse4.2
 
 OUTDIR = ./build
 SUBDIR = src src/Implementierung src/IOSystem src/Testsystem
 DIR_OBJ = ./obj
-LIBS = -lm
+LIBS = -lm -lrt
 
 INCS = $(wildcard *.h $(foreach path, $(SUBDIR), $(path)/*.h))
 SRCS = $(wildcard *.c $(foreach path, $(SUBDIR), $(path)/*.c))

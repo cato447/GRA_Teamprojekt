@@ -3,12 +3,10 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "immintrin.h"
-#include "simd_sobel.h"
 #include "thread_sobel.h"
+#include "simd_sobel.h"
 
 #define SHIFT_BY 2
-
-const uint8_t cleanUp16BitRShifts[] = { 0x3F, 0x3F, 0x3F, 0x3F, 0x3F, 0x3F, 0x3F, 0x3F, 0x3F, 0x3F, 0x3F, 0x3F, 0x3F, 0x3F, 0x3F, 0x3F };
 
 void thread_sobel(uint8_t* img_in, size_t width, size_t height, uint8_t* img_out) {
     if (width >= 16) {
@@ -74,6 +72,6 @@ void thread_sobel(uint8_t* img_in, size_t width, size_t height, uint8_t* img_out
             _mm_store_si128((__m128i*) (img_out + i), (_mm_add_epi8(A_v, A_h)));
         }
     } else {
-        basic_sobel(img_in, width, height, img_out);
+        sobel(img_in, width, height, img_out);
     }
 }
