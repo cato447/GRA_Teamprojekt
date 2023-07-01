@@ -18,6 +18,7 @@
 #include "launcher.h"
 #include "Implementierung/basic_sobel.h"
 #include "Implementierung/simd_sobel.h"
+#include "Implementierung/thread_sobel.h"
 #include "Implementierung/test_basic_sobel.h"
 
 void print_help_msg(void) {
@@ -160,6 +161,12 @@ int main(int argc, char *argv[]) {
             case 1:
                 clock_gettime(CLOCK_MONOTONIC, &start);
                 simd_sobel((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, newPixels);
+                clock_gettime(CLOCK_MONOTONIC, &end);
+                time += end.tv_sec - start.tv_sec + 1e-9 * (end.tv_nsec - start.tv_nsec);
+                break;
+            case 2:
+                clock_gettime(CLOCK_MONOTONIC, &start);
+                thread_sobel((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, newPixels);
                 clock_gettime(CLOCK_MONOTONIC, &end);
                 time += end.tv_sec - start.tv_sec + 1e-9 * (end.tv_nsec - start.tv_nsec);
                 break;

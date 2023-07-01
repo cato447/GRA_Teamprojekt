@@ -10,7 +10,7 @@
 
 void cuda_sobel(uint8_t* img_in, size_t width, size_t height, uint8_t* img_out) {
     if (width >= 16) {
-        __m128i shrpi8Mask2 = _mm_loadu_si128((const __m128i*) cleanUp16BitRShifts);
+        __m128i shrpi8Mask2 = _mm_loadu_si128((const __m128i*) SHIFT_BY2_MASK);
 
         for (size_t i = width * 3 + 3; i < width * (height-1) * 3 - 3; i += 16) {
             __m128i A_v = _mm_loadu_si128((const __m128i*) (img_in + i));
