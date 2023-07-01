@@ -17,8 +17,8 @@ void simd_sobel(uint8_t* img_in, size_t width, size_t height, uint8_t* img_out) 
         __m128i shrpi8Mask2 = _mm_loadu_si128((const __m128i*) cleanUp16BitRShifts);
 
         for (size_t i = width * 3 + 3; i < width * (height-1) * 3 - 3; i += 16) {
-            __m128i A_v = _mm_loadu_si128((const __m128i*) (img_in + i));
-            __m128i A_h = _mm_loadu_si128((const __m128i*) (img_in + i));
+            __m128i A_v = _mm_setzero_si128();
+            __m128i A_h = _mm_setzero_si128();
 
             __m128i upperLeft = _mm_loadu_si128((const __m128i*) (img_in + i - width * 3 - 3));
             __m128i upper = _mm_loadu_si128((const __m128i*) (img_in + i - width * 3));
