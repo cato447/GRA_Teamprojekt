@@ -1,6 +1,7 @@
 //
 // Created by Cato on 22.06.23.
 //
+#define _POSIX_C_SOURCE 199309L
 
 #include <stdio.h>
 #include <getopt.h>
