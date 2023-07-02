@@ -38,9 +38,6 @@ void sobel(const uint8_t* img_in, size_t width, size_t height, uint8_t* img_out)
                 }
             }
 
-//            int32_t A_R = sqrt((A_v_R * A_v_R) + (A_h_R * A_h_R));
-//            int32_t A_G = sqrt((A_v_G * A_v_G) + (A_h_G * A_h_G));
-//            int32_t A_B = sqrt((A_v_B * A_v_B) + (A_h_B * A_h_B));
             int32_t A_R = abs(A_v_R) + abs(A_h_R);
             int32_t A_G = abs(A_v_G) + abs(A_h_G);
             int32_t A_B = abs(A_v_B) + abs(A_h_B);
