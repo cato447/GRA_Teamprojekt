@@ -14,10 +14,14 @@
 
 void thread_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out) {
     if (width >= 16) {
+
+        //Ignore last row; prevent seg faults
+        --height;
+
         size_t amountThreads = height / LINES_PER_THREAD;
         pthread_t threads[amountThreads];
 
-        //We the first fromY to be 1 instead of 0, or we might access memory that we do not own.
+        //We need the first fromY to be 1 instead of 0, or we might access memory that we do not own.
         int ensureOffset = 1;
 
         for (int i = 0; i < amountThreads; ++i) {
@@ -43,12 +47,11 @@ void thread_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out
 
         //printf("Self from %zu to %zu\n", args.fromY, args.toY);
 
-        computeSobelForHeightInterval((void *) &args);
+        computeSobelForHeightInterval((void*) &args);
 
         for (int i = 0; i < amountThreads; ++i) {
             pthread_join(threads[i], NULL);
         }
-
     } else {
         sobel(img_in, width, height, img_out);
     }
