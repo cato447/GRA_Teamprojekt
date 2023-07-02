@@ -1,5 +1,6 @@
 #include "bmp_parser.h"
 
+#include <stdalign.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -9,12 +10,26 @@
 #include <errno.h>
 
 #define BMP_HEADER_SIGN 0x4d42
-#define FILESIZE_OFFS 0x02
-#define DATAOFFS_OFFS 0x0a
-#define PXWIDTH_OFFS 0x12
-#define PXHEIGHT_OFFS 0x16
 #define HEADER_SIZE 14
 #define INFO_HEADER_SIZE 40
+
+struct __attribute__((__packed__)) bmpHeader {
+    uint16_t signature;
+    uint32_t fileSize;
+    uint32_t _0;
+    uint32_t dataOffset;
+    uint32_t infoHeadersize;
+    int32_t pxWidth;
+    int32_t pxHeight;
+    uint16_t planes;
+    uint16_t bitDepth;
+    uint32_t _1;
+    uint32_t _2;
+    uint32_t pxPerMx;
+    uint32_t pxPerMy;
+    uint32_t numColors;
+    uint32_t _3;
+};
 
 /*
 Returns 0 on success and -1 on failure.
@@ -27,30 +42,32 @@ int bmpToArray(char* buf, size_t bufSize, uBMPImage* bmpImgBuf) {
         return 1;
     }
 
-    if (*(uint16_t*) buf != BMP_HEADER_SIGN) {
-        fprintf(stderr, "Error: incorrect file header signature\n");
+    struct bmpHeader* header = (struct bmpHeader*) buf;
+
+    if (header->signature != BMP_HEADER_SIGN) {
+        fprintf(stderr, "Error: Input isn't a BMP file\n");
         return 1;
     }
 
-    if (*(uint32_t*)(buf + FILESIZE_OFFS) != bufSize) {
+    if (header->fileSize != bufSize) {
         fprintf(stderr, "Error: file size not matching size specified in file info\n"); 
         return 1;
     }
 
-    int32_t pxWidth = *(int32_t*)(buf + PXWIDTH_OFFS);
+    int32_t pxWidth = header->pxWidth;
     if (pxWidth < 0) {
         fprintf(stderr, "Error: image width can't be negative");
         return 1;
     }
 
     int negHeight = 0;
-    int32_t pxHeight = *(int32_t*)(buf + PXHEIGHT_OFFS);
+    int32_t pxHeight = header->pxHeight;
     if (pxHeight < 0) {
         pxHeight = -pxHeight;
         negHeight = 1;
     }
 
-    uint32_t dataOffset = *(uint32_t*)(buf + DATAOFFS_OFFS);
+    uint32_t dataOffset = header->dataOffset;
 
     int32_t byteWidth = pxWidth * sizeof(pixel24_t);
     int32_t byteWidthPadded = (byteWidth & 0x3) ? ((byteWidth & ~0x3)) : byteWidth;
@@ -97,17 +114,19 @@ int bmpToArray(char* buf, size_t bufSize, uBMPImage* bmpImgBuf) {
 #define NUM_COLORS 256 * 256 * 256
 
 static inline void generateHeaderInfoHeader(char* zeroBuf, uint32_t fileSize, int32_t width, int32_t height) {
-    *(uint16_t*)(zeroBuf + 0x00) = BMP_HEADER_SIGN;
-    *(uint32_t*)(zeroBuf + 0x02) = fileSize;
-    *(uint32_t*)(zeroBuf + 0x0A) = HEADER_SIZE + INFO_HEADER_SIZE;
-    *(uint32_t*)(zeroBuf + 0x0E) = INFO_HEADER_SIZE;
-    *(uint32_t*)(zeroBuf + 0x12) = width;
-    *(uint32_t*)(zeroBuf + 0x16) = height;
-    *(uint16_t*)(zeroBuf + 0x1A) = NUM_PLANES;
-    *(uint16_t*)(zeroBuf + 0x1C) = BIT_DEPTH;
-    *(uint32_t*)(zeroBuf + 0x26) = PX_PER_METER;
-    *(uint32_t*)(zeroBuf + 0x2A) = PX_PER_METER;
-    *(uint32_t*)(zeroBuf + 0x2E) = NUM_COLORS;
+    struct bmpHeader* header = (struct bmpHeader*) zeroBuf;
+
+    header->signature = BMP_HEADER_SIGN;
+    header->fileSize = fileSize;
+    header->dataOffset = HEADER_SIZE + INFO_HEADER_SIZE;
+    header->infoHeadersize = INFO_HEADER_SIZE;
+    header->pxWidth = width;
+    header->pxHeight = height;
+    header->planes = NUM_PLANES;
+    header->bitDepth = BIT_DEPTH;
+    header->pxPerMx = PX_PER_METER;
+    header->pxPerMy = PX_PER_METER;
+    header->numColors = NUM_COLORS;
 }
 
 /*

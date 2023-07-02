@@ -1,7 +1,7 @@
-#include "IO_tools.h"
-
 //POSIX function fileno() not part of C17 standard
-#define _POSIX_C_SOURCE 200809L
+#define _POSIX_C_SOURCE 199309L
+
+#include "IO_tools.h"
 
 #include <stdio.h>
 #include <sys/types.h>
