@@ -10,23 +10,29 @@
 
 #define SHIFT_BY2 2
 #define SHIFT_BY1 1
-#define LINES_PER_THREAD 250
+#define LINES_PER_THREAD 200
 
 void thread_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out) {
     if (width >= 16) {
-        size_t amountThreads = height / LINES_PER_THREAD - 1;
+        size_t amountThreads = height / LINES_PER_THREAD;
         pthread_t threads[amountThreads];
+
+        //We the first fromY to be 1 instead of 0, or we might access memory that we do not own.
+        int ensureOffset = 1;
+
         for (int i = 0; i < amountThreads; ++i) {
             sobelIntervalArgs args;
             args.img_in = img_in;
             args.width = width;
-            args.fromY = i * LINES_PER_THREAD;
+            args.fromY = i * LINES_PER_THREAD + ensureOffset;
             args.toY = i * LINES_PER_THREAD + LINES_PER_THREAD;
             args.img_out = img_out;
-            pthread_create(&threads[i], NULL, computeSobelForHeightInterval, (void *) &args);
+            pthread_create(&threads[i], NULL, computeSobelForHeightInterval, (void*) &args);
+            ensureOffset = 0;
+            //printf("\nCreated Thread %d: from = %zu, to = %zu, LPT = %d\n", i, args.fromY, args.toY, LINES_PER_THREAD);
         }
 
-        //printf("Created %zu Threads\n", amountThreads);
+        //printf("\nCreated %zu Threads: h = %zu, LPT = %d\n", amountThreads, height, LINES_PER_THREAD);
 
         sobelIntervalArgs args;
         args.img_in = img_in;
@@ -38,9 +44,11 @@ void thread_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out
         //printf("Self from %zu to %zu\n", args.fromY, args.toY);
 
         computeSobelForHeightInterval((void *) &args);
+
         for (int i = 0; i < amountThreads; ++i) {
             pthread_join(threads[i], NULL);
         }
+
     } else {
         sobel(img_in, width, height, img_out);
     }
@@ -56,7 +64,7 @@ void *computeSobelForHeightInterval(void *args) {
     uint8_t *img_out = arguments.img_out;
 
     __m128i zeroEvenBytesMask = _mm_loadu_si128((const __m128i *) ZERO_EVEN_BYTES_MASK);
-    for (size_t i = width * fromY * 3; i < width * toY * 3; i += 16) {
+    for (size_t i = width * fromY * 3 + 3; i < width * toY * 3; i += 16) {
         __m128i A_v = _mm_setzero_si128();
         __m128i A_h = _mm_setzero_si128();
 
