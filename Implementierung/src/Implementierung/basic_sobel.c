@@ -1,5 +1,5 @@
 #include "basic_sobel.h"
-#include <math.h>
+#include <stdlib.h>
 #include <stddef.h>
 #include <stdint.h>
 
