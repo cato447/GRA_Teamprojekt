@@ -15,7 +15,7 @@ const uint16_t COMP_255[] =
         };
 
 void simd_sobel(uint8_t* img_in, size_t width, size_t height, uint8_t* img_out) {
-    if (width >= 16) {
+    if (width >= 16 && height >= 3) {
         __m128i zeroEvenBytesMask = _mm_loadu_si128((const __m128i*) ZERO_EVEN_BYTES_MASK);
         __m128i comparer = _mm_loadu_si128((const __m128i*) COMP_255);
 
