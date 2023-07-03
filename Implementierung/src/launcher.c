@@ -125,7 +125,7 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    uint8_t *newPixels = calloc(bmpImage->pxHeight * bmpImage->pxWidth * sizeof(pixel24_t));
+    uint8_t *newPixels = calloc(bmpImage->pxHeight * bmpImage->pxWidth * sizeof(pixel24_t), 1);
     if (newPixels == NULL) {
         fprintf(stderr, "Couldn't allocate memory for newPixels\n");
         free(bmpImage);
