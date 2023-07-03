@@ -9,20 +9,27 @@
 
 void thread_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out) {
     if (width >= 16 && height >= 3) {
-        size_t amountThreads = height / LINES_PER_THREAD;
+        size_t amountThreads = height / LINES_PER_THREAD - (height % LINES_PER_THREAD == 0);
         pthread_t threads[amountThreads];
 
         //We need the first fromY to be 1 instead of 0, or we might access memory that we do not own.
         int ensureOffset = 1;
 
-        for (int i = 0; i < amountThreads - (height % LINES_PER_THREAD == 0); ++i) {
+        for (int i = 0; i < amountThreads; ++i) {
             sobelIntervalArgs args;
             args.img_in = img_in;
             args.width = width;
             args.fromY = i * LINES_PER_THREAD + ensureOffset;
             args.toY = i * LINES_PER_THREAD + LINES_PER_THREAD;
             args.img_out = img_out;
-            pthread_create(&threads[i], PTHREAD_CREATE_JOINABLE, computeSobelForHeightInterval, (void*) &args);
+
+            int creationResult;
+            creationResult = pthread_create(&threads[i], PTHREAD_CREATE_JOINABLE, computeSobelForHeightInterval, (void*) &args);
+
+            if (creationResult != 0) {
+                printf("Thread %d raised an error: %d", i, creationResult);
+            }
+
             ensureOffset = 0;
             //printf("\nCreated Thread %d: from = %zu, to = %zu, LPT = %d\n", i, args.fromY, args.toY, LINES_PER_THREAD);
         }
