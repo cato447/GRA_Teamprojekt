@@ -4,7 +4,7 @@
 #include "simd_sobel.h"
 #include <pthread.h>
 #include "thread_sobel.h"
-
+#include <stdio.h>
 #define LINES_PER_THREAD 200
 
 void thread_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out) {
@@ -40,8 +40,14 @@ void thread_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out
 
         computeSobelForHeightInterval((void*) &args);
 
+        void* result;
+
         for (int i = 0; i < amountThreads; ++i) {
-            pthread_join(threads[i], NULL);
+            pthread_join(threads[i], &result);
+            if (result != NULL) {
+                printf("Thread %d returned with value\n", *((int*)result));
+                result = NULL;
+            }
         }
     } else {
         sobel(img_in, width, height, img_out);
