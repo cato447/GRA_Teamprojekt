@@ -3,12 +3,13 @@
 #include "../Implementierung/basic_sobel.h"
 #include "../Testsystem/unittest.h"
 #include "../Testsystem/image_similarity.h"
+#include "../IOSystem/IO_tools.h"
 
 #include "stdio.h"
 #include "stdlib.h"
 
 // Data tests are run on
-static size_t img_size;
+static size_t buffer_size;
 static uBMPImage *bmpImage;
 
 int freeBmpImg(uBMPImage *img){
@@ -50,21 +51,18 @@ int testSetColorOfPixel() {
 }
 
 int testSobel() {
-    //TODO: Get real testing data
-    pixel24_t *newPixels = malloc(bmpImage->pxHeight * bmpImage->pxWidth * sizeof(pixel24_t));
+    pixel24_t *newPixels = malloc(bmpImage->pxArraySize * sizeof(pixel24_t));
     sobel((uint8_t*) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, (uint8_t *) newPixels);
 
-    char *reference_path = "../res/muster.bmp";
+    char *reference_path = "../res/reference/muster_sobel.bmp";
 
-    size_t reference_buffer_size;
     uBMPImage *reference_bmpImage = malloc(sizeof(uBMPImage));
     if (reference_bmpImage == NULL) {
         fprintf(stderr, "Couldn't allocated reference_bmpImage\n");
         free(newPixels);
         return 1;
     }
-
-    reference_buffer_size = loadPicture(reference_path, reference_bmpImage);
+    size_t reference_buffer_size = loadPicture(reference_path, reference_bmpImage);
 
     if (reference_buffer_size == 0) {
         fprintf(stderr, "Couldn't load picture\n");
@@ -73,29 +71,29 @@ int testSobel() {
         return 1;
     }
 
-    double similarity = compareImages((uint8_t *) bmpImage->pxArray,
-                                      bmpImage->pxWidth * bmpImage->pxHeight * 3,
+    double similarity = compareImages((uint8_t *) newPixels,
+                                      bmpImage->pxArraySize * sizeof(pixel24_t),
                                       (uint8_t *) reference_bmpImage->pxArray,
-                                      reference_bmpImage->pxWidth * reference_bmpImage->pxHeight * 3);
-    printf("similarity: %3.3f %%\n", (similarity * 100));
+                                      reference_bmpImage->pxArraySize * sizeof(pixel24_t));
+
     freeBmpImg(reference_bmpImage);
     free(newPixels);
-    return 0;
+
+    return ASSERT_EQUAL_DOUBLE(1.0, similarity, 1e-9);
 }
 
 int setUp() {
-    char *path = "../res/muster.bmp";
+    char *path = "../res/raw/muster.bmp";
     bmpImage = malloc(sizeof(uBMPImage));
-    img_size = loadPicture(path, bmpImage);
-    if (img_size == 0) {
+    buffer_size = loadPicture(path, bmpImage);
+    if (buffer_size == 0) {
         return 1;
     }
     return 0;
 }
 
-int tearDown() {
+void tearDown() {
     freeBmpImg(bmpImage);
-    return 0;
 }
 
 int runTestsSobel(void) {
@@ -109,7 +107,7 @@ int runTestsSobel(void) {
     runTest(testColorOfPixelGreen);
     runTest(testSetColorOfPixel);
     testSobel();
-    stopTesting();
     tearDown();
+    stopTesting();
     return 0;
 }

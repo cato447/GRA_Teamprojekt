@@ -14,6 +14,7 @@
 #include "launcher.h"
 #include "Implementierung/basic_sobel.h"
 #include "Implementierung/test_basic_sobel.h"
+#include "Implementierung/test_similarity.h"
 
 void print_help_msg(void) {
     printf("Program to calculate sobel from BMP file\n");
@@ -63,7 +64,7 @@ void parseArgs(int argc, char *argv[], config *config_params) {
                         config_params->measure_performance_cycles > 3 ? config_params->measure_performance_cycles : 3;
                 break;
             case 't':
-                config_params->run_unit_tests = true;
+                config_params->run_tests = true;
                 break;
             case 'h':
                 print_help_msg();
@@ -125,7 +126,7 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    uint8_t *newPixels = calloc(bmpImage->pxHeight * bmpImage->pxWidth * sizeof(pixel24_t), 1);
+    uint8_t *newPixels = calloc(bmpImage->pxArraySize, sizeof(3));
     if (newPixels == NULL) {
         fprintf(stderr, "Couldn't allocate memory for newPixels\n");
         free(bmpImage);
@@ -133,8 +134,7 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    if (config_params->run_unit_tests) {
-        printf("Running all available unit tests\n");
+    if (config_params->run_tests) {
         runTestsSobel();
     }
 
@@ -166,14 +166,33 @@ int main(int argc, char *argv[]) {
     //#---------------------
     //#Erste Output Integration im Launcher - up to change
     //#
-    bmpImage->pxArray = (pixel24_t *) newPixels;
+    uBMPImage exportImage = {.pxArray = (pixel24_t *) newPixels, .pxArraySize = bmpImage->pxArraySize, .pxHeight = bmpImage->pxHeight, .pxWidth = bmpImage->pxWidth};
     size_t newSize;
-    char *newBuf = arrayToBmp(bmpImage, &newSize);
+    char *newBuf = arrayToBmp(&exportImage, &newSize);
 
     printf("Writing to file %s\n", config_params->outputFilePath);
     writeFile(config_params->outputFilePath, newBuf, newSize);
     free(newBuf);
     //#---------------------
+
+    if (config_params->run_tests || config_params->measure_performance) {
+        uint8_t *sobelReferenceVersion = calloc(bmpImage->pxArraySize, sizeof(pixel24_t));
+        if (sobelReferenceVersion == NULL) {
+            fprintf(stderr, "Couldn't allocate memory for sobelReferenceVersion\n");
+            free(newPixels);
+            free(bmpImage);
+            free(config_params);
+            exit(1);
+        }
+        // We use version 0 as a reference for the optimized Versions testing the output of version 0 against the output of version 0 is pointless
+        //if (config_params->version != 0) {
+        printf("Comparing generated output image to output of version 0 algorithm\n");
+        sobel((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, sobelReferenceVersion);
+        runTestSimilarity(config_params->outputFilePath, sobelReferenceVersion,
+                          bmpImage->pxArraySize * sizeof(pixel24_t));
+        //}
+        free(sobelReferenceVersion);
+    }
 
     if (config_params->measure_performance) {
         printf("Sobel calculation from version %d took on average %f seconds\n", config_params->version,

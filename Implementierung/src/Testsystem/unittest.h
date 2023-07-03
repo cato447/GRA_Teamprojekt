@@ -46,6 +46,7 @@ int unitAssertEqualUInt64(const uint64_t expected, const uint64_t actual, const 
 
 int unitAssertEqualString(const char *expected, const char *actual, const char *funcName, int lineNum);
 
+int unitAssertDouble(const double expected, const double actual, double tolerance, const char *funcName, int fileNum);
 
 #define ASSERT(CONDITION) unitAssert(CONDITION, __func__, __LINE__)
 #define ASSERT_FALSE(CONDITION) unitAssertFalse(CONDITION, __func__, __LINE__)
@@ -60,6 +61,6 @@ int unitAssertEqualString(const char *expected, const char *actual, const char *
 #define ASSERT_EQUAL_INT64(EXPECTED, ACTUAL) unitAssertEqualInt64(EXPECTED, ACTUAL, __func__, __LINE__)
 #define ASSERT_EQUAL_U_INT64(EXPECTED, ACTUAL) unitAssertEqualUInt64(EXPECTED, ACTUAL, __func__, __LINE__)
 #define ASSERT_EQUAL_STRING(EXPECTED, ACTUAL) unitAssertEqualString(EXPECTED, ACTUAL, __func__, __LINE__)
-
+#define ASSERT_EQUAL_DOUBLE(EXPECTED, ACTUAL, TOLERANCE) unitAssertDouble(EXPECTED, ACTUAL, TOLERANCE, __func__, __LINE__)
 
 #endif
