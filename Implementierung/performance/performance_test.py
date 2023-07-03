@@ -1,11 +1,13 @@
 import cv2 as cv
 import glob
 import subprocess
+import sys
 import os
 import re
 import pandas as pd
 import matplotlib.pyplot as plt
 import time
+from tqdm import tqdm
 
 
 def get_pixel_count(path: str):
@@ -32,10 +34,14 @@ if __name__ == "__main__":
     test_files = glob.glob("../performance/sample_images/*.bmp")
     times = []
     pixelNum = []
-    version = "0"
-    for test_file in test_files:
-        process = subprocess.run(["./program", "-V", version, "-B10", "-o", "output.bmp", test_file], stdout=subprocess.PIPE)
+    if (len(sys.argv) != 2):
+        sys.exit("Wrong number of args expected python performance_test.py [version]")
+
+    version = sys.argv[1]
+    for test_file in tqdm(test_files):
+        process = subprocess.run(["./program", "-V", version, "-B1000", "-o", f"../performance/output_images/{test_file.split('/')[-1][:-4]}_out.bmp", test_file], stdout=subprocess.PIPE)
         output = process.stdout.decode('utf-8')
+        print(output)
         times.append(getTime(output))
         pixelNum.append(get_pixel_count(test_file))
 
@@ -43,5 +49,6 @@ if __name__ == "__main__":
     df = df.sort_values(by=['pixelNum'])
     print(df)
     df.to_csv(f"../performance/results/testresult_preformance_{time.strftime('%Y%m%d_%H%M%S')}.csv", index=False)
-    df.plot(x='pixelNum', y='time', style='.-')
+    res = df.plot(x='pixelNum', y='time', style='.-').get_figure()
+    res.savefig(f"../performance/graphs/testresult_version_{version}_preformance_graph_{time.strftime('%Y%m%d_%H%M%S')}.png")
     plt.show()
