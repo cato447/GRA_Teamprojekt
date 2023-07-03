@@ -119,13 +119,13 @@ char* arrayToBmp(const uBMPImage* bmpImg, size_t* size) {
     uint32_t byteWidthPadded = (byteWidth & 0x3) ? ((byteWidth & ~0x3) + 4) : byteWidth;
 
     *size = HEADER_SIZE + INFO_HEADER_SIZE + byteWidthPadded * (bmpImg->pxHeight);
-    char* buf = calloc(*size, 1);
+    char* buf = malloc(*size);
 
     generateHeaderInfoHeader(buf, *size, bmpImg->pxWidth, bmpImg->pxHeight);
 
     char* pxData = buf + HEADER_SIZE + INFO_HEADER_SIZE;
-    pixel24_t* pxArraySrc = bmpImg->pxArray + bmpImg->pxWidth;
-    pixel24_t* pxArrayEnd = bmpImg->pxArray + bmpImg->pxArraySize - bmpImg->pxWidth;
+    pixel24_t* pxArraySrc = bmpImg->pxArray;
+    pixel24_t* pxArrayEnd = bmpImg->pxArray + bmpImg->pxArraySize;
 
     while (pxArraySrc < pxArrayEnd) {
         memcpy(pxData, pxArraySrc, byteWidth);
