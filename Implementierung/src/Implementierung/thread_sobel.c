@@ -1,23 +1,14 @@
 #include "basic_sobel.h"
-#include <math.h>
 #include <stddef.h>
-#include <stdint.h>
 #include "immintrin.h"
 #include "simd_sobel.h"
 #include <pthread.h>
 #include "thread_sobel.h"
-#include <stdio.h>
 
-#define SHIFT_BY2 2
-#define SHIFT_BY1 1
 #define LINES_PER_THREAD 200
 
 void thread_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out) {
     if (width >= 16 && height >= 3) {
-
-        //Ignore last row; prevent seg faults
-        --height;
-
         size_t amountThreads = height / LINES_PER_THREAD;
         pthread_t threads[amountThreads];
 
@@ -42,7 +33,7 @@ void thread_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out
         args.img_in = img_in;
         args.width = width;
         args.fromY = height - height % LINES_PER_THREAD;
-        args.toY = height;
+        args.toY = height-1;
         args.img_out = img_out;
 
         //printf("Self from %zu to %zu\n", args.fromY, args.toY);
@@ -68,7 +59,7 @@ void *computeSobelForHeightInterval(void *args) {
 
     __m128i comparer = _mm_loadu_si128((const __m128i*) COMP_255);
     __m128i zeroEvenBytesMask = _mm_loadu_si128((const __m128i *) ZERO_EVEN_BYTES_MASK);
-    for (size_t i = width * fromY * 3 + 3; i < width * toY * 3; i += 16) {
+    for (size_t i = width * fromY * 3 + 3; i < width * (toY-1) * 3; i += 16) {
         __m128i upperLeft = _mm_loadu_si128((const __m128i*) (img_in + i - width * 3 - 3));
         __m128i upper = _mm_loadu_si128((const __m128i*) (img_in + i - width * 3));
         __m128i upperRight = _mm_loadu_si128((const __m128i*) (img_in + i - width * 3 + 3));
@@ -187,4 +178,5 @@ void *computeSobelForHeightInterval(void *args) {
 
         _mm_storeu_si128((__m128i*) (img_out + i), _mm_or_si128(result2, result));
     }
+    return NULL;
 }
