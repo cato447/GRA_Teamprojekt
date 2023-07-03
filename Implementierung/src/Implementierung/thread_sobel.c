@@ -15,14 +15,14 @@ void thread_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out
         //We need the first fromY to be 1 instead of 0, or we might access memory that we do not own.
         int ensureOffset = 1;
 
-        for (int i = 0; i < amountThreads; ++i) {
+        for (int i = 0; i < amountThreads - (height % LINES_PER_THREAD == 0); ++i) {
             sobelIntervalArgs args;
             args.img_in = img_in;
             args.width = width;
             args.fromY = i * LINES_PER_THREAD + ensureOffset;
             args.toY = i * LINES_PER_THREAD + LINES_PER_THREAD;
             args.img_out = img_out;
-            pthread_create(&threads[i], NULL, computeSobelForHeightInterval, (void*) &args);
+            pthread_create(&threads[i], PTHREAD_CREATE_JOINABLE, computeSobelForHeightInterval, (void*) &args);
             ensureOffset = 0;
             //printf("\nCreated Thread %d: from = %zu, to = %zu, LPT = %d\n", i, args.fromY, args.toY, LINES_PER_THREAD);
         }
@@ -33,7 +33,7 @@ void thread_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out
         args.img_in = img_in;
         args.width = width;
         args.fromY = height - height % LINES_PER_THREAD;
-        args.toY = height-1;
+        args.toY = height - 1;
         args.img_out = img_out;
 
         //printf("Self from %zu to %zu\n", args.fromY, args.toY);
@@ -59,7 +59,7 @@ void *computeSobelForHeightInterval(void *args) {
 
     __m128i comparer = _mm_loadu_si128((const __m128i*) COMP_255);
     __m128i zeroEvenBytesMask = _mm_loadu_si128((const __m128i *) ZERO_EVEN_BYTES_MASK);
-    for (size_t i = width * fromY * 3 + 3; i < width * (toY-1) * 3; i += 16) {
+    for (size_t i = width * fromY * 3 + 3; i < width * toY * 3; i += 16) {
         __m128i upperLeft = _mm_loadu_si128((const __m128i*) (img_in + i - width * 3 - 3));
         __m128i upper = _mm_loadu_si128((const __m128i*) (img_in + i - width * 3));
         __m128i upperRight = _mm_loadu_si128((const __m128i*) (img_in + i - width * 3 + 3));
