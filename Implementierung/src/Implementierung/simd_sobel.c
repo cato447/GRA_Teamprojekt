@@ -130,8 +130,8 @@ void simd_sobel(uint8_t* img_in, size_t width, size_t height, uint8_t* img_out) 
             __m128i result2 = _mm_and_si128(_mm_cmpgt_epi16(sum2, comparer), zeroEvenBytesMask);
 
             //This handles all values < 255.
-            result = _mm_or_si128(result, sum);
-            result2 = _mm_or_si128(result2, sum2);
+            result = _mm_or_si128(result, _mm_and_si128(sum, zeroEvenBytesMask));
+            result2 = _mm_or_si128(result2, _mm_and_si128(sum2, zeroEvenBytesMask));
 
             //Shift the bits from addr + 1 in place
             result2 = _mm_slli_epi16(result2, 8);
