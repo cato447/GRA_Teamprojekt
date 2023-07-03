@@ -16,19 +16,19 @@
 struct __attribute__((__packed__)) bmpHeader {
     uint16_t signature;
     uint32_t fileSize;
-    uint32_t _0;
+    uint32_t _zero0;
     uint32_t dataOffset;
     uint32_t infoHeadersize;
     int32_t pxWidth;
     int32_t pxHeight;
     uint16_t planes;
     uint16_t bitDepth;
-    uint32_t _1;
-    uint32_t _2;
-    uint32_t pxPerMx;
-    uint32_t pxPerMy;
+    uint32_t _zero1;
+    uint32_t _zero2;
+    int32_t pxPerMx;
+    int32_t pxPerMy;
     uint32_t numColors;
-    uint32_t _3;
+    uint32_t _zero3;
 };
 
 /*
@@ -107,26 +107,30 @@ int bmpToArray(char* buf, size_t bufSize, uBMPImage* bmpImgBuf) {
 }
 
 
-//const char headerInfoHeaderTemplate[HEADER_SIZE + INFO_HEADER_SIZE] = {0x42, 0x4D, 0, 0, 0, 0, 0, 0, 0, 0, INFO_HEADER_SIZE + HEADER_SIZE, 0x0, 0x0, 0x0, INFO_HEADER_SIZE, 0x0, 0x0, 0x0, 0, 0, 0, 0, 0, 0, 0, 0, 0x1, 0x0, }
 #define NUM_PLANES 1
 #define PX_PER_METER 3800
 #define BIT_DEPTH 3 * 8
 #define NUM_COLORS 256 * 256 * 256
 
-static inline void generateHeaderInfoHeader(char* zeroBuf, uint32_t fileSize, int32_t width, int32_t height) {
-    struct bmpHeader* header = (struct bmpHeader*) zeroBuf;
+const struct bmpHeader headerTemplate = {
+    .signature = BMP_HEADER_SIGN,
+    .dataOffset = HEADER_SIZE + INFO_HEADER_SIZE,
+    .infoHeadersize = INFO_HEADER_SIZE,
+    .planes = NUM_PLANES,
+    .bitDepth = BIT_DEPTH,
+    .pxPerMx = PX_PER_METER,
+    .pxPerMy = PX_PER_METER,
+    .numColors = NUM_COLORS,
+    ._zero0 = 0,
+    ._zero1 = 0,
+    ._zero2 = 0,
+    ._zero3 = 0};
 
-    header->signature = BMP_HEADER_SIGN;
-    header->fileSize = fileSize;
-    header->dataOffset = HEADER_SIZE + INFO_HEADER_SIZE;
-    header->infoHeadersize = INFO_HEADER_SIZE;
-    header->pxWidth = width;
-    header->pxHeight = height;
-    header->planes = NUM_PLANES;
-    header->bitDepth = BIT_DEPTH;
-    header->pxPerMx = PX_PER_METER;
-    header->pxPerMy = PX_PER_METER;
-    header->numColors = NUM_COLORS;
+static inline void generateHeaderInfoHeader(struct bmpHeader* buf, uint32_t fileSize, int32_t width, int32_t height) {
+    *buf = headerTemplate;
+    buf->fileSize = fileSize;
+    buf->pxWidth = width;
+    buf->pxHeight = height;
 }
 
 /*
@@ -139,7 +143,7 @@ char* arrayToBmp(const uBMPImage* bmpImg, size_t* size) {
     *size = HEADER_SIZE + INFO_HEADER_SIZE + byteWidth * (bmpImg->pxHeight);
     char* buf = calloc(*size, sizeof(uint8_t));
 
-    generateHeaderInfoHeader(buf, *size, bmpImg->pxWidth, bmpImg->pxHeight);
+    generateHeaderInfoHeader((struct bmpHeader*) buf, *size, bmpImg->pxWidth, bmpImg->pxHeight);
 
     char* pxData = buf + HEADER_SIZE + INFO_HEADER_SIZE;
     pixel24_t* pxArraySrc = bmpImg->pxArray;
