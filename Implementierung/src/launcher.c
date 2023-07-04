@@ -121,7 +121,6 @@ int main(int argc, char *argv[]) {
     size_t img_size = loadPicture(config_params->inputFilePath, bmpImage);
     if (img_size == 0) {
         fprintf(stderr, "Couldn't load picture from input file %s\n", config_params->inputFilePath);
-        free(bmpImage);
         free(config_params);
         exit(1);
     }

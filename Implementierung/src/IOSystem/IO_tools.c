@@ -13,7 +13,8 @@
 #include "bmp_parser.h"
 
 /*
-Returns a pointer to the data buffer of the file read at parameter "path" and sets "bufSize" accordingly on successful read.
+Returns a pointer to the data buffer of the file read at parameter "path" or a null pointer on failure.
+Sets "bufSize" accordingly on successful read.
 */
 char* readFile(const char* path, size_t* bufSize) {
     FILE* file = fopen(path, "rb");
@@ -62,14 +63,12 @@ size_t loadPicture(char *path, uBMPImage *img) {
 
     if (buffer == NULL) {
         fprintf(stderr, "Couldn't read BMP File\n");
-        return 0;
-    }
-    if (img == NULL) {
-        fprintf(stderr, "img was not initialized\n");
+        free(img);
         return 0;
     }
     if (bmpToArray(buffer, buffer_size, img) == 1) {
         fprintf(stderr, "Couldn't parse BMP file");
+        free(img);
         free(buffer);
         return 0;
     }

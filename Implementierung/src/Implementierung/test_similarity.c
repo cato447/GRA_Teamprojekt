@@ -38,10 +38,10 @@ static int testSimilarity() {
 }
 
 int runTestSimilarity(char *pathSobelImage, uint8_t *reference_pixel_array, size_t reference_px_array_size) {
-    startTesting(__BASE_FILE__);
     if (setup(pathSobelImage, reference_pixel_array, reference_px_array_size) == 1) {
-        tearDown();
+        return 1;
     }
+    startTesting(__BASE_FILE__);
     runTest(testSimilarity);
     tearDown();
     stopTesting();

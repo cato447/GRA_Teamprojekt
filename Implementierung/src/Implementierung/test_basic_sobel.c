@@ -85,6 +85,10 @@ int testSobel() {
 int setUp() {
     char *path = "../res/raw/muster.bmp";
     bmpImage = malloc(sizeof(uBMPImage));
+    if (bmpImage == NULL) {
+        fprintf(stderr, "failed to allocate memory for bmpImage");
+        return 1;
+    }
     buffer_size = loadPicture(path, bmpImage);
     if (buffer_size == 0) {
         return 1;
@@ -97,11 +101,10 @@ void tearDown() {
 }
 
 int runTestsSobel(void) {
-    startTesting(__BASE_FILE__);
     if (setUp() == 1) {
-        tearDown();
         return 1;
     }
+    startTesting(__BASE_FILE__);
     runTest(testColorOfPixelRed);
     runTest(testColorOfPixelBlue);
     runTest(testColorOfPixelGreen);
