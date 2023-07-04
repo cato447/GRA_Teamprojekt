@@ -3,6 +3,7 @@
 //
 #define _POSIX_C_SOURCE 199309L
 
+#include <ctype.h>
 #include <stdio.h>
 #include <getopt.h>
 #include <stdlib.h>
@@ -15,6 +16,9 @@
 #include "Implementierung/basic_sobel.h"
 #include "Implementierung/test_basic_sobel.h"
 #include "Implementierung/test_similarity.h"
+
+#define BMP_EXTENSION ".bmp"
+#define OUTPUT_MARK "_out" BMP_EXTENSION
 
 void print_help_msg(void) {
     printf("Program to calculate sobel from BMP file\n");
@@ -98,14 +102,21 @@ void parseArgs(int argc, char *argv[], config *config_params) {
     size_t input_path_len = strlen(argv[0]) + 1;
     config_params->inputFilePath = malloc(input_path_len);
     strncpy(config_params->inputFilePath, argv[0], input_path_len);
+    for (char* c = config_params->inputFilePath; *c; c++) {
+        *c = tolower(*c);
+    }
 
     //Set outputFilePath if not given
     if (config_params->outputFilePath == NULL) {
-        size_t len_input_name = input_path_len - 4 - 1;
-        char *output_mark = "_out.bmp";
-        config_params->outputFilePath = malloc(len_input_name + strlen(output_mark));
+        size_t len_input_name;
+        if (strstr(config_params->inputFilePath, BMP_EXTENSION) != config_params->inputFilePath + input_path_len - strlen(BMP_EXTENSION) - 1) {
+            len_input_name = input_path_len - 1;
+        } else {
+            len_input_name = input_path_len - strlen(BMP_EXTENSION) - 1;
+        }
+        config_params->outputFilePath = malloc(len_input_name + strlen(OUTPUT_MARK) + 1);
         strncpy(config_params->outputFilePath, config_params->inputFilePath, len_input_name);
-        strncat(config_params->outputFilePath, output_mark, strlen(output_mark));
+        strncat(config_params->outputFilePath, OUTPUT_MARK, strlen(OUTPUT_MARK) + 1);
     }
 }
 
