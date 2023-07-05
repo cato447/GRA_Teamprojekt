@@ -12,7 +12,7 @@
 static size_t buffer_size;
 static uBMPImage *bmpImage;
 
-int freeBmpImg(uBMPImage *img){
+static int freeBmpImg(uBMPImage *img){
     free(img->pxArray);
     free(img);
     return 0;
@@ -58,7 +58,7 @@ int testSobel() {
 
     uBMPImage *reference_bmpImage = malloc(sizeof(uBMPImage));
     if (reference_bmpImage == NULL) {
-        fprintf(stderr, "Couldn't allocated reference_bmpImage\n");
+        fprintf(stderr, "Couldn't allocate reference_bmpImage\n");
         free(newPixels);
         return 1;
     }
@@ -67,7 +67,7 @@ int testSobel() {
     if (reference_buffer_size == 0) {
         fprintf(stderr, "Couldn't load picture\n");
         free(newPixels);
-        freeBmpImg(reference_bmpImage);
+        free(reference_bmpImage);
         return 1;
     }
 
@@ -91,6 +91,7 @@ int setUp() {
     }
     buffer_size = loadPicture(path, bmpImage);
     if (buffer_size == 0) {
+        free(bmpImage);
         return 1;
     }
     return 0;

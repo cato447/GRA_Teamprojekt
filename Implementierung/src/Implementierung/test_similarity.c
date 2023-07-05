@@ -15,11 +15,17 @@ static uBMPImage *sobelImage;
 static uint8_t *ref_pixels;
 static size_t ref_px_array_size;
 
+static void freeBmpImg(uBMPImage *img){
+    free(img->pxArray);
+    free(img);
+}
+
 static int setup(char *pathSobelImage, uint8_t *reference_pixel_array, size_t reference_px_array_size) {
     sobelImage = malloc(sizeof(uBMPImage));
     sobel_buffer_size = loadPicture(pathSobelImage, sobelImage);
     if (sobel_buffer_size == 0) {
         fprintf(stderr, "Couldn't load sobel image %s\n", pathSobelImage);
+        free(sobelImage);
         return 1;
     }
     ref_pixels = reference_pixel_array;
@@ -28,7 +34,7 @@ static int setup(char *pathSobelImage, uint8_t *reference_pixel_array, size_t re
 }
 
 static void tearDown() {
-    free(sobelImage);
+    freeBmpImg(sobelImage);
 }
 
 static int testSimilarity() {
