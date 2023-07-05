@@ -3,7 +3,7 @@
 #include "../Implementierung/basic_sobel.h"
 #include "../Testsystem/unittest.h"
 #include "../Testsystem/image_similarity.h"
-#include "../IOSystem/IO_tools.h"
+#include "../IOSystem/test_functionality.h"
 
 #include <stdio.h>
 #include <stdlib.h>

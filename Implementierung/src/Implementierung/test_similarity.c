@@ -8,7 +8,7 @@
 
 #include "../Testsystem/unittest.h"
 #include "../Testsystem/image_similarity.h"
-#include "../IOSystem/IO_tools.h"
+#include "../IOSystem/test_functionality.h"
 
 static size_t sobel_buffer_size;
 static uBMPImage *sobelImage;
