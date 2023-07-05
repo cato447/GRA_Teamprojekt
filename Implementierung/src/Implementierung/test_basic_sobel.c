@@ -3,10 +3,27 @@
 #include "../Implementierung/basic_sobel.h"
 #include "../Testsystem/unittest.h"
 #include "../Testsystem/image_similarity.h"
-#include "../IOSystem/IO_tools.h"
+#include "../IOSystem/test_functionality.h"
 
-#include "stdio.h"
-#include "stdlib.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+/*
+Declares and initializes OUT as a char*.
+Sets OUT to [directory containing this file] ^ CONCAT.
+*/
+#define CONCAT_TO_DIR_OF_FILE(CONCAT, OUT) \
+    char ____dir[sizeof(__FILE__)]; \
+    strcpy(____dir, __FILE__); \
+    char* ____c = strrchr(____dir, '/'); \
+    *____c = '\0'; \
+    char OUT[strlen(____dir) + strlen(CONCAT) + 1]; \
+    strcpy(OUT, ____dir); \
+    strcat(OUT, CONCAT); \
+
+#define MUSTER_PATH_REL(OUT) CONCAT_TO_DIR_OF_FILE("/../../res/raw/muster.bmp", OUT)
+#define MUSTER_REF_PATH_REL(OUT) CONCAT_TO_DIR_OF_FILE("/../../res/reference/muster_sobel.bmp", OUT)
 
 // Data tests are run on
 static size_t buffer_size;
@@ -54,7 +71,7 @@ int testSobel() {
     pixel24_t *newPixels = malloc(bmpImage->pxArraySize * sizeof(pixel24_t));
     sobel((uint8_t*) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, (uint8_t *) newPixels);
 
-    char *reference_path = "../res/reference/muster_sobel.bmp";
+    MUSTER_REF_PATH_REL(reference_path);
 
     uBMPImage *reference_bmpImage = malloc(sizeof(uBMPImage));
     if (reference_bmpImage == NULL) {
@@ -83,7 +100,7 @@ int testSobel() {
 }
 
 int setUp() {
-    char *path = "../res/raw/muster.bmp";
+    MUSTER_PATH_REL(path);
     bmpImage = malloc(sizeof(uBMPImage));
     if (bmpImage == NULL) {
         fprintf(stderr, "failed to allocate memory for bmpImage");

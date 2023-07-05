@@ -12,6 +12,8 @@
 #include <time.h>
 
 #include "IOSystem/IO_tools.h"
+#include "IOSystem/bmp_parser.h"
+#include "IOSystem/test_functionality.h"
 #include "launcher.h"
 #include "Implementierung/basic_sobel.h"
 #include "Implementierung/test_basic_sobel.h"
