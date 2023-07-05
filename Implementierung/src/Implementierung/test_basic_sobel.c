@@ -22,8 +22,8 @@ Sets OUT to [directory containing this file] ^ CONCAT.
     strcpy(OUT, ____dir); \
     strcat(OUT, CONCAT); \
 
-#define MUSTER_PATH_REL(OUT) CONCAT_TO_DIR_OF_FILE("/../../res/raw/muster.bmp", OUT)
-#define MUSTER_REF_PATH_REL(OUT) CONCAT_TO_DIR_OF_FILE("/../../res/reference/muster_sobel.bmp", OUT)
+#define MUSTER_PATH_REL "/../../res/raw/muster.bmp" 
+#define MUSTER_REF_PATH_REL "/../../res/reference/muster_sobel.bmp"
 
 // Data tests are run on
 static size_t buffer_size;
@@ -71,7 +71,7 @@ int testSobel() {
     pixel24_t *newPixels = malloc(bmpImage->pxArraySize * sizeof(pixel24_t));
     sobel((uint8_t*) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, (uint8_t *) newPixels);
 
-    MUSTER_REF_PATH_REL(reference_path);
+    CONCAT_TO_DIR_OF_FILE(MUSTER_REF_PATH_REL, reference_path);
 
     uBMPImage *reference_bmpImage = malloc(sizeof(uBMPImage));
     if (reference_bmpImage == NULL) {
@@ -100,7 +100,7 @@ int testSobel() {
 }
 
 int setUp() {
-    MUSTER_PATH_REL(path);
+    CONCAT_TO_DIR_OF_FILE(MUSTER_PATH_REL, path);
     bmpImage = malloc(sizeof(uBMPImage));
     buffer_size = loadPicture(path, bmpImage);
     if (buffer_size == 0) {
