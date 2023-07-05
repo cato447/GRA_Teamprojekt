@@ -80,8 +80,8 @@ int bmpToArray(char* buf, size_t bufSize, uBMPImage* bmpImgBuf) {
 
     size_t pxArraySize = pxWidth * pxHeight;
     pixel24_t* pxArray = calloc(pxArraySize, sizeof(pixel24_t));
-    if (!pxArray) {
-        fprintf(stderr, "Error: failed allocating memory for pixel array\n");
+    if (pxArray == NULL) {
+        fprintf(stderr, "Failed allocating memory for pxArray\n");
         return 1;
     }
 

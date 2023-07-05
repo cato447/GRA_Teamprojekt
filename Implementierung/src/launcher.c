@@ -125,22 +125,29 @@ void parseArgs(int argc, char *argv[], config *config_params) {
 int main(int argc, char *argv[]) {
     config *config_params = malloc(sizeof(config));
     if (config_params == NULL) {
-        fprintf(stderr, "Couldn't allocate memory for config parameters\n");
+        fprintf(stderr, "Failed allocating memory for config_params\n");
         exit(1);
     }
     parseArgs(argc, argv, config_params);
     uBMPImage *bmpImage = malloc(sizeof(uBMPImage));
+    if (bmpImage == NULL) {
+        fprintf(stderr, "Failed allocating memory for bmpImage\n");
+        free(config_params);
+        exit(1);
+    }
+
     printf("Loading image from inputFilePath\n");
     size_t img_size = loadPicture(config_params->inputFilePath, bmpImage);
     if (img_size == 0) {
         fprintf(stderr, "Couldn't load picture from input file %s\n", config_params->inputFilePath);
+        free(bmpImage);
         free(config_params);
         exit(1);
     }
 
     uint8_t *newPixels = calloc(bmpImage->pxArraySize, sizeof(3));
     if (newPixels == NULL) {
-        fprintf(stderr, "Couldn't allocate memory for newPixels\n");
+        fprintf(stderr, "Failed allocating memory for newPixels\n");
         free(bmpImage);
         free(config_params);
         exit(1);
@@ -165,7 +172,7 @@ int main(int argc, char *argv[]) {
                 time += end.tv_sec - start.tv_sec + 1e-9 * (end.tv_nsec - start.tv_nsec);
                 break;
             default:
-                fprintf(stderr, "Version %d not implemented", config_params->version);
+                fprintf(stderr, "Version %d not implemented\n", config_params->version);
                 free(config_params);
                 free(bmpImage);
                 free(newPixels);
@@ -190,7 +197,7 @@ int main(int argc, char *argv[]) {
     if (config_params->run_tests || config_params->measure_performance) {
         uint8_t *sobelReferenceVersion = calloc(bmpImage->pxArraySize, sizeof(pixel24_t));
         if (sobelReferenceVersion == NULL) {
-            fprintf(stderr, "Couldn't allocate memory for sobelReferenceVersion\n");
+            fprintf(stderr, "Failed allocating memory for sobelReferenceVersion\n");
             free(newPixels);
             free(bmpImage);
             free(config_params);

@@ -75,7 +75,7 @@ int testSobel() {
 
     uBMPImage *reference_bmpImage = malloc(sizeof(uBMPImage));
     if (reference_bmpImage == NULL) {
-        fprintf(stderr, "Couldn't allocate reference_bmpImage\n");
+        fprintf(stderr, "Failed allocating memory for reference_bmpImage\n");
         free(newPixels);
         return 1;
     }
@@ -103,7 +103,7 @@ int setUp() {
     MUSTER_PATH_REL(path);
     bmpImage = malloc(sizeof(uBMPImage));
     if (bmpImage == NULL) {
-        fprintf(stderr, "failed to allocate memory for bmpImage");
+        fprintf(stderr, "Failed allocating memory for bmpImage\n");
         return 1;
     }
     buffer_size = loadPicture(path, bmpImage);
