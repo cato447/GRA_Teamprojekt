@@ -19,7 +19,7 @@ void simd_sobel(uint8_t* img_in, size_t width, size_t height, uint8_t* img_out) 
         __m128i zeroEvenBytesMask = _mm_loadu_si128((const __m128i*) ZERO_EVEN_BYTES_MASK);
         __m128i comparer = _mm_loadu_si128((const __m128i*) COMP_255);
 
-        for (size_t i = width * 3 + 3; i < width * (height-1) * 3 - 3; i += 16) {
+        for (size_t i = width * 3 + 3; i < width * (height-1) * 3 - 3 - 16; i += 16) {
             __m128i upperLeft = _mm_loadu_si128((const __m128i*) (img_in + i - width * 3 - 3));
             __m128i upper = _mm_loadu_si128((const __m128i*) (img_in + i - width * 3));
             __m128i upperRight = _mm_loadu_si128((const __m128i*) (img_in + i - width * 3 + 3));
