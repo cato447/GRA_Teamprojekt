@@ -15,7 +15,8 @@ void thread_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out
         //We need the first fromY to be 1 instead of 0, or we might access memory that we do not own.
         int ensureOffset = 1;
 
-        //printf("amount: %zu", amountThreads);
+        printf("amount: %zu", amountThreads);
+
         for (int i = 0; i < amountThreads; ++i) {
             sobelIntervalArgs args;
             args.img_in = img_in;
@@ -29,14 +30,13 @@ void thread_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out
 
             if (creationResult != 0) {
                 printf("Thread %d raised an error: %d\n", i, creationResult);
-                abort();
             }
 
             ensureOffset = 0;
-            //printf("\nCreated Thread %d: from = %zu, to = %zu, LPT = %d\n", i, args.fromY, args.toY, LINES_PER_THREAD);
+            printf("\nCreated Thread %d: from = %zu, to = %zu, LPT = %d\n", i, args.fromY, args.toY, LINES_PER_THREAD);
         }
 
-        //printf("\nCreated %zu Threads: h = %zu, LPT = %d\n", amountThreads, height, LINES_PER_THREAD);
+        printf("\nCreated %zu Threads: h = %zu, LPT = %d\n", amountThreads, height, LINES_PER_THREAD);
 
         sobelIntervalArgs args;
         args.img_in = img_in;
@@ -45,7 +45,7 @@ void thread_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out
         args.toY = height - 1;
         args.img_out = img_out;
 
-        //printf("Self from %zu to %zu\n", args.fromY, args.toY);
+        printf("Self from %zu to %zu\n", args.fromY, args.toY);
 
         computeSobelForHeightInterval((void*) &args);
 
@@ -53,6 +53,11 @@ void thread_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out
 
         for (int i = 0; i < amountThreads; ++i) {
             pthread_join(threads[i], &result);
+            if (result != NULL) {
+                printf("Thread %d returned with value\n", *((int*)result));
+                result = NULL;
+            }
+            printf("Joined Thread %d\n", i);
         }
     } else {
         sobel(img_in, width, height, img_out);
@@ -190,5 +195,6 @@ void *computeSobelForHeightInterval(void *args) {
         _mm_storeu_si128((__m128i*) (img_out + i), _mm_or_si128(result2, result));
     }
     pthread_t thread_id = pthread_self();
+    printf("Thread %llu finished work.\n", thread_id);
     return NULL;
 }
