@@ -38,6 +38,9 @@ void thread_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out
 
         printf("\nCreated %zu Threads: h = %zu, LPT = %d\n", amountThreads, height, LINES_PER_THREAD);
 
+
+        //TODO: Letzten Aufruf in eigene Funktion verlegen um Invalid read analog zu SIMD zu fixen
+
         sobelIntervalArgs args;
         args.img_in = img_in;
         args.width = width;
