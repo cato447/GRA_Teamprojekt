@@ -9,21 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-/*
-Declares and initializes OUT as a char*.
-Sets OUT to [directory containing this file] ^ CONCAT.
-*/
-#define CONCAT_TO_DIR_OF_FILE(CONCAT, OUT) \
-    char ____dir[sizeof(__FILE__)]; \
-    strcpy(____dir, __FILE__); \
-    char* ____c = strrchr(____dir, '/'); \
-    *____c = '\0'; \
-    char OUT[strlen(____dir) + strlen(CONCAT) + 1]; \
-    strcpy(OUT, ____dir); \
-    strcat(OUT, CONCAT); \
-
-#define MUSTER_PATH_REL "/../../res/raw/muster.bmp" 
-#define MUSTER_REF_PATH_REL "/../../res/reference/muster_sobel.bmp"
+#define MUSTER_PATH "res/raw/muster.bmp" 
+#define MUSTER_REF_PATH "res/reference/muster_sobel.bmp"
 
 // Data tests are run on
 static size_t buffer_size;
@@ -71,15 +58,13 @@ int testSobel() {
     pixel24_t *newPixels = malloc(bmpImage->pxArraySize * sizeof(pixel24_t));
     sobel((uint8_t*) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, (uint8_t *) newPixels);
 
-    CONCAT_TO_DIR_OF_FILE(MUSTER_REF_PATH_REL, reference_path);
-
     uBMPImage *reference_bmpImage = malloc(sizeof(uBMPImage));
     if (reference_bmpImage == NULL) {
         fprintf(stderr, "Couldn't allocated reference_bmpImage\n");
         free(newPixels);
         return 1;
     }
-    size_t reference_buffer_size = loadPicture(reference_path, reference_bmpImage);
+    size_t reference_buffer_size = loadPicture(MUSTER_REF_PATH, reference_bmpImage);
 
     if (reference_buffer_size == 0) {
         fprintf(stderr, "Couldn't load picture\n");
@@ -100,9 +85,8 @@ int testSobel() {
 }
 
 int setUp() {
-    CONCAT_TO_DIR_OF_FILE(MUSTER_PATH_REL, path);
     bmpImage = malloc(sizeof(uBMPImage));
-    buffer_size = loadPicture(path, bmpImage);
+    buffer_size = loadPicture(MUSTER_PATH, bmpImage);
     if (buffer_size == 0) {
         return 1;
     }
