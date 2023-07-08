@@ -34,6 +34,7 @@ if __name__ == "__main__":
     pixelNum = []
     version = "0"
     for test_file in test_files:
+        print(f"Running program for input {test_file}")
         process = subprocess.run(["./program", "-V", version, "-B10", "-o", "output.bmp", test_file], stdout=subprocess.PIPE)
         output = process.stdout.decode('utf-8')
         times.append(getTime(output))

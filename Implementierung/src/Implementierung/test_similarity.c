@@ -28,7 +28,12 @@ static int setup(char *pathSobelImage, uint8_t *reference_pixel_array, size_t re
 }
 
 static void tearDown() {
-    free(sobelImage);
+    if (sobelImage) {
+        if (sobelImage->pxArray) {
+            free(sobelImage->pxArray);
+        }
+        free(sobelImage);
+    }
 }
 
 static int testSimilarity() {
