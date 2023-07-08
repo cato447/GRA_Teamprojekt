@@ -22,7 +22,7 @@ Sets OUT to [directory containing this file] ^ CONCAT.
     strcpy(OUT, ____dir); \
     strcat(OUT, CONCAT); \
 
-#define MUSTER_PATH_REL "/../../res/raw/muster.bmp" 
+#define MUSTER_PATH_REL "/../../res/raw/muster.bmp"
 #define MUSTER_REF_PATH_REL "/../../res/reference/muster_sobel.bmp"
 
 // Data tests are run on
@@ -57,8 +57,8 @@ int testSetColorOfPixel() {
     uint8_t red = 32;
     uint8_t green = 42;
     uint8_t blue = 52;
-    int x = 6;
-    int y = 7;
+    int x = 0;
+    int y = 0;
     setPixelAt((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, x, y, red, green, blue);
     int passed = 1;
     passed &= ASSERT_EQUAL_U_INT8(red, colorOfPixel((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, x, y, RED));
@@ -68,17 +68,22 @@ int testSetColorOfPixel() {
 }
 
 int testSobel() {
-    pixel24_t *newPixels = malloc(bmpImage->pxArraySize * sizeof(pixel24_t));
-    sobel((uint8_t*) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, (uint8_t *) newPixels);
+    pixel24_t *newPixels = calloc(bmpImage->pxArraySize, sizeof(pixel24_t));
+    if (!newPixels) {
+        fprintf(stderr, "Couldn't allocate memory for newPixels\n");
+        return 1;
+    }
+    sobel((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, (uint8_t *) newPixels);
 
     CONCAT_TO_DIR_OF_FILE(MUSTER_REF_PATH_REL, reference_path);
 
     uBMPImage *reference_bmpImage = malloc(sizeof(uBMPImage));
     if (reference_bmpImage == NULL) {
-        fprintf(stderr, "Couldn't allocated reference_bmpImage\n");
+        fprintf(stderr, "Couldn't allocate memory for reference_bmpImage\n");
         free(newPixels);
         return 1;
     }
+
     size_t reference_buffer_size = loadPicture(reference_path, reference_bmpImage);
 
     if (reference_buffer_size == 0) {

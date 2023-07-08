@@ -38,19 +38,19 @@ void print_help_msg(void) {
 
 void dealloc_config_params(config *config_params) {
     if (config_params) {
-       if (config_params->inputFilePath){
-           free(config_params->inputFilePath);
-       }
-       if (config_params->outputFilePath) {
-           free(config_params->outputFilePath);
-       }
+        if (config_params->inputFilePath) {
+            free(config_params->inputFilePath);
+        }
+        if (config_params->outputFilePath) {
+            free(config_params->outputFilePath);
+        }
     }
 }
 
 void freeImage(uBMPImage *img) {
     if (img) {
-        if (img->pxArray){
-           free(img->pxArray);
+        if (img->pxArray) {
+            free(img->pxArray);
         }
         free(img);
     }
@@ -65,7 +65,7 @@ void print_arg_error(char *errorMsg) {
 int parseArgs(int argc, char *argv[], config *config_params) {
     static struct option longopts[] = {
             {"help", no_argument, NULL, 'h'},
-            {NULL, 0,             NULL, 0}
+            {NULL,   0,           NULL, 0}
     };
 
     int ch;
@@ -104,7 +104,12 @@ int parseArgs(int argc, char *argv[], config *config_params) {
                     print_arg_error("Output path can't start with a dash");
                     return 1;
                 }
-                config_params->outputFilePath = optarg;
+                size_t outputPathLen = strlen(optarg) + 1;
+                config_params->outputFilePath = malloc(outputPathLen);
+                if (!config_params->outputFilePath) {
+                    fprintf(stderr, "Couldn't allocate memory for outputFilePath\n");
+                }
+                strncpy(config_params->outputFilePath, optarg, outputPathLen);
                 break;
             case '?':
                 print_arg_error("Unknown argument");
@@ -124,7 +129,7 @@ int parseArgs(int argc, char *argv[], config *config_params) {
     argv += optind;
 
     if (argc == 0) {
-        print_arg_error("No input path was given"); 
+        print_arg_error("No input path was given");
         return 1;
     } else if (argc > 1) {
         print_arg_error("Multiple input path were given");
@@ -134,14 +139,15 @@ int parseArgs(int argc, char *argv[], config *config_params) {
     size_t input_path_len = strlen(argv[0]) + 1;
     config_params->inputFilePath = malloc(input_path_len);
     strncpy(config_params->inputFilePath, argv[0], input_path_len);
-    for (char* c = config_params->inputFilePath; *c; c++) {
+    for (char *c = config_params->inputFilePath; *c; c++) {
         *c = tolower(*c);
     }
 
     //Set outputFilePath if not given
     if (config_params->outputFilePath == NULL) {
         size_t len_input_name;
-        if (strstr(config_params->inputFilePath, BMP_EXTENSION) != config_params->inputFilePath + input_path_len - strlen(BMP_EXTENSION) - 1) {
+        if (strstr(config_params->inputFilePath, BMP_EXTENSION) !=
+            config_params->inputFilePath + input_path_len - strlen(BMP_EXTENSION) - 1) {
             len_input_name = input_path_len - 1;
         } else {
             len_input_name = input_path_len - strlen(BMP_EXTENSION) - 1;
@@ -155,8 +161,9 @@ int parseArgs(int argc, char *argv[], config *config_params) {
 
 int main(int argc, char *argv[]) {
     config config_params = {0, false, 3, false, NULL, NULL};
-    if(parseArgs(argc, argv, &config_params)) {
+    if (parseArgs(argc, argv, &config_params)) {
         fprintf(stderr, "Couldn't parse arguments\n");
+        dealloc_config_params(&config_params);
         return 1;
     }
     uBMPImage *bmpImage = malloc(sizeof(uBMPImage));
@@ -202,7 +209,7 @@ int main(int argc, char *argv[]) {
                 break;
             default:
                 fprintf(stderr, "Version %d not implemented", config_params.version);
-                freeImage(bmpImage); 
+                freeImage(bmpImage);
                 dealloc_config_params(&config_params);
                 free(newPixels);
                 return 1;
