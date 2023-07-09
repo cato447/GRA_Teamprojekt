@@ -9,7 +9,7 @@
 
 void thread_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out) {
     if (width >= 16 && height > LINES_PER_THREAD) {
-        size_t amountThreads = height / LINES_PER_THREAD - (height % LINES_PER_THREAD == 0);
+        size_t amountThreads = height / LINES_PER_THREAD - (height % LINES_PER_THREAD == 0 ? 1 : 0);
         pthread_t threads[amountThreads];
 
         //We need the first fromY to be 1 instead of 0, or we might access memory that we do not own.
@@ -45,7 +45,7 @@ void thread_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out
         //Remaining image is calculated by normal simd_sobel with adjusted pointers and height
         size_t imgOffset = width * 3 * amountThreads * LINES_PER_THREAD - (amountThreads > 0 ? width * 3 : 0);
 
-        simd_sobel(img_in + imgOffset, width, height % LINES_PER_THREAD + (amountThreads > 0 ? 1 : 0), img_out + imgOffset);
+        simd_sobel(img_in + imgOffset, width, (height % LINES_PER_THREAD == 0 ? LINES_PER_THREAD : height % LINES_PER_THREAD) + (amountThreads > 0 ? 1 : 0), img_out + imgOffset);
 
         for (int i = 0; i < amountThreads; ++i) {
             pthread_join(threads[i], NULL);
