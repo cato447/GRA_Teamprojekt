@@ -18,12 +18,12 @@ void thread_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out
         printf("amount: %zu", amountThreads);
 
         for (int i = 0; i < amountThreads; ++i) {
-            sobelIntervalArgs args;
-            args.img_in = img_in;
-            args.width = width;
-            args.fromY = i * LINES_PER_THREAD + ensureOffset;
-            args.toY = i * LINES_PER_THREAD + LINES_PER_THREAD;
-            args.img_out = img_out;
+            sobelIntervalArgs args = { .img_in = img_in,
+                                        .width = width,
+                .fromY = i * LINES_PER_THREAD + ensureOffset,
+                .toY = i * LINES_PER_THREAD + LINES_PER_THREAD,
+                .img_out = img_out
+            };
 
             int creationResult;
             creationResult = pthread_create(&threads[i], PTHREAD_CREATE_JOINABLE, computeSobelForHeightInterval, (void*) &args);
@@ -70,6 +70,9 @@ void *computeSobelForHeightInterval(void *args) {
 
     __m128i comparer = _mm_loadu_si128((const __m128i*) COMP_255);
     __m128i zeroEvenBytesMask = _mm_loadu_si128((const __m128i *) ZERO_EVEN_BYTES_MASK);
+
+    printf("Calculating from %zu to %zu\n", fromY, toY);
+
     for (size_t i = width * fromY * 3 + 3; i < width * toY * 3; i += 16) {
         __m128i upperLeft = _mm_loadu_si128((const __m128i*) (img_in + i - width * 3 - 3));
         __m128i upper = _mm_loadu_si128((const __m128i*) (img_in + i - width * 3));
