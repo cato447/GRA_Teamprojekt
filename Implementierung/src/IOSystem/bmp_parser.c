@@ -110,7 +110,7 @@ int bmpToArray(char* buf, size_t bufSize, uBMPImage* bmpImgBuf) {
 #define NUM_PLANES 1
 #define PX_PER_METER 3800
 #define BIT_DEPTH 3 * 8
-#define NUM_COLORS 256 * 256 * 256
+#define NUM_COLORS 0 
 
 const struct bmpHeader headerTemplate = {
     .signature = BMP_HEADER_SIGN,
