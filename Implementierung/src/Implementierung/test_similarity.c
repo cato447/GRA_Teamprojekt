@@ -17,9 +17,14 @@ static size_t ref_px_array_size;
 
 static int setup(char *pathSobelImage, uint8_t *reference_pixel_array, size_t reference_px_array_size) {
     sobelImage = malloc(sizeof(uBMPImage));
+    if (sobelImage == NULL) {
+        fprintf(stderr, "Failed allocating memory for sobelImage\n");
+        return 1;
+    }
     sobel_buffer_size = loadPicture(pathSobelImage, sobelImage);
     if (sobel_buffer_size == 0) {
         fprintf(stderr, "Couldn't load sobel image %s\n", pathSobelImage);
+        free(sobelImage);
         return 1;
     }
     ref_pixels = reference_pixel_array;

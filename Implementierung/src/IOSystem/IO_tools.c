@@ -11,7 +11,8 @@
 #include <errno.h>
 
 /*
-Returns a pointer to the data buffer of the file read at parameter "path" and sets "bufSize" accordingly on successful read.
+Returns a pointer to the data buffer of the file read at parameter "path" or a null pointer on failure.
+Sets "bufSize" accordingly on successful read.
 */
 char* readFile(const char* path, size_t* bufSize) {
     FILE* file = fopen(path, "rb");
@@ -33,38 +34,41 @@ char* readFile(const char* path, size_t* bufSize) {
         return NULL;
     }
 
-    void* buf = malloc(statbuf.st_size);
-    if (!buf) {
-        fprintf(stderr, "Error: failed allocating memory for file buffer\n");
+    void* fileBuf = malloc(statbuf.st_size);
+    if (fileBuf == NULL) {
+        fprintf(stderr, "Failed allocating memory for fileBuf\n");
         fclose(file);
         return NULL;
     }
 
-    if (fread(buf, 1, statbuf.st_size, file) != (size_t) statbuf.st_size) {
-        fprintf(stderr, "Error: failed reading file data at %s\n", path);
+    if (fread(fileBuf, 1, statbuf.st_size, file) != (size_t) statbuf.st_size) {
+        fprintf(stderr, "Failed reading file data at %s\n", path);
         fclose(file);
-        free(buf);
+        free(fileBuf);
         return NULL;
     }
     
     *bufSize = statbuf.st_size;
     fclose(file);
-    return buf;
+    return fileBuf;
 }
 
 /*
 Writes "bufSize" bytes from buffer at parameter "buf" to file at location "path", creates files if doesn't exist prior.
 */
-void writeFile(const char* path, char* buf, size_t bufSize) {
+int writeFile(const char* path, char* buf, size_t bufSize) {
     FILE* file = fopen(path, "wb+");
     if (!file) {
-        fprintf(stderr, "Error trying to create/overwrite file at \"%s\": %s\n", path, strerror(errno));
-        return;
+        fprintf(stderr, "Failed trying to create/overwrite file at \"%s\": %s\n", path, strerror(errno));
+        return 1;
     }
 
     if (fwrite(buf, 1, bufSize, file) != bufSize) {
-        fprintf(stderr, "Error: failed writing buffer data to %s\n", path);
+        fprintf(stderr, "Failed writing buffer data to %s\n", path);
+        fclose(file);
+        return 1;
     }
 
     fclose(file);
+    return 0;
 }

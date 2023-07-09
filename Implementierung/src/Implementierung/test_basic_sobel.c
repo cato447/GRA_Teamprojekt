@@ -16,7 +16,7 @@
 static size_t buffer_size;
 static uBMPImage *bmpImage;
 
-int freeBmpImg(uBMPImage *img) {
+static int freeBmpImg(uBMPImage *img){
     free(img->pxArray);
     free(img);
     return 0;
@@ -90,8 +90,13 @@ int testSobel() {
 
 int setUp() {
     bmpImage = malloc(sizeof(uBMPImage));
+    if (bmpImage == NULL) {
+        fprintf(stderr, "Failed allocating memory for bmpImage\n");
+        return 1;
+    }
     buffer_size = loadPicture(MUSTER_PATH, bmpImage);
     if (buffer_size == 0) {
+        free(bmpImage);
         return 1;
     }
     return 0;
@@ -102,11 +107,10 @@ void tearDown() {
 }
 
 int runTestsSobel(void) {
-    startTesting(__BASE_FILE__);
     if (setUp() == 1) {
-        tearDown();
         return 1;
     }
+    startTesting(__BASE_FILE__);
     runTest(testColorOfPixelRed);
     runTest(testColorOfPixelBlue);
     runTest(testColorOfPixelGreen);
