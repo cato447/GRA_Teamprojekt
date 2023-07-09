@@ -15,43 +15,40 @@ void thread_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out
         //We need the first fromY to be 1 instead of 0, or we might access memory that we do not own.
         int ensureOffset = 1;
 
-        printf("amount: %zu", amountThreads);
-
         for (int i = 0; i < amountThreads; ++i) {
-            sobelIntervalArgs args = { .img_in = img_in,
-                                        .width = width,
-                .fromY = i * LINES_PER_THREAD + ensureOffset,
-                .toY = i * LINES_PER_THREAD + LINES_PER_THREAD,
-                .img_out = img_out
-            };
+            sobelIntervalArgs* args = (sobelIntervalArgs*)malloc(sizeof(sobelIntervalArgs));
 
-            int creationResult;
-            creationResult = pthread_create(&threads[i], PTHREAD_CREATE_JOINABLE, computeSobelForHeightInterval, (void*) &args);
+            if (!args) {
+                printf("Failed to allocate memory for thread %d. Aborting.", i);
+                abort();
+            }
+
+            args -> img_in = img_in;
+            args -> width = width;
+            args -> fromY = i * LINES_PER_THREAD + ensureOffset;
+            args -> toY = i * LINES_PER_THREAD + LINES_PER_THREAD;
+            args -> img_out = img_out;
+
+            int creationResult = pthread_create(&threads[i], PTHREAD_CREATE_JOINABLE, computeSobelForHeightInterval, (void*) args);
 
             if (creationResult != 0) {
-                printf("Thread %d raised an error: %d\n", i, creationResult);
+                printf("Thread %d could not be created: %d. Aborting.\n", i, creationResult);
+                abort();
             }
 
             ensureOffset = 0;
-            printf("\nCreated Thread %d: from = %zu, to = %zu, LPT = %d\n", i, args.fromY, args.toY, LINES_PER_THREAD);
+            //printf("\nCreated Thread %d: from = %zu, to = %zu, LPT = %d\n", i, args -> fromY, args -> toY, LINES_PER_THREAD);
         }
 
-        printf("\nCreated %zu Threads: h = %zu, LPT = %d\n", amountThreads, height, LINES_PER_THREAD);
+        //printf("\nCreated %zu Threads: h = %zu, LPT = %d\n", amountThreads, height, LINES_PER_THREAD);
 
         //Remaining image is calculated by normal simd_sobel with adjusted pointers and height
-        size_t imgOffset = width * 3 * amountThreads * LINES_PER_THREAD;
+        size_t imgOffset = width * 3 * amountThreads * LINES_PER_THREAD - (amountThreads > 0 ? width * 3 : 0);
 
         simd_sobel(img_in + imgOffset, width, height % LINES_PER_THREAD, img_out + imgOffset);
 
-        void* result;
-
         for (int i = 0; i < amountThreads; ++i) {
-            pthread_join(threads[i], &result);
-            if (result != NULL) {
-                printf("Thread %d returned with value\n", *((int*)result));
-                result = NULL;
-            }
-            printf("Joined Thread %d\n", i);
+            pthread_join(threads[i], NULL);
         }
     } else {
         //If image is too small for the thread logic to work properly, fall back to normal simd
@@ -71,7 +68,7 @@ void *computeSobelForHeightInterval(void *args) {
     __m128i comparer = _mm_loadu_si128((const __m128i*) COMP_255);
     __m128i zeroEvenBytesMask = _mm_loadu_si128((const __m128i *) ZERO_EVEN_BYTES_MASK);
 
-    printf("Calculating from %zu to %zu\n", fromY, toY);
+    //printf("Calculating from %zu to %zu\n", fromY, toY);
 
     for (size_t i = width * fromY * 3 + 3; i < width * toY * 3; i += 16) {
         __m128i upperLeft = _mm_loadu_si128((const __m128i*) (img_in + i - width * 3 - 3));
@@ -192,7 +189,6 @@ void *computeSobelForHeightInterval(void *args) {
 
         _mm_storeu_si128((__m128i*) (img_out + i), _mm_or_si128(result2, result));
     }
-    pthread_t thread_id = pthread_self();
-    printf("Thread %llu finished work.\n", thread_id);
+    free(args);
     return NULL;
 }
