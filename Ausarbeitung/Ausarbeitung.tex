@@ -11,22 +11,121 @@
 % Diese Zeile bitte -nicht- aendern.
 \title{Gruppe \theGroup{} -- Abgabe zu Aufgabe \theNumber}
 
+\usepackage{caption}
+\usepackage{subcaption}
+
 \begin{document}
 \maketitle
 
 \section{Einleitung}
 
+In diesem Projekt haben wir uns damit beschäftigt den Sobel-Filter Algorithmus zu implementieren.
+Der Algorithmus wird dazu verwendet um Kanten in Bildern zu erkennen.
+Dabei werden die Pixel eines Bildes mit zwei Matritzen verrechnet.
+Diese Matritzen werden auch Filter genannt.
+Die aus der Verrechnung resultierenden Werte werden dann in einem neuen Bild gespeichert.
+\begin{figure}[H]
+    \begin{subfigure}{.5\columnwidth}
+        \centering
+        \includegraphics[width=\columnwidth]{graphics/johnmuirtrail.png}
+        \caption{Input-Bild}
+        \label{fig:input-bild}
+    \end{subfigure}
+    \begin{subfigure}{.5\columnwidth}
+        \centering
+        \includegraphics[width=\columnwidth]{graphics/johnmuirtrail_sobel.png}
+        \caption{Output-Bild}
+        \label{fig:output-bild}
+    \end{subfigure}
+\end{figure}
+
+In Abbildung \ref{fig:input-bild} und \ref{fig:output-bild} ist ein Beispiel für die Anwendung des Sobel-Filters zu sehen.
 
 \section{Lösungsansatz}
 
+Unser gewählter Lösungsansatz besteht aus drei verschiedenen Versionen.
+In der ersten Version haben wir den Sobel-Filter nach seiner mathematischen Definition implementiert.
+Zusätzlich dient und die erste Version als Vergleichsimplementierung.
+Die zweite und dritte Version sind jeweils eine Optimierung der ersten Version.
+In der zweiten Version haben wir die den Algorithmus mit Hilfe von SIMD-Instruktionen implementiert und in der dritten die SIMD Implementierung mit Threading kombiniert.
+Alle Implementierungen arbeiten mit 24-Bit BMP Bildern. Ein Pixel besteht dabei aus drei Bytes, die die Farbwerte Rot, Grün und Blau repräsentieren.
+
+\subsection{Vergleichsimplementierung}
+Die Vergleichsimplementierung ist eine naive Implementierung des Sobel-Filter Algorithmus.
+Dabei werden die beiden Filtermatritzen $M^{v}$ und $M^{h}$ mit jedem Pixel des Bildes verrechnet.
+\begin{equation}
+    M^{v} :
+    \begin{bmatrix}
+        1 & 0 & -1 \\
+        2 & 0 & -2 \\
+        1 & 0 & -1
+    \end{bmatrix}
+    M^{h} :
+    \begin{bmatrix}
+        1 & 2 & 1 \\
+        0 & 0 & 0 \\
+        -1 & -2 & -1
+    \end{bmatrix}
+\end{equation}
+\begin{equation}
+    A^{h} = M^{h} * Image
+\end{equation}
+\begin{equation}
+    A^{v} = M^{v} * Image
+\end{equation} \\
+Jeder Pixel besteht aus drei Bytes, die die Farbwerte Rot, Grün und Blau repräsentieren.
+Deswegen wird das Bild B in drei Farbkanäle F aufgeteilt.
+Um einen Pixel mit den Filtermatritzen zu verrechnen, werden die Werte der Filtermatrix mit den Werten der umliegenden Pixel multipliziert und anschließend aufsummiert.
+\begin{equation}
+    A_(x,y)^{v,F} = \sum_{i=-1}^{1} \sum_{j=-1}^{1} M^{v}_{i,j} * B_{(x+i,y+j)}^{F}
+\end{equation}
+\begin{equation}
+    A_(x,y)^{h,F} = \sum_{i=-1}^{1} \sum_{j=-1}^{1} M^{h}_{i,j} * B_{(x+i,y+j)}^{F}
+\end{equation}
+Pixel, die sich am Rand des Bildes befinden, können nicht mit allen Werten der Filtermatritzen verrechnet werden.
+Der Fall wird behandelt, indem die Sobelwerte dieser Pixel als schwarz angenommen werden. Hierdurch entsteht ein schwarzer Rand um das Bild. \\\\
+Um nun den Sobelwert eines Pixels zu berechnen wird der Betrag der horizontalen und vertikalen Sobelwerte berechnet.
+\begin{equation}
+    O^{F}_{x,y} = \left | A^{v,F}_{x,y} \right | + \left | A^{h,F}_{x,y} \right |
+    \label{eq:betrag}
+\end{equation}
+Normalerweise wird dieser Schritt mit der Wurzel der Summe der Quadrate berechnet.
+\begin{equation}
+    O^{F}_{x,y} = \sqrt{(A^{v,F}_{x,y})^2 + (A^{h,F}_{x,y})^2}
+    \label{eq:wurzel}
+\end{equation}
+\begin{figure}[H]
+    \begin{subfigure}{.5\columnwidth}
+        \centering
+        \includegraphics[width=\columnwidth]{graphics/johnmuirtrail_sobel.png}
+        \caption{Abs Version \ref{eq:betrag}}
+        \label{fig:abs-bild}
+    \end{subfigure}
+    \begin{subfigure}{.5\columnwidth}
+        \centering
+        \includegraphics[width=\columnwidth]{graphics/sqrt_sobel.png}
+        \caption{Sqrt Version \ref{eq:wurzel}}
+        \label{fig:sqrt-bild}
+    \end{subfigure}
+\end{figure}
+Zwischen {\ref{fig:abs-bild}} und {\ref{fig:sqrt-bild}} besteht nur ein kleiner Unterschied in der Helligkeit des Bildes, was für Kantenerkennung nicht relevant ist.
+Da keine brauchbare SIMD Instruktion zur Berechnung der Wurzel eines 8 bzw. 16 Bit Integer existiert haben wir uns für die Variante {\ref{eq:betrag}} entschieden.
+
+\subsection{SIMD Implementierung}
+
+\subsection{SIMD Implementierung mit Threading}
 
 \section{Genauigkeit}
 
+TODO: Geben Sie hier die Genauigkeit Ihres Lösungsansatzes ein.
 
 \section{Performanzanalyse}
 
+TODO: Geben Sie hier die Performanz Ihres Lösungsansatzes ein.
 
 \section{Zusammenfassung und Ausblick}
+
+TODO: Geben Sie hier eine kurze Zusammenfassung und einen Ausblick ein.
 
 % TODO: Fuegen Sie Ihre Quellen der Datei Ausarbeitung.bib hinzu
 % Referenzieren Sie diese dann mit \cite{}.
