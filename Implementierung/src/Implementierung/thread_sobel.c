@@ -8,7 +8,7 @@
 #define LINES_PER_THREAD 200
 
 void thread_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out) {
-    if (width >= 16 && height >= 3) {
+    if (width >= 16 && height > LINES_PER_THREAD) {
         size_t amountThreads = height / LINES_PER_THREAD - (height % LINES_PER_THREAD == 0);
         pthread_t threads[amountThreads];
 
@@ -38,19 +38,10 @@ void thread_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out
 
         printf("\nCreated %zu Threads: h = %zu, LPT = %d\n", amountThreads, height, LINES_PER_THREAD);
 
+        //Remaining image is calculated by normal simd_sobel with adjusted pointers and height
+        size_t imgOffset = width * 3 * amountThreads * LINES_PER_THREAD;
 
-        //TODO: Letzten Aufruf in eigene Funktion verlegen um Invalid read analog zu SIMD zu fixen
-
-        sobelIntervalArgs args;
-        args.img_in = img_in;
-        args.width = width;
-        args.fromY = height - height % LINES_PER_THREAD;
-        args.toY = height - 1;
-        args.img_out = img_out;
-
-        printf("Self from %zu to %zu\n", args.fromY, args.toY);
-
-        computeSobelForHeightInterval((void*) &args);
+        simd_sobel(img_in + imgOffset, width, height % LINES_PER_THREAD, img_out + imgOffset);
 
         void* result;
 
@@ -63,7 +54,8 @@ void thread_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out
             printf("Joined Thread %d\n", i);
         }
     } else {
-        sobel(img_in, width, height, img_out);
+        //If image is too small for the thread logic to work properly, fall back to normal simd
+        simd_sobel(img_in, width, height, img_out);
     }
 }
 

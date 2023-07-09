@@ -6,7 +6,7 @@ CFLAGS = -O3 -g -std=c17 -Wall -Wpedantic -msse4.2
 OUTDIR = ./build
 SUBDIR = src src/Implementierung src/IOSystem src/Testsystem
 DIR_OBJ = ./obj
-LIBS = -lm -lrt -lpthread
+LIBS = -lm -lrt -pthread
 
 INCS = $(wildcard *.h $(foreach path, $(SUBDIR), $(path)/*.h))
 SRCS = $(wildcard *.c $(foreach path, $(SUBDIR), $(path)/*.c))
