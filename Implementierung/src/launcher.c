@@ -173,7 +173,12 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     printf("Loading image from inputFilePath\n");
+    struct timespec start_io;
+    struct timespec end_io;
+    clock_gettime(CLOCK_MONOTONIC, &start_io);
     size_t img_size = loadPicture(config_params.inputFilePath, bmpImage);
+    clock_gettime(CLOCK_MONOTONIC, &end_io);
+    double io_time = end_io.tv_sec - start_io.tv_sec + 1e-9 * (end_io.tv_nsec - start_io.tv_nsec);
     if (img_size == 0) {
         fprintf(stderr, "Couldn't load picture from input file %s\n", config_params.inputFilePath);
         freeImage(bmpImage);
@@ -193,19 +198,19 @@ int main(int argc, char *argv[]) {
         runTestsSobel();
     }
 
-    double time = 0;
+    double exec_time = 0;
     int num_of_execute_cycles = config_params.measure_performance ? config_params.measure_performance_cycles : 1;
     for (int i = 1; i <= num_of_execute_cycles; ++i) {
         printf("\rCycles run: %d/%d", i, num_of_execute_cycles);
         fflush(stdout);
-        struct timespec start;
-        struct timespec end;
+        struct timespec start_exec;
+        struct timespec end_exec;
         switch (config_params.version) {
             case 0:
-                clock_gettime(CLOCK_MONOTONIC, &start);
+                clock_gettime(CLOCK_MONOTONIC, &start_exec);
                 sobel((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, newPixels);
-                clock_gettime(CLOCK_MONOTONIC, &end);
-                time += end.tv_sec - start.tv_sec + 1e-9 * (end.tv_nsec - start.tv_nsec);
+                clock_gettime(CLOCK_MONOTONIC, &end_exec);
+                exec_time += end_exec.tv_sec - start_exec.tv_sec + 1e-9 * (end_exec.tv_nsec - start_exec.tv_nsec);
                 break;
             default:
                 fprintf(stderr, "Version %d not implemented", config_params.version);
@@ -249,8 +254,11 @@ int main(int argc, char *argv[]) {
     }
 
     if (config_params.measure_performance) {
+        double avg_exec_time = exec_time / config_params.measure_performance_cycles;
         printf("Sobel calculation from version %d took on average %f seconds\n", config_params.version,
-               time / config_params.measure_performance_cycles);
+               avg_exec_time);
+        printf("Loading the image took %f seconds\n", io_time);
+        printf("Percentage io/calc = %f%% \n", (io_time/avg_exec_time) * 100);
     }
 
     free(newPixels);

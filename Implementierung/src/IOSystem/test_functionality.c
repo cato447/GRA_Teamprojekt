@@ -9,7 +9,7 @@
 size_t loadPicture(char *path, uBMPImage *img) {
     void *buffer;
     size_t buffer_size;
-    fprintf(stdout, "Loading BMP File: %s for test data\n", path);
+    fprintf(stdout, "Loading BMP File: %s\n", path);
     buffer = readFile(path, &buffer_size);
 
     if (buffer == NULL) {
