@@ -10,6 +10,10 @@ typedef struct pixel24_t {
     uint8_t r;
 } pixel24_t;
 
+typedef struct pixel8_t {
+    uint8_t v;
+} pixel8_t;
+
 typedef struct uBMPImage {
     uint32_t pxWidth;
     uint32_t pxHeight;
