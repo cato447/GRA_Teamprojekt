@@ -17,11 +17,11 @@ void thread_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out
         //We need the first fromY to be 1 instead of 0, or we might access memory that we do not own.
         int ensureOffset = 1;
 
-        for (int i = 0; i < amountThreads; ++i) {
+        for (size_t i = 0; i < amountThreads; ++i) {
             sobelIntervalArgs* args = (sobelIntervalArgs*)malloc(sizeof(sobelIntervalArgs));
 
             if (!args) {
-                printf("Failed to allocate memory for thread %d. Aborting.", i);
+                printf("Failed to allocate memory for thread %lu. Aborting.", i);
                 abort();
             }
 
@@ -34,7 +34,7 @@ void thread_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out
             int creationResult = pthread_create(&threads[i], PTHREAD_CREATE_JOINABLE, computeSobelForHeightInterval, (void*) args);
 
             if (creationResult != 0) {
-                printf("Thread %d could not be created: %d. Aborting.\n", i, creationResult);
+                printf("Thread %lu could not be created: %d. Aborting.\n", i, creationResult);
                 abort();
             }
 
@@ -49,7 +49,7 @@ void thread_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out
 
         simd_sobel(img_in + imgOffset, width, (height % LINES_PER_THREAD == 0 ? LINES_PER_THREAD : height % LINES_PER_THREAD) + (amountThreads > 0 ? 1 : 0), img_out + imgOffset);
 
-        for (int i = 0; i < amountThreads; ++i) {
+        for (size_t i = 0; i < amountThreads; ++i) {
             pthread_join(threads[i], NULL);
         }
     } else {
