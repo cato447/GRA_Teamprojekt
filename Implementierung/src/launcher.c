@@ -194,7 +194,7 @@ int main(int argc, char *argv[]) {
         dealloc_config_params(&config_params);
         return 1;
     }
-    printf("Loading image from inputFilePath\n");
+    printf("Loading image from %s\n", config_params.inputFilePath);
     struct timespec start_io;
     struct timespec end_io;
     clock_gettime(CLOCK_MONOTONIC, &start_io);
