@@ -193,7 +193,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    uint8_t *newPixels = calloc(bmpImage->pxArraySize, sizeof(pixel24_t));
+    uint8_t *newPixels = calloc(bmpImage->pxArraySize, sizeof(uint8_t));
     if (newPixels == NULL) {
         fprintf(stderr, "Couldn't allocate memory for newPixels\n");
         freeImage(bmpImage);
@@ -245,7 +245,7 @@ int main(int argc, char *argv[]) {
     //#---------------------
     //#Erste Output Integration im Launcher - up to change
     //#
-    uBMPImage exportImage = {.pxArray = (pixel24_t *) newPixels, .pxArraySize = bmpImage->pxArraySize, .pxHeight = bmpImage->pxHeight, .pxWidth = bmpImage->pxWidth};
+    uBMPImage exportImage = {.pxArray = newPixels, .pxArraySize = bmpImage->pxArraySize, .pxHeight = bmpImage->pxHeight, .pxWidth = bmpImage->pxWidth};
     size_t newSize;
     char *newBuf = arrayToBmp(&exportImage, &newSize);
 
@@ -258,7 +258,7 @@ int main(int argc, char *argv[]) {
     //#---------------------
 
     if (config_params.run_tests || config_params.measure_performance) {
-        uint8_t *sobelReferenceVersion = calloc(bmpImage->pxArraySize, sizeof(pixel24_t));
+        uint8_t *sobelReferenceVersion = calloc(bmpImage->pxArraySize, sizeof(uint8_t));
         if (sobelReferenceVersion == NULL) {
             fprintf(stderr, "Couldn't allocate memory for sobelReferenceVersion\n");
             freeImage(bmpImage);
@@ -266,9 +266,9 @@ int main(int argc, char *argv[]) {
             return 1;
         }
         printf("Comparing generated output image to output of version 0 algorithm\n");
-        sobel((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, sobelReferenceVersion);
+        sobel(bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, sobelReferenceVersion);
         runTestSimilarity(config_params.outputFilePath, bmpImage->pxHeight, bmpImage->pxWidth, sobelReferenceVersion,
-                          bmpImage->pxArraySize * sizeof(pixel24_t));
+                          bmpImage->pxArraySize);
         free(sobelReferenceVersion);
     }
 

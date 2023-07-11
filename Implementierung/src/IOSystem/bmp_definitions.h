@@ -18,7 +18,7 @@ typedef struct uBMPImage {
     uint32_t pxWidth;
     uint32_t pxHeight;
     size_t pxArraySize;
-    pixel24_t* pxArray;
+    uint8_t* pxArray;
 } uBMPImage;
 
 #endif

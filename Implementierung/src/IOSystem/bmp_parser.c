@@ -78,22 +78,22 @@ int bmpToArray(char* buf, size_t bufSize, uBMPImage* bmpImgBuf) {
     }
 
 
-    size_t pxArraySize = pxWidth * pxHeight;
-    pixel24_t* pxArray = calloc(pxArraySize, sizeof(pixel24_t));
+    size_t pxArraySize = byteWidth * pxHeight;
+    uint8_t* pxArray = calloc(pxArraySize, sizeof(uint8_t));
     if (pxArray == NULL) {
         fprintf(stderr, "Failed allocating memory for pxArray\n");
         return 1;
     }
 
-    pixel24_t* pxArrayEnd = pxArray + pxWidth * pxHeight;
+    uint8_t* pxArrayEnd = pxArray + byteWidth * pxHeight;
     char* bufInc = buf + dataOffset;
 
     if (negHeight) {
-        for (pixel24_t* dest = pxArrayEnd - pxWidth; dest >= pxArray; dest -= pxWidth, bufInc += byteWidthPadded) {
+        for (uint8_t* dest = pxArrayEnd - byteWidth; dest >= pxArray; dest -= byteWidth, bufInc += byteWidthPadded) {
             memcpy(dest, bufInc, byteWidth);
         }
     } else {
-        for (pixel24_t* dest = pxArray; dest < pxArrayEnd; dest += pxWidth, bufInc += byteWidthPadded) {
+        for (uint8_t* dest = pxArray; dest < pxArrayEnd; dest += byteWidth, bufInc += byteWidthPadded) {
             memcpy(dest, bufInc, byteWidth);
         }
     }
@@ -153,18 +153,18 @@ char* arrayToBmp(const uBMPImage* bmpImg, size_t* size) {
     uint32_t byteWidth = bmpImg->pxWidth * sizeof(pixel24_t);
     uint32_t byteWidthPadded = (byteWidth & 0x3) ? ((byteWidth & ~0x3) + 4) : byteWidth;
 
-    *size = HEADER_SIZE + INFO_HEADER_SIZE + byteWidth * (bmpImg->pxHeight);
+    *size = HEADER_SIZE + INFO_HEADER_SIZE + byteWidthPadded * (bmpImg->pxHeight);
     char* buf = calloc(*size, sizeof(uint8_t));
 
     generateHeaderInfoHeader((struct bmpHeader*) buf, *size, bmpImg->pxWidth, bmpImg->pxHeight);
 
     char* pxData = buf + HEADER_SIZE + INFO_HEADER_SIZE;
-    pixel24_t* pxArraySrc = bmpImg->pxArray;
-    pixel24_t* pxArrayEnd = bmpImg->pxArray + bmpImg->pxArraySize;
+    uint8_t* pxArraySrc = bmpImg->pxArray;
+    uint8_t* pxArrayEnd = bmpImg->pxArray + bmpImg->pxArraySize;
 
     while (pxArraySrc < pxArrayEnd) {
         memcpy(pxData, pxArraySrc, byteWidth);
-        pxArraySrc += bmpImg->pxWidth;
+        pxArraySrc += byteWidth;
         pxData += byteWidthPadded;
     }
     
@@ -172,25 +172,25 @@ char* arrayToBmp(const uBMPImage* bmpImg, size_t* size) {
 }
 
 /*
-Return a pointer to a buffer containing a complete BMP image.
+Return a pointer to a buffer containing a complete monochromic BMP image.
 Writes size of buffer to parameter "size".
 */
 char* arrayToBmpMono(const uBMPImage* bmpImg, size_t* size) {
     uint32_t byteWidth = bmpImg->pxWidth * sizeof(pixel8_t);
     uint32_t byteWidthPadded = (byteWidth & 0x3) ? ((byteWidth & ~0x3) + 4) : byteWidth;
 
-    *size = HEADER_SIZE + INFO_HEADER_SIZE + byteWidth * (bmpImg->pxHeight);
+    *size = HEADER_SIZE + INFO_HEADER_SIZE + byteWidthPadded * (bmpImg->pxHeight);
     char* buf = calloc(*size, sizeof(uint8_t));
 
     generateHeaderInfoHeaderMono((struct bmpHeader*) buf, *size, bmpImg->pxWidth, bmpImg->pxHeight);
 
     char* pxData = buf + HEADER_SIZE + INFO_HEADER_SIZE;
-    pixel24_t* pxArraySrc = bmpImg->pxArray;
-    pixel24_t* pxArrayEnd = bmpImg->pxArray + bmpImg->pxArraySize;
+    uint8_t* pxArraySrc = bmpImg->pxArray;
+    uint8_t* pxArrayEnd = bmpImg->pxArray + bmpImg->pxArraySize;
 
     while (pxArraySrc < pxArrayEnd) {
         memcpy(pxData, pxArraySrc, byteWidth);
-        pxArraySrc += bmpImg->pxWidth;
+        pxArraySrc += byteWidth;
         pxData += byteWidthPadded;
     }
     
