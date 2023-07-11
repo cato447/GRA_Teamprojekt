@@ -155,6 +155,10 @@ char* arrayToBmp(const uBMPImage* bmpImg, size_t* size) {
 
     *size = HEADER_SIZE + INFO_HEADER_SIZE + byteWidthPadded * (bmpImg->pxHeight);
     char* buf = calloc(*size, sizeof(uint8_t));
+    if (buf == NULL) {
+        fprintf(stderr, "Failed allocating memory for buf\n");
+        return NULL;
+    }
 
     generateHeaderInfoHeader((struct bmpHeader*) buf, *size, bmpImg->pxWidth, bmpImg->pxHeight);
 
@@ -181,6 +185,10 @@ char* arrayToBmpMono(const uBMPImage* bmpImg, size_t* size) {
 
     *size = HEADER_SIZE + INFO_HEADER_SIZE + byteWidthPadded * (bmpImg->pxHeight);
     char* buf = calloc(*size, sizeof(uint8_t));
+    if (buf == NULL) {
+        fprintf(stderr, "Failed allocating memory for buf\n");
+        return NULL;
+    }
 
     generateHeaderInfoHeaderMono((struct bmpHeader*) buf, *size, bmpImg->pxWidth, bmpImg->pxHeight);
 

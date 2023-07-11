@@ -1,6 +1,8 @@
-#include <immintrin.h>
-#include "basic_sobel.h"
 #include "simd_sobel.h"
+
+#include <immintrin.h>
+
+#include "basic_sobel.h"
 
 void simd_sobel(uint8_t* img_in, size_t width, size_t height, uint8_t* img_out) {
     if (width * 3 * height >= 16 * 3 + 3 + 3 && height >= 3) {

@@ -8,8 +8,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
-#define MUSTER_PATH "../res/raw/muster.bmp" 
+#define MUSTER_PATH "../res/raw/muster.bmp"
 #define MUSTER_REF_PATH "../res/reference/muster_sobel.bmp"
 
 // Data tests are run on
@@ -56,15 +57,15 @@ int testSetColorOfPixel() {
 
 int testSobel() {
     uint8_t *newPixels = calloc(bmpImage->pxArraySize, sizeof(uint8_t));
-    if (!newPixels) {
-        fprintf(stderr, "Couldn't allocate memory for newPixels\n");
+    if (newPixels == NULL) {
+        fprintf(stderr, "Failed allocating memory for newPixels\n");
         return 1;
     }
     sobel((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, (uint8_t *) newPixels);
 
     uBMPImage *reference_bmpImage = malloc(sizeof(uBMPImage));
     if (reference_bmpImage == NULL) {
-        fprintf(stderr, "Couldn't allocate memory for reference_bmpImage\n");
+        fprintf(stderr, "Failed allocating memory for reference_bmpImage\n");
         free(newPixels);
         return 1;
     }
@@ -88,8 +89,13 @@ int testSobel() {
 
 int setUp() {
     bmpImage = malloc(sizeof(uBMPImage));
+    if (bmpImage == NULL) {
+        fprintf(stderr, "Failed allocating memory for bmpImage\n");
+        return 1;
+    }
     buffer_size = loadPicture(MUSTER_PATH, bmpImage);
     if (buffer_size == 0) {
+        free(bmpImage);
         return 1;
     }
     return 0;
