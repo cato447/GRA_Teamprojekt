@@ -55,7 +55,7 @@ int testSetColorOfPixel() {
 }
 
 int testSobel() {
-    pixel24_t *newPixels = calloc(bmpImage->pxArraySize, sizeof(pixel24_t));
+    uint8_t *newPixels = calloc(bmpImage->pxArraySize, sizeof(uint8_t));
     if (!newPixels) {
         fprintf(stderr, "Couldn't allocate memory for newPixels\n");
         return 1;
@@ -77,11 +77,8 @@ int testSobel() {
         return 1;
     }
 
-    double similarity = compareImages((uint8_t *) newPixels,
-                                      bmpImage->pxArraySize * sizeof(pixel24_t),
-                                      bmpImage->pxWidth, bmpImage->pxHeight,
-                                      (uint8_t *) reference_bmpImage->pxArray,
-                                      reference_bmpImage->pxArraySize * sizeof(pixel24_t));
+    double similarity = compareImages(newPixels, bmpImage->pxArraySize, bmpImage->pxWidth, bmpImage->pxHeight,
+                                      reference_bmpImage->pxArray, reference_bmpImage->pxArraySize);
 
     freeBmpImg(reference_bmpImage);
     free(newPixels);
