@@ -6,11 +6,9 @@ import sys
 import cv2 as cv
 def main(argv):
  
- window_name = ('Sobel Demo - Simple Edge Detector')
  scale = 1
  delta = 0
  ddepth = cv.CV_16S
- 
  
  if len(argv) < 1:
     print ('Not enough parameters')
@@ -22,12 +20,7 @@ def main(argv):
  if src is None:
     print ('Error opening image: ' + argv[0])
     return -1
- 
- 
- 
- 
- 
- 
+
  grad_x = cv.Sobel(src, ddepth, 1, 0, ksize=3, scale=scale, delta=delta, borderType=cv.BORDER_DEFAULT)
  # Gradient-Y
  # grad_y = cv.Scharr(gray,ddepth,0,1)
@@ -39,11 +32,9 @@ def main(argv):
  
  
  grad = cv.addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0)
- 
- 
- cv.imshow(window_name, grad)
- cv.waitKey(0)
- 
+
+ cv.imwrite(argv[0][:-4]+"_sobel.png", grad)
+
  return 0
 
 if __name__ == "__main__":
