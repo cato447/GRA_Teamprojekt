@@ -10,7 +10,7 @@
 #define LINES_PER_THREAD 200
 
 void thread_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out) {
-    if (width >= 16 && height > LINES_PER_THREAD) {
+    if (width * 3 * height >= 16 * 3 + 3 + 3 && height >= LINES_PER_THREAD) {
         size_t amountThreads = height / LINES_PER_THREAD - (height % LINES_PER_THREAD == 0 ? 1 : 0);
         pthread_t threads[amountThreads];
 

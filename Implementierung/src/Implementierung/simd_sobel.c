@@ -3,17 +3,17 @@
 #include "simd_sobel.h"
 
 void simd_sobel(uint8_t* img_in, size_t width, size_t height, uint8_t* img_out) {
-    if (width >= 16 && height >= 3) {
+    if (width * 3 * height >= 16 * 3 + 3 + 3 && height >= 3) {
         __m128i zeroEvenBytesMask = _mm_set_epi16(ZERO_EVEN_BYTES_MASK);
         __m128i comparer = _mm_set_epi16(COMP_255);
 
-        size_t i;
+        size_t i = width * 3 + 3;
 
-        for (i = width * 3 + 3; i < width * (height-1) * 3 - 3 - 16; i += 16) {
+        for ( ; i < width * (height - 1) * 3 - 3 - 16; i += 16) {
             computeSIMDSobel(img_in, i, width, img_out, zeroEvenBytesMask, comparer);
         }
 
-        for ( ; i < width * (height-1) * 3 - 3; ++i) {
+        for ( ; i < width * (height - 1) * 3 - 3; ++i) {
             uint8_t upperLeft = *(img_in + i - width * 3 - 3);
             uint8_t upper = *(img_in + i - width * 3);
             uint8_t upperRight = *(img_in + i - width * 3 + 3);
