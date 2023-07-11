@@ -1,4 +1,5 @@
 #include "basic_sobel.h"
+
 #include <stdlib.h>
 
 const int8_t M_v[3][3] = { { 1, 0, -1 },
