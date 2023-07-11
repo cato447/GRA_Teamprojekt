@@ -72,9 +72,9 @@ int testSobel() {
     size_t reference_buffer_size = loadPicture(MUSTER_REF_PATH, reference_bmpImage);
 
     if (reference_buffer_size == 0) {
-        fprintf(stderr, "Couldn't load picture\n");
+        fprintf(stderr, "Failed loading reference picture\n");
         free(newPixels);
-        freeBmpImg(reference_bmpImage);
+        free(reference_bmpImage);
         return 1;
     }
 
