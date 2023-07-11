@@ -133,7 +133,20 @@ Durch die Verdunkelung wird der Überlauf zwar verhindert das Output Bild ist je
 \end{figure}
 Dieses Problem wurde behoben, indem die Farbwerte der Pixel als 16 Bit Integer während der Berechnung gespeichert werden.
 Dabei werden insgesamt 16 xmm Register benutzt, um jeweils die Sobel Werte für 2 Pixel zu berechnen.
-
+\begin{figure}[H]
+    \begin{subfigure}{.5\columnwidth}
+        \centering
+        \includegraphics[width=\columnwidth]{graphics/simd.png}
+        \caption{Finale SIMD Version}
+        \label{fig:final-simd}
+    \end{subfigure}
+    \begin{subfigure}{.5\columnwidth}
+        \centering
+        \includegraphics[width=\columnwidth]{graphics/basic.png}
+        \caption{Vergleichsimplementierung}
+        \label{fig:vergleich}
+    \end{subfigure}
+\end{figure}
 
 \subsection{SIMD Implementierung mit Threading}
 Die SIMD Implementierung mit Threading basiert auf der SIMD Implementierung mit der Besonderheit, dass das Bild in Abschnitte eigneteilt und diese Abschnitte von Threads bearbeitet werden.
@@ -142,7 +155,7 @@ Das horizontale Zerteilen des Bildes hat den Vorteil, dass der Cache besser genu
 Desweiteren besteht der Vorteil fortlaufende Indexe bei der Berechnung zu benutzen und nicht wie zum Beispiel bei einer Aufteilung in Quadranten diese Indexe aufwändig berechenen zu müssen.
 
 \section{Genauigkeit}
-Wir haben uns dafür entschieden, die Genauigkeit unseres Lösungsansatzes zu analysieren, da es keine fest definierte "source of truth" wie zum Beispiel bei einer Mathematischen Berechnung gibt.
+Wir haben uns dafür entschieden die Genauigkeit unseres Lösungsansatzes zu analysieren, da es keine fest definierte ''Source of truth'' wie zum Beispiel bei einer Mathematischen Berechnung gibt.
 Öffentlich existierende Sobel Filter Implementierungen wie zum Beispiel die von OpenCV
 \section{Performanzanalyse}
 
