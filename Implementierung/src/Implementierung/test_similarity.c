@@ -26,6 +26,7 @@ static int setup(char *pathSobelImage, size_t height, size_t width, uint8_t *ref
     sobel_buffer_size = loadPicture(pathSobelImage, sobelImage);
     if (sobel_buffer_size == 0) {
         fprintf(stderr, "Couldn't load sobel image %s\n", pathSobelImage);
+        free(sobelImage);
         return 1;
     }
     ref_pixels = reference_pixel_array;
@@ -36,12 +37,8 @@ static int setup(char *pathSobelImage, size_t height, size_t width, uint8_t *ref
 }
 
 static void tearDown() {
-    if (sobelImage) {
-        if (sobelImage->pxArray) {
-            free(sobelImage->pxArray);
-        }
-        free(sobelImage);
-    }
+    free(sobelImage->pxArray);    
+    free(sobelImage);
 }
 
 static int testSimilarity() {
@@ -50,10 +47,10 @@ static int testSimilarity() {
 }
 
 int runTestSimilarity(char *pathSobelImage, size_t reference_img_height, size_t reference_img_width, uint8_t *reference_pixel_array, size_t reference_px_array_size) {
-    startTesting(__BASE_FILE__);
     if (setup(pathSobelImage, reference_img_height, reference_img_width, reference_pixel_array, reference_px_array_size) == 1) {
-        tearDown();
+        return 1;
     }
+    startTesting(__BASE_FILE__);
     runTest(testSimilarity);
     tearDown();
     stopTesting();
