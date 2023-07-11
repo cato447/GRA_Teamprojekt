@@ -152,15 +152,18 @@ int parseArgs(int argc, char *argv[], config *config_params) {
     }
 
     strncpy(config_params->inputFilePath, argv[0], input_path_len);
-    for (char *c = config_params->inputFilePath; *c; c++) {
-        *c = tolower(*c);
-    }
 
     //Set outputFilePath if not given
     if (config_params->outputFilePath == NULL) {
+        char searchString[input_path_len];
+        strncpy(searchString, config_params->inputFilePath, input_path_len);
+        for (char *c = searchString; *c; c++) {
+            *c = tolower(*c);
+        }
+
         size_t len_input_name;
-        if (strstr(config_params->inputFilePath, BMP_EXTENSION) !=
-            config_params->inputFilePath + input_path_len - strlen(BMP_EXTENSION) - 1) {
+        if (strstr(searchString, BMP_EXTENSION) !=
+            searchString + input_path_len - strlen(BMP_EXTENSION) - 1) {
             len_input_name = input_path_len - 1;
         } else {
             len_input_name = input_path_len - strlen(BMP_EXTENSION) - 1;
@@ -172,7 +175,8 @@ int parseArgs(int argc, char *argv[], config *config_params) {
         }
 
         strncpy(config_params->outputFilePath, config_params->inputFilePath, len_input_name);
-        strncat(config_params->outputFilePath, OUTPUT_MARK, strlen(OUTPUT_MARK) + 1);
+        strncat(config_params->outputFilePath, OUTPUT_MARK, 
+        strlen(OUTPUT_MARK) + 1);
     }
     return 0;
 }
@@ -259,11 +263,14 @@ int main(int argc, char *argv[]) {
     uBMPImage exportImage = {.pxArray = newPixels, .pxArraySize = bmpImage->pxArraySize, .pxHeight = bmpImage->pxHeight, .pxWidth = bmpImage->pxWidth};
     size_t newSize;
     char *newBuf = arrayToBmp(&exportImage, &newSize);
+    free(newPixels);
 
     printf("Writing to file %s\n", config_params.outputFilePath);
     if(writeFile(config_params.outputFilePath, newBuf, newSize)){
         freeImage(bmpImage);
         dealloc_config_params(&config_params);
+        free(newBuf);
+        return 1;
     }
     free(newBuf);
     //#---------------------
@@ -291,7 +298,6 @@ int main(int argc, char *argv[]) {
         printf("Percentage io/calc = %f%% \n", (io_time/avg_exec_time) * 100);
     }
 
-    free(newPixels);
     freeImage(bmpImage);
     dealloc_config_params(&config_params);
     return 0;
