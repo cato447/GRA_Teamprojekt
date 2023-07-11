@@ -1,7 +1,7 @@
 TARGET = program
 
 CC = gcc
-CFLAGS = -O0 -g -std=c17 -Wall -Wpedantic -msse4.2
+CFLAGS = -O3 -g -std=c17 -Wall -Wpedantic -msse4.2
 
 OUTDIR = ./build
 SUBDIR = src src/Implementierung src/IOSystem src/Testsystem
