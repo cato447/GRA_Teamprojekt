@@ -1,10 +1,12 @@
-#include "basic_sobel.h"
 #include <stddef.h>
+#include <pthread.h>
+#include <stdio.h>
+
+#include "basic_sobel.h"
 #include "immintrin.h"
 #include "simd_sobel.h"
-#include <pthread.h>
 #include "thread_sobel.h"
-#include <stdio.h>
+
 #define LINES_PER_THREAD 200
 
 void thread_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out) {
