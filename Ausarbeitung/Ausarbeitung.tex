@@ -82,14 +82,15 @@ Um einen Pixel mit den Filtermatritzen zu verrechnen, werden die Werte der Filte
 \begin{equation}
     A_(x,y)^{h,F} = \sum_{i=-1}^{1} \sum_{j=-1}^{1} M^{h}_{i,j} * B_{(x+i,y+j)}^{F}
 \end{equation}
-Pixel, die sich am Rand des Bildes befinden, können nicht mit allen Werten der Filtermatritzen verrechnet werden.
-Der Fall wird behandelt, indem die Sobelwerte dieser Pixel als schwarz angenommen werden. Hierdurch entsteht ein schwarzer Rand um das Bild. \\\\
 Um nun den Sobelwert eines Pixels zu berechnen wird der Betrag der horizontalen und vertikalen Sobelwerte berechnet.
 \begin{equation}
     O^{F}_{x,y} = \left | A^{v,F}_{x,y} \right | + \left | A^{h,F}_{x,y} \right |
     \label{eq:betrag}
 \end{equation}
-Normalerweise wird dieser Schritt mit der Wurzel der Summe der Quadrate berechnet.
+Pixel, die sich am Rand des Bildes befinden, können nicht mit allen Werten der Filtermatritzen verrechnet werden.
+Der Fall wird behandelt, indem die Sobelwerte dieser Pixel als schwarz angenommen werden. Hierdurch entsteht ein schwarzer Rand um das Bild.
+\\\\
+Normalerweise wird im letzten Schritt der Endgültige Sobel Wert mit der Wurzel der Summe der Quadrate berechnet.
 \begin{equation}
     O^{F}_{x,y} = \sqrt{(A^{v,F}_{x,y})^2 + (A^{h,F}_{x,y})^2}
     \label{eq:wurzel}
@@ -101,7 +102,7 @@ Normalerweise wird dieser Schritt mit der Wurzel der Summe der Quadrate berechne
         \caption{Abs Version \ref{eq:betrag}}
         \label{fig:abs-bild}
     \end{subfigure}
-    \begin{subfigure}{.5\columnwidth}
+        \begin{subfigure}{.5\columnwidth}
         \centering
         \includegraphics[width=\columnwidth]{graphics/sqrt_sobel.png}
         \caption{Sqrt Version \ref{eq:wurzel}}
@@ -109,16 +110,40 @@ Normalerweise wird dieser Schritt mit der Wurzel der Summe der Quadrate berechne
     \end{subfigure}
 \end{figure}
 Zwischen {\ref{fig:abs-bild}} und {\ref{fig:sqrt-bild}} besteht nur ein kleiner Unterschied in der Helligkeit des Bildes, was für Kantenerkennung nicht relevant ist.
-Da keine brauchbare SIMD Instruktion zur Berechnung der Wurzel eines 8 bzw. 16 Bit Integer existiert haben wir uns für die Variante {\ref{eq:betrag}} entschieden.
-
+Da keine brauchbare SIMD Instruktion zur Berechnung der Wurzel eines 8 bzw. 16 Bit Integer existiert und diese Version als Vergleichsimplementierung genutzt werden soll, haben wir uns für die Variante {\ref{eq:betrag}} entschieden.
 \subsection{SIMD Implementierung}
+Die SIMD Implementierung basiert auf der Vergleichsimplementierung benutzt zur Berechnung jedoch SIMD Instruktionen.
+Ein großes Problem an der naiven Übersetzung waren Byteoverflows.
+Da die Werte Farbwerte der Pixel als 8 Bit Integer gespeichert werden, kann es bei der Multiplikation zu einem Überlauf kommen.
+Um dem entgegen zu wirken haben wir das Input Bild einfach um 75\% verdunkelt.
+Durch die Verdunkelung wird der Überlauf zwar verhindert das Output Bild ist jedoch auch dunkler {\ref{fig:dark}}, was die erkannten Kanten nicht mehr gut sichtbar macht.
+\begin{figure}[H]
+    \begin{subfigure}{.5\columnwidth}
+        \centering
+        \includegraphics[width=\columnwidth]{graphics/dark.png}
+        \caption{Erste SIMD Version}
+        \label{fig:dark}
+    \end{subfigure}
+    \begin{subfigure}{.5\columnwidth}
+        \centering
+        \includegraphics[width=\columnwidth]{graphics/correct.png}
+        \caption{Vergleichsimplementierung}
+        \label{fig:correct}
+    \end{subfigure}
+\end{figure}
+Dieses Problem wurde behoben, indem die Farbwerte der Pixel als 16 Bit Integer während der Berechnung gespeichert werden.
+Dabei werden insgesamt 16 xmm Register benutzt, um jeweils die Sobel Werte für 2 Pixel zu berechnen.
+
 
 \subsection{SIMD Implementierung mit Threading}
+Die SIMD Implementierung mit Threading basiert auf der SIMD Implementierung mit der Besonderheit, dass das Bild in Abschnitte eigneteilt und diese Abschnitte von Threads bearbeitet werden.
+Die Abschnitte entstehen dadurch, dass man das Bild in horizontale Streifen einteilt. Die Anzahl der Streifen hängt davon ab wie viele Zeilen pro Thread berechnet werden sollen.
+Das horizontale Zerteilen des Bildes hat den Vorteil, dass der Cache besser genutzt wird als zum Beispiel beim Aufteilen in Quadranten, weil die Daten hintereinander Zeile für Zeile im Speicher liegen.
+Desweiteren besteht der Vorteil fortlaufende Indexe bei der Berechnung zu benutzen und nicht wie zum Beispiel bei einer Aufteilung in Quadranten diese Indexe aufwändig berechenen zu müssen.
 
 \section{Genauigkeit}
-
-TODO: Geben Sie hier die Genauigkeit Ihres Lösungsansatzes ein.
-
+Wir haben uns dafür entschieden, die Genauigkeit unseres Lösungsansatzes zu analysieren, da es keine fest definierte "source of truth" wie zum Beispiel bei einer Mathematischen Berechnung gibt.
+Öffentlich existierende Sobel Filter Implementierungen wie zum Beispiel die von OpenCV
 \section{Performanzanalyse}
 
 TODO: Geben Sie hier die Performanz Ihres Lösungsansatzes ein.
