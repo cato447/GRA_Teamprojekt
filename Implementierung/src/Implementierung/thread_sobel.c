@@ -65,8 +65,8 @@ void *computeSobelForHeightInterval(void *args) {
     size_t toY = arguments.toY;
     uint8_t *img_out = arguments.img_out;
 
-    __m128i comparer = _mm_loadu_si128((const __m128i*) COMP_255);
-    __m128i zeroEvenBytesMask = _mm_loadu_si128((const __m128i *) ZERO_EVEN_BYTES_MASK);
+    __m128i comparer = _mm_set_epi16(COMP_255);
+    __m128i zeroEvenBytesMask = _mm_set_epi16(ZERO_EVEN_BYTES_MASK);
 
     //printf("Calculating from %zu to %zu\n", fromY, toY);
 
