@@ -7,8 +7,26 @@ void simd_sobel(uint8_t* img_in, size_t width, size_t height, uint8_t* img_out) 
         __m128i zeroEvenBytesMask = _mm_set_epi16(ZERO_EVEN_BYTES_MASK);
         __m128i comparer = _mm_set_epi16(COMP_255);
 
-        for (size_t i = width * 3 + 3; i < width * (height-1) * 3 - 3 - 16; i += 16) {
+        size_t i;
+
+        for (i = width * 3 + 3; i < width * (height-1) * 3 - 3 - 16; i += 16) {
             computeSIMDSobel(img_in, i, width, img_out, zeroEvenBytesMask, comparer);
+        }
+
+        for ( ; i < width * (height-1) * 3 - 3; ++i) {
+            uint8_t upperLeft = *(img_in + i - width * 3 - 3);
+            uint8_t upper = *(img_in + i - width * 3);
+            uint8_t upperRight = *(img_in + i - width * 3 + 3);
+            uint8_t left = *(img_in + i - 3);
+            uint8_t right = *(img_in + i + 3);
+            uint8_t lowerLeft = *(img_in + i + width * 3 - 3);
+            uint8_t lower = *(img_in + i + width * 3);
+            uint8_t lowerRight = *(img_in + i + width * 3 + 3);
+
+            int32_t A_v = upperLeft - lowerLeft + 2 * upper - 2 * lower + upperRight - lowerRight;
+            int32_t A_h = upperLeft - upperRight + 2 * left - 2 * right + lowerLeft - lowerRight;
+
+            *(img_out + i) = abs(A_v) + abs(A_h) > 255 ? 255 : abs(A_v) + abs(A_h);
         }
     } else {
         sobel(img_in, width, height, img_out);
