@@ -106,11 +106,10 @@ void tearDown() {
 }
 
 int runTestsSobel(void) {
-    startTesting(__BASE_FILE__);
     if (setUp() == 1) {
-        tearDown();
         return 1;
     }
+    startTesting(__BASE_FILE__);
     runTest(testColorOfPixelRed);
     runTest(testColorOfPixelBlue);
     runTest(testColorOfPixelGreen);
