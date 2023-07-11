@@ -14,8 +14,10 @@ static size_t sobel_buffer_size;
 static uBMPImage *sobelImage;
 static uint8_t *ref_pixels;
 static size_t ref_px_array_size;
+static size_t image_height;
+static size_t image_width;
 
-static int setup(char *pathSobelImage, uint8_t *reference_pixel_array, size_t reference_px_array_size) {
+static int setup(char *pathSobelImage, size_t height, size_t width, uint8_t *reference_pixel_array, size_t reference_px_array_size) {
     sobelImage = malloc(sizeof(uBMPImage));
     if (sobelImage == NULL) {
         fprintf(stderr, "Failed allocating memory for sobelImage\n");
@@ -28,6 +30,8 @@ static int setup(char *pathSobelImage, uint8_t *reference_pixel_array, size_t re
     }
     ref_pixels = reference_pixel_array;
     ref_px_array_size = reference_px_array_size;
+    image_height = height;
+    image_width = width;
     return 0;
 }
 
@@ -41,14 +45,14 @@ static void tearDown() {
 }
 
 static int testSimilarity() {
-    double similarity = compareImages(ref_pixels, ref_px_array_size,
+    double similarity = compareImages(ref_pixels, ref_px_array_size, image_width, image_height,
                                       (uint8_t *) sobelImage->pxArray, sobelImage->pxArraySize * sizeof(pixel24_t));
     return ASSERT_EQUAL_DOUBLE(1.0, similarity, 1e-9);
 }
 
-int runTestSimilarity(char *pathSobelImage, uint8_t *reference_pixel_array, size_t reference_px_array_size) {
+int runTestSimilarity(char *pathSobelImage, size_t reference_img_height, size_t reference_img_width, uint8_t *reference_pixel_array, size_t reference_px_array_size) {
     startTesting(__BASE_FILE__);
-    if (setup(pathSobelImage, reference_pixel_array, reference_px_array_size) == 1) {
+    if (setup(pathSobelImage, reference_img_height, reference_img_width, reference_pixel_array, reference_px_array_size) == 1) {
         tearDown();
     }
     runTest(testSimilarity);

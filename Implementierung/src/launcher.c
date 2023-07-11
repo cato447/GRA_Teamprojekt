@@ -250,7 +250,10 @@ int main(int argc, char *argv[]) {
     char *newBuf = arrayToBmp(&exportImage, &newSize);
 
     printf("Writing to file %s\n", config_params.outputFilePath);
-    writeFile(config_params.outputFilePath, newBuf, newSize);
+    if(writeFile(config_params.outputFilePath, newBuf, newSize)){
+        freeImage(bmpImage);
+        dealloc_config_params(&config_params);
+    }
     free(newBuf);
     //#---------------------
 
@@ -262,13 +265,10 @@ int main(int argc, char *argv[]) {
             dealloc_config_params(&config_params);
             return 1;
         }
-        // We use version 0 as a reference for the optimized Versions testing the output of version 0 against the output of version 0 is pointless
-        //if (config_params->version != 0) {
         printf("Comparing generated output image to output of version 0 algorithm\n");
         sobel((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, sobelReferenceVersion);
-        runTestSimilarity(config_params.outputFilePath, sobelReferenceVersion,
+        runTestSimilarity(config_params.outputFilePath, bmpImage->pxHeight, bmpImage->pxWidth, sobelReferenceVersion,
                           bmpImage->pxArraySize * sizeof(pixel24_t));
-        //}
         free(sobelReferenceVersion);
     }
 

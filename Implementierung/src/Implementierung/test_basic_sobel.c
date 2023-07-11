@@ -79,6 +79,7 @@ int testSobel() {
 
     double similarity = compareImages((uint8_t *) newPixels,
                                       bmpImage->pxArraySize * sizeof(pixel24_t),
+                                      bmpImage->pxWidth, bmpImage->pxHeight,
                                       (uint8_t *) reference_bmpImage->pxArray,
                                       reference_bmpImage->pxArraySize * sizeof(pixel24_t));
 
