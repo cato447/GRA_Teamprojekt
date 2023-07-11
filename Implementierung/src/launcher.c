@@ -152,15 +152,18 @@ int parseArgs(int argc, char *argv[], config *config_params) {
     }
 
     strncpy(config_params->inputFilePath, argv[0], input_path_len);
-    for (char *c = config_params->inputFilePath; *c; c++) {
-        *c = tolower(*c);
-    }
 
     //Set outputFilePath if not given
     if (config_params->outputFilePath == NULL) {
+        char searchString[input_path_len];
+        strncpy(searchString, config_params->inputFilePath, input_path_len);
+        for (char *c = searchString; *c; c++) {
+            *c = tolower(*c);
+        }
+
         size_t len_input_name;
-        if (strstr(config_params->inputFilePath, BMP_EXTENSION) !=
-            config_params->inputFilePath + input_path_len - strlen(BMP_EXTENSION) - 1) {
+        if (strstr(searchString, BMP_EXTENSION) !=
+            searchString + input_path_len - strlen(BMP_EXTENSION) - 1) {
             len_input_name = input_path_len - 1;
         } else {
             len_input_name = input_path_len - strlen(BMP_EXTENSION) - 1;
