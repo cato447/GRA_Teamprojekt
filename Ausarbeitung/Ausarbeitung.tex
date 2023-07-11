@@ -19,11 +19,10 @@
 
 \section{Einleitung}
 
-In diesem Projekt haben wir uns damit beschäftigt den Sobel-Filter Algorithmus zu implementieren.
-Der Algorithmus wird dazu verwendet um Kanten in Bildern zu erkennen.
-Dabei werden die Pixel eines Bildes mit zwei Matritzen verrechnet.
-Diese Matritzen werden auch Filter genannt.
-Die aus der Verrechnung resultierenden Werte werden dann in einem neuen Bild gespeichert.
+In diesem Projekt haben wir uns damit beschäftigt, den Sobel-Filter Algorithmus zu implementieren.
+Dieser Algorithmus wird verwendet, um Kanten in Bildern zu erkennen.
+Dabei werden die Pixel eines Bildes mit zwei Matritzen, sogenannte Filter, verrechnet.
+Die aus dieser Verrechnung resultierenden Werte werden dann in einem neuen Bild gespeichert.
 \begin{figure}[H]
     \begin{subfigure}{.5\columnwidth}
         \centering
@@ -110,13 +109,13 @@ Normalerweise wird im letzten Schritt der Endgültige Sobel Wert mit der Wurzel 
     \end{subfigure}
 \end{figure}
 Zwischen {\ref{fig:abs-bild}} und {\ref{fig:sqrt-bild}} besteht nur ein kleiner Unterschied in der Helligkeit des Bildes, was für Kantenerkennung nicht relevant ist.
-Da keine brauchbare SIMD Instruktion zur Berechnung der Wurzel eines 8 bzw. 16 Bit Integer existiert und diese Version als Vergleichsimplementierung genutzt werden soll, haben wir uns für die Variante {\ref{eq:betrag}} entschieden.
+Da keine SIMD-Instruktion zur Berechnung der Wurzel eines 8 bzw. 16 Bit Integers existiert und diese Version als Vergleichsimplementierung genutzt werden soll, haben wir uns für die Variante {\ref{eq:betrag}} entschieden.
 \subsection{SIMD Implementierung}
-Die SIMD Implementierung basiert auf der Vergleichsimplementierung benutzt zur Berechnung jedoch SIMD Instruktionen.
-Ein großes Problem an der naiven Übersetzung waren Byteoverflows.
-Da die Werte Farbwerte der Pixel als 8 Bit Integer gespeichert werden, kann es bei der Multiplikation zu einem Überlauf kommen.
-Um dem entgegen zu wirken haben wir das Input Bild einfach um 75\% verdunkelt.
-Durch die Verdunkelung wird der Überlauf zwar verhindert das Output Bild ist jedoch auch dunkler {\ref{fig:dark}}, was die erkannten Kanten nicht mehr gut sichtbar macht.
+Die SIMD Implementierung basiert auf der Vergleichsimplementierung, benutzt zur Berechnung jedoch SIMD Instruktionen.
+Ein großes Problem, bei der Arbeit mit 8-Bit-Ganzzahlen ist der kleine Wertebereich.
+Da die Werte der einzelnen Farbchannel der Pixel als 8 Bit Integer gespeichert werden, kann es folglich bei der Faltungsoperation schnell zu einem Überlauf kommen.
+Der naive Lösungsansatz, um dem entgegen zu wirken, ist das Input-Bild einfach um 75\% zu verdunkeln.
+Durch die Verdunkelung wird der Überlauf zwar verhindert, das Output Bild ist jedoch auch (wesentlich) dunkler {\ref{fig:dark}}, wodurch die erkannten Kanten signifikant dunkler werden.
 \begin{figure}[H]
     \begin{subfigure}{.5\columnwidth}
         \centering
@@ -131,31 +130,27 @@ Durch die Verdunkelung wird der Überlauf zwar verhindert das Output Bild ist je
         \label{fig:correct}
     \end{subfigure}
 \end{figure}
-Dieses Problem wurde behoben, indem die Farbwerte der Pixel als 16 Bit Integer während der Berechnung gespeichert werden.
-Dabei werden insgesamt 16 xmm Register benutzt, um jeweils die Sobel Werte für 2 Pixel zu berechnen.
-\begin{figure}[H]
-    \begin{subfigure}{.5\columnwidth}
-        \centering
-        \includegraphics[width=\columnwidth]{graphics/simd.png}
-        \caption{Finale SIMD Version}
-        \label{fig:final-simd}
-    \end{subfigure}
-    \begin{subfigure}{.5\columnwidth}
-        \centering
-        \includegraphics[width=\columnwidth]{graphics/basic.png}
-        \caption{Vergleichsimplementierung}
-        \label{fig:vergleich}
-    \end{subfigure}
-\end{figure}
+Um trotz Vektorinstruktionen und sehr kleinen Wertebereichen ein Ergebnis zu erzielen,
+das - bis auf den linken und rechten Rand - exakt der Vergleichsimplementierung entspricht,
+werden die Daten aus einem 16-Byte-Speicherbereich so in zwei Vektoren geladen, dass während der Berechnung je 8 Byte
+als 16-Bit-Integer interpretiert werden können.
+Dabei werden insgesamt 16 xmm Register benutzt, um jeweils die Sobel Werte für 16 Farbchannel zu berechnen.
+Das funktioniert so, dass ein 16 Byte-Speicherbereich gelesen wird und anschließend das jeweils höherwertige Byte eines jeden
+16-Bit-Integers in diesem Vektor mit einer Bitmaske genullt wird. Das geschieht analog mit den 16-Byte an der um einen Byte höheren Speicheradresse.
+Für jeden der 16 Farbchannel, die mit einem Schleifendurchlauf berechnet werden können, werden so die acht umliegenden
+Farbchannel geladen. Dadurch lassen sich die Farbwerte für 16 Byte gleichzeitig berechnen. Durch den dadurch entstehenden Overhead
+ist dieser Lösungsansatz zwar ca. nur halb so schnell, wie der naive SIMD-Ansatz, erzeugt jedoch wesentlich
+akkuratere Ergebnisse, weshalb das Programm auch diesen Ansatz implementiert. In Relation zur Vergleichsimplementierung erzielt dieser
+Ansatz in etwa einen Speedup von x10.
 
-\subsection{SIMD Implementierung mit Threading}
-Die SIMD Implementierung mit Threading basiert auf der SIMD Implementierung mit der Besonderheit, dass das Bild in Abschnitte eigneteilt und diese Abschnitte von Threads bearbeitet werden.
-Die Abschnitte entstehen dadurch, dass man das Bild in horizontale Streifen einteilt. Die Anzahl der Streifen hängt davon ab wie viele Zeilen pro Thread berechnet werden sollen.
-Das horizontale Zerteilen des Bildes hat den Vorteil, dass der Cache besser genutzt wird als zum Beispiel beim Aufteilen in Quadranten, weil die Daten hintereinander Zeile für Zeile im Speicher liegen.
-Desweiteren besteht der Vorteil fortlaufende Indexe bei der Berechnung zu benutzen und nicht wie zum Beispiel bei einer Aufteilung in Quadranten diese Indexe aufwändig berechenen zu müssen.
+\subsection{SIMD-Implementierung mit Threading}
+Die SIMD-Implementierung mit Threading basiert auf der SIMD-Implementierung mit der Besonderheit, dass das Bild in Abschnitte eingeteilt werden, die jeweils von einem eigenen Thread bearbeitet werden.
+Um diese Abschnitte zu erzeugen, wird das Bild in horizontale Streifen geschnitten. Die Anzahl dieser Streifen hängt davon ab, wie viele Zeilen pro Thread berechnet werden sollen.
+Das horizontale Zerteilen des Bildes hat den Vorteil, dass der Cache besser genutzt wird, als zum Beispiel beim Aufteilen in Quadranten, weil die Daten hintereinander Zeile für Zeile im Speicher liegen.
+Desweiteren besteht der Vorteil, fortlaufende Indizes bei der Berechnung nutzen zu können und nicht, wie zum Beispiel bei einer Aufteilung in Quadranten, diese Indizes aufwendig berechenen zu müssen.
 
 \section{Genauigkeit}
-Wir haben uns dafür entschieden die Genauigkeit unseres Lösungsansatzes zu analysieren, da es keine fest definierte ''Source of truth'' wie zum Beispiel bei einer Mathematischen Berechnung gibt.
+Wir haben uns dafür entschieden, die Genauigkeit unseres Lösungsansatzes zu analysieren, da es bei Kantenerkennung keine fest definierte "source of truth", wie zum Beispiel bei einer pur mathematischen Operation, gibt.
 Öffentlich existierende Sobel Filter Implementierungen wie zum Beispiel die von OpenCV
 \section{Performanzanalyse}
 
@@ -169,6 +164,6 @@ TODO: Geben Sie hier eine kurze Zusammenfassung und einen Ausblick ein.
 % Referenzieren Sie diese dann mit \cite{}.
 % Beispiel: CR2 ist ein Register der x86-Architektur~\cite{intel2017man}.
 \bibliographystyle{plain}
-\bibliography{Ausarbeitung}{}
+\bibliography{Ausarbeitung}
 
 \end{document}
