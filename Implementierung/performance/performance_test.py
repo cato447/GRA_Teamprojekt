@@ -1,11 +1,13 @@
 import cv2 as cv
 import glob
 import subprocess
+import sys
 import os
 import re
 import pandas as pd
 import matplotlib.pyplot as plt
 import time
+from tqdm import tqdm
 
 
 def get_pixel_count(path: str):
@@ -33,7 +35,10 @@ if __name__ == "__main__":
     execTimes = []
     ioTimes = []
     pixelNum = []
-    version = "0"
+    if (len(sys.argv) != 2):
+        sys.exit("Wrong number of args expected python performance_test.py [version]")
+
+    version = sys.argv[1]
     for test_file in test_files:
         print(f"Running program for input {test_file}")
         process = subprocess.run(["./program", "-V", version, "-B10", "-o", "output.bmp", test_file], stdout=subprocess.PIPE)

@@ -1,6 +1,7 @@
 //
 // Created by Cato on 22.06.23.
 //
+#define _POSIX_C_SOURCE 199309L
 
 #define _POSIX_C_SOURCE 199309L
 
@@ -11,14 +12,20 @@
 #include <getopt.h>
 #include <stdlib.h>
 #include <string.h>
-#include <alloca.h>
 #include <time.h>
+
+
+#ifdef _WIN32
+#include <pthread_time.h>
+#endif
 
 #include "IOSystem/IO_tools.h"
 #include "IOSystem/bmp_parser.h"
 #include "IOSystem/test_functionality.h"
 #include "launcher.h"
 #include "Implementierung/basic_sobel.h"
+#include "Implementierung/simd_sobel.h"
+#include "Implementierung/thread_sobel.h"
 #include "Implementierung/test_basic_sobel.h"
 #include "Implementierung/test_similarity.h"
 
@@ -209,6 +216,18 @@ int main(int argc, char *argv[]) {
             case 0:
                 clock_gettime(CLOCK_MONOTONIC, &start_exec);
                 sobel((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, newPixels);
+                clock_gettime(CLOCK_MONOTONIC, &end_exec);
+                exec_time += end_exec.tv_sec - start_exec.tv_sec + 1e-9 * (end_exec.tv_nsec - start_exec.tv_nsec);
+                break;
+            case 1:
+                clock_gettime(CLOCK_MONOTONIC, &start_exec);
+                simd_sobel((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, newPixels);
+                clock_gettime(CLOCK_MONOTONIC, &end_exec);
+                exec_time += end_exec.tv_sec - start_exec.tv_sec + 1e-9 * (end_exec.tv_nsec - start_exec.tv_nsec);
+                break;
+            case 2:
+                clock_gettime(CLOCK_MONOTONIC, &start_exec);
+                thread_sobel((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, newPixels);
                 clock_gettime(CLOCK_MONOTONIC, &end_exec);
                 exec_time += end_exec.tv_sec - start_exec.tv_sec + 1e-9 * (end_exec.tv_nsec - start_exec.tv_nsec);
                 break;

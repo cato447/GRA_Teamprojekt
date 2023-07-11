@@ -24,7 +24,6 @@ static int setup(char *pathSobelImage, uint8_t *reference_pixel_array, size_t re
     sobel_buffer_size = loadPicture(pathSobelImage, sobelImage);
     if (sobel_buffer_size == 0) {
         fprintf(stderr, "Couldn't load sobel image %s\n", pathSobelImage);
-        free(sobelImage);
         return 1;
     }
     ref_pixels = reference_pixel_array;
