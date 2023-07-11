@@ -148,7 +148,7 @@ akkuratere Ergebnisse, weshalb das Programm auch diesen Ansatz implementiert.
 \subsection{SIMD-Implementierung mit Threading}
 \label{sec:simd-threading}
 Die SIMD-Implementierung mit Threading basiert auf der SIMD-Implementierung mit der Besonderheit, dass das Bild in Abschnitte eingeteilt werden, die jeweils von einem eigenen Thread bearbeitet werden.
-Um diese Abschnitte zu erzeugen, wird das Bild in horizontale Streifen geschnitten. Die Anzahl dieser Streifen hängt davon ab, wie viele Zeilen pro Thread berechnet werden sollen.
+Um diese Abschnitte zu erzeugen, wird das Bild in horizontale Streifen geschnitten. Die Anzahl der Streifen wird von der Anzahl der durch die CPU bereitgesellten Threads bestimmt. Dies führt zu einer Optimalen Auslastung der CPU.
 Das horizontale Zerteilen des Bildes hat den Vorteil, dass der Cache besser genutzt wird, als zum Beispiel beim Aufteilen in Quadranten, weil die Daten hintereinander Zeile für Zeile im Speicher liegen.
 Desweiteren besteht der Vorteil, fortlaufende Indizes bei der Berechnung nutzen zu können und nicht, wie zum Beispiel bei einer Aufteilung in Quadranten, diese Indizes aufwendig berechenen zu müssen.
 
