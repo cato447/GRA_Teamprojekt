@@ -44,19 +44,19 @@ void print_help_msg(void) {
 }
 
 void dealloc_config_params(config *config_params) {
-    if (config_params) {
-        if (config_params->inputFilePath) {
+    if (config_params != NULL) {
+        if (config_params->inputFilePath != NULL) {
             free(config_params->inputFilePath);
         }
-        if (config_params->outputFilePath) {
+        if (config_params->outputFilePath != NULL) {
             free(config_params->outputFilePath);
         }
     }
 }
 
 void freeImage(uBMPImage *img) {
-    if (img) {
-        if (img->pxArray) {
+    if (img != NULL) {
+        if (img->pxArray != NULL) {
             free(img->pxArray);
         }
         free(img);
@@ -113,8 +113,9 @@ int parseArgs(int argc, char *argv[], config *config_params) {
                 }
                 size_t outputPathLen = strlen(optarg) + 1;
                 config_params->outputFilePath = malloc(outputPathLen);
-                if (!config_params->outputFilePath) {
-                    fprintf(stderr, "Couldn't allocate memory for outputFilePath\n");
+                if (config_params->outputFilePath == NULL) {
+                    fprintf(stderr, "Failed allocating memory for outputFilePath\n");
+                    return 1;
                 }
                 strncpy(config_params->outputFilePath, optarg, outputPathLen);
                 break;
@@ -145,6 +146,11 @@ int parseArgs(int argc, char *argv[], config *config_params) {
 
     size_t input_path_len = strlen(argv[0]) + 1;
     config_params->inputFilePath = malloc(input_path_len);
+    if (config_params->inputFilePath == NULL) {
+        fprintf(stderr, "Failed allocating memory for inputFilePath\n");
+        return 1;
+    }
+
     strncpy(config_params->inputFilePath, argv[0], input_path_len);
     for (char *c = config_params->inputFilePath; *c; c++) {
         *c = tolower(*c);
@@ -160,6 +166,11 @@ int parseArgs(int argc, char *argv[], config *config_params) {
             len_input_name = input_path_len - strlen(BMP_EXTENSION) - 1;
         }
         config_params->outputFilePath = malloc(len_input_name + strlen(OUTPUT_MARK) + 1);
+        if (config_params->outputFilePath == NULL) {
+            fprintf(stderr, "Failed allocating memory for outputFilePath\n");
+            return 1;
+        }
+
         strncpy(config_params->outputFilePath, config_params->inputFilePath, len_input_name);
         strncat(config_params->outputFilePath, OUTPUT_MARK, strlen(OUTPUT_MARK) + 1);
     }
@@ -174,8 +185,8 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     uBMPImage *bmpImage = malloc(sizeof(uBMPImage));
-    if (!bmpImage) {
-        fprintf(stderr, "Couldn't allocate memory for bmpImage\n");
+    if (bmpImage == NULL) {
+        fprintf(stderr, "Failed allocating memory for bmpImage\n");
         dealloc_config_params(&config_params);
         return 1;
     }
@@ -260,7 +271,7 @@ int main(int argc, char *argv[]) {
     if (config_params.run_tests || config_params.measure_performance) {
         uint8_t *sobelReferenceVersion = calloc(bmpImage->pxArraySize, sizeof(uint8_t));
         if (sobelReferenceVersion == NULL) {
-            fprintf(stderr, "Couldn't allocate memory for sobelReferenceVersion\n");
+            fprintf(stderr, "Failed allocating memory for sobelReferenceVersion\n");
             freeImage(bmpImage);
             dealloc_config_params(&config_params);
             return 1;

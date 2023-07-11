@@ -16,10 +16,6 @@ size_t loadPicture(char *path, uBMPImage *img) {
         fprintf(stderr, "Couldn't read BMP File\n");
         return 0;
     }
-    if (img == NULL) {
-        fprintf(stderr, "img was not initialized\n");
-        return 0;
-    }
     if (bmpToArray(buffer, buffer_size, img) == 1) {
         fprintf(stderr, "Couldn't parse BMP file");
         free(buffer);
