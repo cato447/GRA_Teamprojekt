@@ -1,0 +1,5 @@
+fileName,execTime,ioTime,pixelNum,version
+../performance/sample_images/sample_640x427.bmp,0.000625,0.001598,273280,2
+../performance/sample_images/sample_1280x853.bmp,0.001963,0.006212,1091840,2
+../performance/sample_images/sample_1920x1280.bmp,0.005574,0.015951,2457600,2
+../performance/sample_images/sample_3840x2160.bmp,0.014113,0.050049,8294400,2

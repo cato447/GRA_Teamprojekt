@@ -75,6 +75,10 @@ void thread_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out
         for (size_t i = 0; i < amountThreads; ++i) {
             pthread_join(threads[i], NULL);
         }
+        for (size_t y = 0; y < height; y++) {
+            setPixelAt(img_out, width, 0, y, 0, 0, 0);
+            setPixelAt(img_out, width, width-1, y, 0, 0, 0);
+        }
     } else {
         //If image is too small for the thread logic to work properly, fall back to normal simd
         simd_sobel(img_in, width, height, img_out);
