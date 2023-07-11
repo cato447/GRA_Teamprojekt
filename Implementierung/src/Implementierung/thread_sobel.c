@@ -4,11 +4,12 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <immintrin.h>
+#include <sys/sysinfo.h>
 
 #include "basic_sobel.h"
 #include "simd_sobel.h"
 
-#define LINES_PER_THREAD 200
+//#define LINES_PER_THREAD 1400
 
 typedef struct sobelIntervalArgs {
     uint8_t* img_in;
@@ -39,6 +40,11 @@ void *computeSobelForHeightInterval(void *args) {
 }
 
 void thread_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out) {
+    size_t hwThreads = get_nprocs();
+    size_t LINES_PER_THREAD = 300;
+    if (hwThreads > 1) {
+        LINES_PER_THREAD = height / (hwThreads-1);
+    }
     if (width * 3 * height >= 16 * 3 + 3 + 3 && height >= LINES_PER_THREAD) {
         size_t amountThreads = height / LINES_PER_THREAD - (height % LINES_PER_THREAD == 0 ? 1 : 0);
         pthread_t threads[amountThreads];
