@@ -28,5 +28,5 @@ for i in range(1, width+1):
         generate(i,j)
         name = "random" + str(i) + "x" + str(j) + ".bmp"
         print(name)
-        subprocess.run(["../../build/program", "-V", "1", "-B10", "-o", "temp.bmp", name])
+        subprocess.run(["../../build/program", "-t", "-V", "1", "-o", "temp.bmp", name])
         os.remove(name)
