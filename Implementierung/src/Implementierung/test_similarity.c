@@ -41,18 +41,18 @@ static void tearDown() {
     free(sobelImage);
 }
 
-static int testSimilarity() {
+void testSimilarity() {
     double similarity = compareImages(ref_pixels, ref_px_array_size, image_width, image_height, sobelImage->pxArray, sobelImage->pxArraySize);
-    return ASSERT_EQUAL_DOUBLE(1.0, similarity, 1e-9);
+    ASSERT_EQUAL_DOUBLE(1.0, similarity, 1e-9);
 }
 
 int runTestSimilarity(char *pathSobelImage, size_t reference_img_height, size_t reference_img_width, uint8_t *reference_pixel_array, size_t reference_px_array_size) {
     if (setup(pathSobelImage, reference_img_height, reference_img_width, reference_pixel_array, reference_px_array_size) == 1) {
         return 1;
     }
-    startTesting(__BASE_FILE__);
-    runTest(testSimilarity);
+    START_TESTING;
+    RUN_TEST(testSimilarity);
+    STOP_TESTING;
     tearDown();
-    stopTesting();
     return 0;
 }

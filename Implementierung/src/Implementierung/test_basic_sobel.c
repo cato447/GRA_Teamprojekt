@@ -23,25 +23,25 @@ int freeBmpImg(uBMPImage *img) {
     return 0;
 }
 
-int testColorOfPixelRed() {
+void testColorOfPixelRed() {
     int x = 1;
     int y = 1;
-    return ASSERT_EQUAL_U_INT8(34, colorOfPixel(bmpImage->pxArray, bmpImage->pxWidth, x, y, RED));
+    ASSERT_EQUAL_U_INT8(34, colorOfPixel(bmpImage->pxArray, bmpImage->pxWidth, x, y, RED));
 }
 
-int testColorOfPixelGreen() {
+void testColorOfPixelGreen() {
     int x = 2;
     int y = 2;
-    return ASSERT_EQUAL_U_INT8(133, colorOfPixel(bmpImage->pxArray, bmpImage->pxWidth, x, y, GREEN));
+    ASSERT_EQUAL_U_INT8(133, colorOfPixel(bmpImage->pxArray, bmpImage->pxWidth, x, y, GREEN));
 }
 
-int testColorOfPixelBlue() {
+void testColorOfPixelBlue() {
     int x = 2;
     int y = 1;
-    return ASSERT_EQUAL_U_INT8(102, colorOfPixel(bmpImage->pxArray, bmpImage->pxWidth, x, y, BLUE));
+    ASSERT_EQUAL_U_INT8(102, colorOfPixel(bmpImage->pxArray, bmpImage->pxWidth, x, y, BLUE));
 }
 
-int testSetColorOfPixel() {
+void testSetColorOfPixel() {
     uint8_t red = 32;
     uint8_t green = 42;
     uint8_t blue = 52;
@@ -50,41 +50,39 @@ int testSetColorOfPixel() {
 
     uint8_t* pxArrayCopy = malloc(bmpImage->pxArraySize);
     if (pxArrayCopy == NULL) {
-        fprintf(stderr, "Failed allocating memory for pxArrayCopy\n");
-        return 0;
+        FAIL("Failed allocating memory for pxArrayCopy\n");
+        return;
     }
 
     setPixelAt(pxArrayCopy, bmpImage->pxWidth, x, y, red, green, blue);
-    int passed = 1;
-    passed &= ASSERT_EQUAL_U_INT8(red, colorOfPixel(pxArrayCopy, bmpImage->pxWidth, x, y, RED));
-    passed &= ASSERT_EQUAL_U_INT8(green, colorOfPixel(pxArrayCopy, bmpImage->pxWidth, x, y, GREEN));
-    passed &= ASSERT_EQUAL_U_INT8(blue, colorOfPixel(pxArrayCopy, bmpImage->pxWidth, x, y, BLUE));
+    ASSERT_EQUAL_U_INT8(red, colorOfPixel(pxArrayCopy, bmpImage->pxWidth, x, y, RED));
+    ASSERT_EQUAL_U_INT8(green, colorOfPixel(pxArrayCopy, bmpImage->pxWidth, x, y, GREEN));
+    ASSERT_EQUAL_U_INT8(blue, colorOfPixel(pxArrayCopy, bmpImage->pxWidth, x, y, BLUE));
 
     free(pxArrayCopy);
-    return passed;
 }
 
-int testSobel() {
+void testSobel() {
     uint8_t *newPixels = calloc(bmpImage->pxArraySize, sizeof(uint8_t));
     if (newPixels == NULL) {
-        fprintf(stderr, "Failed allocating memory for newPixels\n");
-        return 1;
+        FAIL("Failed allocating memory for newPixels\n");
+        return;
     }
     sobel((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, (uint8_t *) newPixels);
 
     uBMPImage *reference_bmpImage = malloc(sizeof(uBMPImage));
     if (reference_bmpImage == NULL) {
-        fprintf(stderr, "Failed allocating memory for reference_bmpImage\n");
+        FAIL("Failed allocating memory for reference_bmpImage\n");
         free(newPixels);
-        return 1;
+        return;
     }
     
     size_t reference_buffer_size = loadPicture(MUSTER_REF_PATH, reference_bmpImage);
     if (reference_buffer_size == 0) {
-        fprintf(stderr, "Failed loading reference picture\n");
+        FAIL("Failed loading reference picture\n");
         free(newPixels);
         free(reference_bmpImage);
-        return 1;
+        return;
     }
 
     double similarity = compareImages(newPixels, bmpImage->pxArraySize, bmpImage->pxWidth, bmpImage->pxHeight,
@@ -93,7 +91,7 @@ int testSobel() {
     freeBmpImg(reference_bmpImage);
     free(newPixels);
 
-    return ASSERT_EQUAL_DOUBLE(1.0, similarity, 1e-9);
+    ASSERT_EQUAL_DOUBLE(1.0, similarity, 1e-9);
 }
 
 int setUp() {
@@ -118,13 +116,13 @@ int runTestsSobel(void) {
     if (setUp() == 1) {
         return 1;
     }
-    startTesting(__BASE_FILE__);
-    runTest(testColorOfPixelRed);
-    runTest(testColorOfPixelBlue);
-    runTest(testColorOfPixelGreen);
-    runTest(testSetColorOfPixel);
-    testSobel();
+    START_TESTING;
+    RUN_TEST(testColorOfPixelRed);
+    RUN_TEST(testColorOfPixelBlue);
+    RUN_TEST(testColorOfPixelGreen);
+    RUN_TEST(testSetColorOfPixel);
+    RUN_TEST(testSobel);
+    STOP_TESTING;
     tearDown();
-    stopTesting();
     return 0;
 }
