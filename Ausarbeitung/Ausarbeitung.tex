@@ -178,11 +178,13 @@ Dies wurde nicht umgesetzt, damit die selben Ergebnisse mit den optimierten Vers
 Bei der Bewertung der Genauigkeit wird dir Vergleichsimplementierung als Referenzpunkt genommen. Sie gilt als das richtige Ergebnis und ist, um Fehler zu vermeiden, so simpel gehalten wie nur irgendwie möglich.
 Die mathematische Defintion, wie in \ref{sec:vergleichsimplementierung} beschrieben, wurde ohne weiter Optimierungen umgesetzt.
 Des weiteren wurden Unittests hinzugefügt, die überprüfen, dass die Hilfsfunktionen korrekt implementiert sind.
-Die beiden Versionen SIMD \ref{sec:simd-implementierung} und SIMD Threading \ref{sec:simd-threading} weichen von der Vergleichsimplementierung nur gering ab.
-Dies hat mit den Pixelen am Rand zu tun, die nicht korrekt berechnet werden können, da die Nachbarn fehlen.
-Diese aus der SIMD und SIMD + Threading Berechnung rauszufiltern wie es die Vergleichsoptimierung tut \ref{sec:rand} wäre möglich, würde jedoch die Effizienz der Optimierungen beeinträchtigen.
-Hierfür gibt es auch einen automatisierten Test, der überprüft ob die Ergebnisse der SIMD und SIMD + Threading Versionen mit den
-Ergebnissen der Vergleichsimplementierung bis auf die beiden äußerenen Ränder übereinstimmen.
+Die beiden Versionen SIMD \ref{sec:simd-implementierung} und SIMD Threading \ref{sec:simd-threading} entsprechen der Vergleichsimplementierung exakt.
+Dies wird erreicht, in dem der schwarze Rand an den beiden Seiten künstlich nach der Berechnung hinzugefügt wird. Dies hat einen kleinen performance overhead, der aber kaum spürbar ist.
+\\\\
+*TODO: Performance overhead zeigen*
+\\\\
+Es gibt außerdem einen automatisierten Test, der überprüft ob die Ergebnisse der SIMD und SIMD + Threading Versionen mit den
+Ergebnissen der Vergleichsimplementierung übereinstimmen.
 
 \section{Performanzanalyse}
 
