@@ -2,166 +2,214 @@
 #include <stdio.h>
 #include <string.h>
 
-struct TestResults testResults;
+#define C_RED "\x1b[31m"
+#define C_GREEN "\x1b[32m"
+#define C_YELLOW "\x1b[33m"
+#define C_BLUE "\x1b[34m"
+#define C_RESET "\x1b[0m"
+
+struct TestResults {
+    int testsRun;
+    int testsPassed;
+} testResults;
+
+int assertFailure = 0;
 
 void startTesting(char* fileName) {
     testResults.testsRun = 0;
     testResults.testsPassed = 0;
-    fprintf(stdout, "--------------------\n");
-    fprintf(stdout, "Running tests of %s\n", fileName);
+    printf("\n+─────────────────────────────────────────────────────────────────────\n");
+    printf("│ " C_BLUE "Running tests of %s" C_RESET "\n│\n", fileName);
 }
 
 void stopTesting() {
-    fprintf(stdout, "%d of %d Tests passed\n", testResults.testsPassed, testResults.testsRun);
+    if (testResults.testsPassed == testResults.testsRun) {
+        printf("│\n│ " C_GREEN "%d of %d Tests passed" C_RESET "\n", testResults.testsPassed, testResults.testsRun);
+    } else if (testResults.testsPassed > (testResults.testsRun / 2)) {
+        printf("│\n│ " C_YELLOW "%d of %d Tests passed" C_RESET "\n", testResults.testsPassed, testResults.testsRun);
+    } else {
+        printf("│\n│ " C_RED "%d of %d Tests passed" C_RESET "\n", testResults.testsPassed, testResults.testsRun);
+    }
+    printf("+─────────────────────────────────────────────────────────────────────\n\n");
 }
 
-static void printSuccessMessage(const char *funcName, int fileNum) {
-    fprintf(stdout, "PASS %s:%d\n", funcName, fileNum);
+static void assertPass(const char *funcName, int lineNum) {
+    printf("│  █" C_GREEN "     PASS %s:%d" C_RESET "\n", funcName, lineNum);
+}
+static void assertFailMsg(const char* funcName, int lineNum) {
+    assertFailure = true;
+    printf("│  █" C_RED "     FAIL %s:%d  ▶  " C_RESET, funcName, lineNum);
+}
+static void assertFailNoMsg(const char* funcName, int lineNum) {
+    assertFailure = true;
+    printf("│  █" C_RED "     FAIL %s:%d" C_RESET "\n", funcName, lineNum);
 }
 
-void runTest(int (*f)()) {
-    if (f() == 0) {
+void runTest(void (*f)(), const char* f_name) {
+    assertFailure = false;
+    printf("│  ▂ ❯ %s\n", f_name);
+    f();
+    if (!assertFailure) {
         testResults.testsPassed++;
     }
     testResults.testsRun++;
 }
 
-int unitAssert(bool condition, const char *funcName, int fileNum) {
+int unitFail(char* message, const char *funcName, int lineNum) {
+    assertFailMsg(funcName, lineNum);
+    printf("%s\n", message);
+    return 1;
+}
+
+int unitAssert(bool condition, const char *funcName, int lineNum) {
     if (condition) {
-        printSuccessMessage(funcName, fileNum);
+        assertPass(funcName, lineNum);
 	return 0;
     } else {
-        fprintf(stderr, "Fail %s:%d\n", funcName, fileNum);
-	return 1;
+        assertFailNoMsg(funcName, lineNum);
+	    return 1;
     }
 }
 
-int unitAssertFalse(bool condition, const char *funcName, int fileNum) {
+int unitAssertFalse(bool condition, const char *funcName, int lineNum) {
     if (condition) {
-        fprintf(stderr, "Fail %s:%d Expected false but was true\n", funcName, fileNum);
+        assertFailMsg(funcName, lineNum);
+        printf("Expected FALSE but was TRUE\n");
         return 1;
     } else {
-        printSuccessMessage(funcName, fileNum);
+        assertPass(funcName, lineNum);
         return 0;
     }
 }
 
-int unitAssertTrue(bool condition, const char *funcName, int fileNum) {
+int unitAssertTrue(bool condition, const char *funcName, int lineNum) {
     if (condition) {
-        printSuccessMessage(funcName, fileNum);
+        assertPass(funcName, lineNum);
         return 0;
     } else {
-        fprintf(stderr, "FAIL %s:%d Expected true but was false\n", funcName, fileNum);
+        assertFailMsg(funcName, lineNum);
+        printf("Expected TRUE but was FALSE\n");
         return 1;
     }
 }
 
-int unitAssertEqualInt(const int expected, const int actual, const char *funcName, int fileNum) {
+int unitAssertEqualInt(const int expected, const int actual, const char *funcName, int lineNum) {
     if (expected != actual) {
-        fprintf(stderr, "FAIL %s:%d Expected %d but was %d\n", funcName, fileNum, expected, actual);
+        assertFailMsg(funcName, lineNum);
+        printf("Expected %d but was %d\n", expected, actual);
         return 1;
     } else {
-        printSuccessMessage(funcName, fileNum);
+        assertPass(funcName, lineNum);
         return 0;
     }
 }
 
-int unitAssertEqualInt8(const int8_t expected, const int8_t actual, const char *funcName, int fileNum) {
+int unitAssertEqualInt8(const int8_t expected, const int8_t actual, const char *funcName, int lineNum) {
     if (expected != actual) {
-        fprintf(stderr, "FAIL %s:%d Expected %d but was %d\n", funcName, fileNum, expected, actual);
+        assertFailMsg(funcName, lineNum);
+        printf("Expected %d but was %d\n", expected, actual);
         return 1;
     } else {
-        printSuccessMessage(funcName, fileNum);
+        assertPass(funcName, lineNum);
         return 0;
     }
 }
 
-int unitAssertEqualUInt8(const uint8_t expected, const uint8_t actual, const char *funcName, int fileNum) {
+int unitAssertEqualUInt8(const uint8_t expected, const uint8_t actual, const char *funcName, int lineNum) {
     if (expected != actual) {
-        fprintf(stderr, "FAIL %s:%d Expected %u but was %u\n", funcName, fileNum, expected, actual);
+        assertFailMsg(funcName, lineNum);
+        printf("Expected %u but was %u\n", expected, actual);
         return 1;
     } else {
-        printSuccessMessage(funcName, fileNum);
+        assertPass(funcName, lineNum);
         return 0;
     }
 }
 
-int unitAssertEqualInt16(const int16_t expected, const int16_t actual, const char *funcName, int fileNum) {
+int unitAssertEqualInt16(const int16_t expected, const int16_t actual, const char *funcName, int lineNum) {
     if (expected != actual) {
-        fprintf(stderr, "FAIL %s:%d Expected %d but was %d\n", funcName, fileNum, expected, actual);
+        assertFailMsg(funcName, lineNum);
+        printf("Expected %d but was %d\n", expected, actual);
         return 1;
     } else {
-        printSuccessMessage(funcName, fileNum);
+        assertPass(funcName, lineNum);
         return 0;
     }
 }
 
-int unitAssertEqualUInt16(const uint16_t expected, const uint16_t actual, const char *funcName, int fileNum) {
+int unitAssertEqualUInt16(const uint16_t expected, const uint16_t actual, const char *funcName, int lineNum) {
     if (expected != actual) {
-        fprintf(stderr, "FAIL %s:%d Expected %u but was %u\n", funcName, fileNum, expected, actual);
+        assertFailMsg(funcName, lineNum);
+        printf("Expected %u but was %u\n", expected, actual);
         return 1;
     } else {
-        printSuccessMessage(funcName, fileNum);
+        assertPass(funcName, lineNum);
         return 0;
     }
 }
 
-int unitAssertEqualInt32(const int32_t expected, const int32_t actual, const char *funcName, int fileNum) {
+int unitAssertEqualInt32(const int32_t expected, const int32_t actual, const char *funcName, int lineNum) {
     if (expected != actual) {
-        fprintf(stderr, "FAIL %s:%d Expected %d but was %d\n", funcName, fileNum, expected, actual);
+        assertFailMsg(funcName, lineNum);
+        printf("Expected %d but was %d\n", expected, actual);
         return 1;
     } else {
-        printSuccessMessage(funcName, fileNum);
+        assertPass(funcName, lineNum);
         return 0;
     }
 }
 
-int unitAssertEqualUInt32(const uint32_t expected, const uint32_t actual, const char *funcName, int fileNum) {
+int unitAssertEqualUInt32(const uint32_t expected, const uint32_t actual, const char *funcName, int lineNum) {
     if (expected != actual) {
-        fprintf(stderr, "FAIL %s:%d Expected %u but was %u\n", funcName, fileNum, expected, actual);
+        assertFailMsg(funcName, lineNum);
+        printf("Expected %u but was %u\n", expected, actual);
         return 1;
     } else {
-        printSuccessMessage(funcName, fileNum);
+        assertPass(funcName, lineNum);
         return 0;
     }
 }
 
-int unitAssertEqualInt64(const int64_t expected, const int64_t actual, const char *funcName, int fileNum) {
+int unitAssertEqualInt64(const int64_t expected, const int64_t actual, const char *funcName, int lineNum) {
     if (expected != actual) {
-        fprintf(stderr, "FAIL %s:%d Expected %" PRId64 " but was %" PRId64 "\n", funcName, fileNum, expected, actual);
+        assertFailMsg(funcName, lineNum);
+        printf("Expected %" PRId64 " but was %" PRId64 "\n", expected, actual);
         return 1;
     } else {
-        printSuccessMessage(funcName, fileNum);
+        assertPass(funcName, lineNum);
         return 0;
     }
 }
 
-int unitAssertEqualUInt64(const uint64_t expected, const uint64_t actual, const char *funcName, int fileNum) {
+int unitAssertEqualUInt64(const uint64_t expected, const uint64_t actual, const char *funcName, int lineNum) {
     if (expected != actual) {
-        fprintf(stderr, "FAIL %s:%d Expected %" PRIu64 " but was %" PRIu64 "\n", funcName, fileNum, expected, actual);
+        assertFailMsg(funcName, lineNum);
+        printf("Expected %" PRIu64 " but was %" PRIu64 "\n", expected, actual);
         return 1;
     } else {
-        printSuccessMessage(funcName, fileNum);
+        assertPass(funcName, lineNum);
         return 0;
     }
 }
 
-int unitAssertEqualString(const char *expected, const char *actual, const char *funcName, int fileNum) {
+int unitAssertEqualString(const char *expected, const char *actual, const char *funcName, int lineNum) {
     if (strcmp(expected, actual) == 0) {
-        printSuccessMessage(funcName, fileNum);
+        assertPass(funcName, lineNum);
         return 0;
     } else {
-        fprintf(stderr, "FAIL %s:%d Expected \"%s\" but was \"%s\"\n", funcName, fileNum, expected, actual);
+        assertFailMsg(funcName, lineNum);
+        printf("Expected \"%s\" but was \"%s\"\n", expected, actual);
         return 1;
     }
 }
 
-int unitAssertDouble(const double expected, const double actual, double tolerance, const char *funcName, int fileNum) {
+int unitAssertDouble(const double expected, const double actual, double tolerance, const char *funcName, int lineNum) {
     if (expected + tolerance > actual && expected - tolerance  < actual){
-        printSuccessMessage(funcName, fileNum);
+        assertPass(funcName, lineNum);
         return 0;
     } else {
-        fprintf(stderr, "FAIL %s:%d Expected %f but was %f\n", funcName, fileNum, expected, actual);
+        assertFailMsg(funcName, lineNum);
+        printf("Expected %f but was %f\n", expected, actual);
         return 1;
     }
 }

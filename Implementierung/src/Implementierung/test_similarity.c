@@ -50,9 +50,9 @@ int runTestSimilarity(char *pathSobelImage, size_t reference_img_height, size_t 
     if (setup(pathSobelImage, reference_img_height, reference_img_width, reference_pixel_array, reference_px_array_size) == 1) {
         return 1;
     }
-    startTesting(__BASE_FILE__);
-    runTest(testSimilarity);
+    START_TESTING;
+    RUN_TEST(testSimilarity);
+    STOP_TESTING;
     tearDown();
-    stopTesting();
     return 0;
 }
