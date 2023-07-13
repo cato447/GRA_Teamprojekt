@@ -42,7 +42,7 @@ static void tearDown() {
 }
 
 static int testSimilarity() {
-    double similarity = compareImages(ref_pixels, ref_px_array_size, image_width, image_height, sobelImage->pxArray, sobelImage->pxArraySize);
+    double similarity = compareImages(ref_pixels, ref_px_array_size,sobelImage->pxArray, sobelImage->pxArraySize);
     return ASSERT_EQUAL_DOUBLE(1.0, similarity, 1e-9);
 }
 
