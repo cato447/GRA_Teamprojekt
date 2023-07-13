@@ -85,7 +85,7 @@ void testSobel() {
         return;
     }
 
-    double similarity = compareImages(newPixels, bmpImage->pxArraySize, bmpImage->pxWidth, bmpImage->pxHeight,
+    double similarity = compareImages(newPixels, bmpImage->pxArraySize,
                                       reference_bmpImage->pxArray, reference_bmpImage->pxArraySize);
 
     freeBmpImg(reference_bmpImage);
