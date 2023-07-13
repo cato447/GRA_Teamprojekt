@@ -45,6 +45,27 @@ void sobel(const uint8_t* img_in, size_t width, size_t height, uint8_t* img_out)
     }
 }
 
+void sobel_graysc(const uint8_t* img_in, size_t width, size_t height, uint8_t* img_out) {
+    for (size_t x = 1; x < width - 1; ++x) {
+        for (size_t y = 1; y < height - 1; ++y) {
+            int32_t A_v = 0;
+            int32_t A_h = 0;
+
+            for (int8_t i = -1; i <= 1; i++) {
+                for (int8_t j = -1; j <= 1; j++) {
+                    A_v += (int32_t)(M_v[1 + i][1 + j] * img_in[(y + j) * width + x + i]);
+                    A_h += (int32_t)(M_h[1 + i][1 + j] * img_in[(y + j) * width + x + i]);
+                }
+            }
+
+            int32_t A = abs(A_v) + abs(A_h);
+
+            //Cap value at 255
+            img_out[y * width + x] = A > 255 ? 255 : A;
+        }
+    }
+}
+
 uint8_t colorOfPixel(const uint8_t *img, size_t width, size_t x, size_t y, enum Color color) {
     // Pixel are 24 bit wide to compensate this we multiply x and y by 3
     return *(img + (width * 3) * y + x * 3 + color);
