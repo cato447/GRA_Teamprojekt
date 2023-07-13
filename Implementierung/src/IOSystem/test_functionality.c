@@ -24,3 +24,21 @@ size_t loadPicture(char *path, uBMPImage *img) {
     free(buffer);
     return buffer_size;
 }
+
+size_t loadPicture_graysc(char *path, uBMPImage *img) {
+    void *buffer;
+    size_t buffer_size;
+    buffer = readFile(path, &buffer_size);
+
+    if (buffer == NULL) {
+        fprintf(stderr, "Couldn't read BMP File\n");
+        return 0;
+    }
+    if (bmpToArray_graysc(buffer, buffer_size, img) == 1) {
+        fprintf(stderr, "Couldn't parse BMP file");
+        free(buffer);
+        return 0;
+    }
+    free(buffer);
+    return buffer_size;
+}

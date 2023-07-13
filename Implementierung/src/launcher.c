@@ -72,7 +72,7 @@ void print_arg_error(char *errorMsg) {
 int parseArgs(int argc, char *argv[], config *config_params) {
     static struct option longopts[] = {
             {"help", no_argument, NULL, 'h'},
-            {NULL,   0,           NULL, 0}
+            {NULL, 0,             NULL, 0}
     };
 
     int ch;
@@ -85,6 +85,11 @@ int parseArgs(int argc, char *argv[], config *config_params) {
                     return 1;
                 }
                 config_params->version = (uint8_t) strtoul(optarg, NULL, 10);
+                // check if version is 0,1 or 2
+                if (config_params->version > 2) {
+                    print_arg_error("Version number is not valid");
+                    return 1;
+                }
                 break;
             case 'B':
                 config_params->measure_performance = true;
@@ -175,8 +180,8 @@ int parseArgs(int argc, char *argv[], config *config_params) {
         }
 
         strncpy(config_params->outputFilePath, config_params->inputFilePath, len_input_name);
-        strncat(config_params->outputFilePath, OUTPUT_MARK, 
-        strlen(OUTPUT_MARK) + 1);
+        strncat(config_params->outputFilePath, OUTPUT_MARK,
+                strlen(OUTPUT_MARK) + 1);
     }
     return 0;
 }
@@ -220,39 +225,44 @@ int main(int argc, char *argv[]) {
         runTestsSobel();
     }
 
-    double exec_time = 0;
-    int num_of_execute_cycles = config_params.measure_performance ? config_params.measure_performance_cycles : 1;
-    for (int i = 1; i <= num_of_execute_cycles; ++i) {
-        printf("\rCycles run: %d/%d", i, num_of_execute_cycles);
-        fflush(stdout);
-        struct timespec start_exec;
-        struct timespec end_exec;
-        switch (config_params.version) {
-            case 0:
-                clock_gettime(CLOCK_MONOTONIC, &start_exec);
-                sobel((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, newPixels);
-                clock_gettime(CLOCK_MONOTONIC, &end_exec);
-                exec_time += end_exec.tv_sec - start_exec.tv_sec + 1e-9 * (end_exec.tv_nsec - start_exec.tv_nsec);
-                break;
-            case 1:
-                clock_gettime(CLOCK_MONOTONIC, &start_exec);
-                simd_sobel((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, newPixels);
-                clock_gettime(CLOCK_MONOTONIC, &end_exec);
-                exec_time += end_exec.tv_sec - start_exec.tv_sec + 1e-9 * (end_exec.tv_nsec - start_exec.tv_nsec);
-                break;
-            case 2:
-                clock_gettime(CLOCK_MONOTONIC, &start_exec);
-                thread_sobel((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, newPixels);
-                clock_gettime(CLOCK_MONOTONIC, &end_exec);
-                exec_time += end_exec.tv_sec - start_exec.tv_sec + 1e-9 * (end_exec.tv_nsec - start_exec.tv_nsec);
-                break;
-            default:
-                fprintf(stderr, "Version %d not implemented", config_params.version);
-                freeImage(bmpImage);
-                dealloc_config_params(&config_params);
-                free(newPixels);
-                return 1;
+    struct timespec start_exec;
+    struct timespec end_exec;
+    double exec_time;
+    long num_of_execute_cycles = config_params.measure_performance ? config_params.measure_performance_cycles : 1;
+    if (config_params.measure_performance) {
+        printf("Running performance tests\n");
+        if (clock_gettime(CLOCK_MONOTONIC, &start_exec) != 0) {
+            fprintf(stderr, "Couldn't get start_exec time\n");
+            return 1;
         }
+    }
+    switch (config_params.version) {
+        case 0:
+            for (long i = 0; i < num_of_execute_cycles; ++i) {
+                sobel((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight,
+                                                     newPixels);
+            }
+            break;
+        case 1:
+            for (long i = 0; i < num_of_execute_cycles; ++i) {
+                simd_sobel((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight,
+                                                     newPixels);
+            }
+            break;
+        case 2:
+            for (long i = 0; i < num_of_execute_cycles; ++i) {
+                thread_sobel((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight,
+                                                     newPixels);
+            }
+            break;
+    }
+    if (config_params.measure_performance) {
+        if(clock_gettime(CLOCK_MONOTONIC, &end_exec) != 0) {
+            fprintf(stderr, "Couldn't get end_exec time\n");
+            return 1;
+        }
+        exec_time = end_exec.tv_sec - start_exec.tv_sec + 1e-9 * (end_exec.tv_nsec - start_exec.tv_nsec);
+        printf("Performance testing took %.17gs to run %ld iterations\n", exec_time, config_params.measure_performance_cycles);
     }
 
     printf("\nCalculated sobel for image %s using version %d\n", config_params.inputFilePath, config_params.version);
@@ -266,7 +276,7 @@ int main(int argc, char *argv[]) {
     free(newPixels);
 
     printf("Writing to file %s\n", config_params.outputFilePath);
-    if(writeFile(config_params.outputFilePath, newBuf, newSize)){
+    if (writeFile(config_params.outputFilePath, newBuf, newSize)) {
         freeImage(bmpImage);
         dealloc_config_params(&config_params);
         free(newBuf);
@@ -285,17 +295,17 @@ int main(int argc, char *argv[]) {
         }
         printf("Comparing generated output image to output of version 0 algorithm\n");
         sobel(bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, sobelReferenceVersion);
-        runTestSimilarity(config_params.outputFilePath, bmpImage->pxHeight, bmpImage->pxWidth, sobelReferenceVersion,
+        runTestSimilarity(config_params.outputFilePath, sobelReferenceVersion,
                           bmpImage->pxArraySize);
         free(sobelReferenceVersion);
     }
 
     if (config_params.measure_performance) {
         double avg_exec_time = exec_time / config_params.measure_performance_cycles;
-        printf("Sobel calculation from version %d took on average %f seconds\n", config_params.version,
+        printf("Sobel calculation from version %d took on average %.17fs\n", config_params.version,
                avg_exec_time);
-        printf("Loading the image took %f seconds\n", io_time);
-        printf("Percentage io/calc = %f%% \n", (io_time/avg_exec_time) * 100);
+        printf("Loading the image took %.17gs\n", io_time);
+        printf("Percentage io/calc = %f%% \n", (io_time / avg_exec_time) * 100);
     }
 
     freeImage(bmpImage);

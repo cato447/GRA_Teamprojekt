@@ -11,7 +11,7 @@
 typedef struct config_ {
     uint8_t version;
     bool measure_performance;
-    uint32_t measure_performance_cycles;
+    long measure_performance_cycles;
     bool run_tests;
     char *outputFilePath;
     char *inputFilePath;
