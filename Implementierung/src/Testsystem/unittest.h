@@ -4,6 +4,12 @@
 #include <stdbool.h>
 #include <inttypes.h>
 
+struct TestResults {
+    int testsRun;
+    int testsPassed;
+    int assertFailure;
+} testResults;
+
 // Controls
 void startTesting(char* fileName);
 void stopTesting();

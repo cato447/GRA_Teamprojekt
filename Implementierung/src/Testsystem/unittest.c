@@ -8,16 +8,12 @@
 #define C_BLUE "\x1b[34m"
 #define C_RESET "\x1b[0m"
 
-struct TestResults {
-    int testsRun;
-    int testsPassed;
-} testResults;
-
-int assertFailure = 0;
+struct TestResults testResults;
 
 void startTesting(char* fileName) {
     testResults.testsRun = 0;
     testResults.testsPassed = 0;
+    testResults.assertFailure = 0;
     printf("\n+─────────────────────────────────────────────────────────────────────\n");
     printf("│ " C_BLUE "Running tests of %s" C_RESET "\n│\n", fileName);
 }
@@ -37,19 +33,19 @@ static void assertPass(const char *funcName, int lineNum) {
     printf("│  █" C_GREEN "     PASS %s:%d" C_RESET "\n", funcName, lineNum);
 }
 static void assertFailMsg(const char* funcName, int lineNum) {
-    assertFailure = true;
+    testResults.assertFailure = true;
     printf("│  █" C_RED "     FAIL %s:%d  ▶  " C_RESET, funcName, lineNum);
 }
 static void assertFailNoMsg(const char* funcName, int lineNum) {
-    assertFailure = true;
+    testResults.assertFailure = true;
     printf("│  █" C_RED "     FAIL %s:%d" C_RESET "\n", funcName, lineNum);
 }
 
 void runTest(void (*f)(), const char* f_name) {
-    assertFailure = false;
+    testResults.assertFailure = false;
     printf("│  ▂ ❯ %s\n", f_name);
     f();
-    if (!assertFailure) {
+    if (!testResults.assertFailure) {
         testResults.testsPassed++;
     }
     testResults.testsRun++;
