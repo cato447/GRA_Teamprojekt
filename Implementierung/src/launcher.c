@@ -204,32 +204,11 @@ int main(int argc, char *argv[]) {
     }
     printf("Loading image from %s\n", config_params.inputFilePath);
 
-    struct timespec start_io;
-    struct timespec end_io;
-    double io_time;
     size_t img_size;
-    if (config_params.measure_performance) {
-        printf("Running performance tests for Image Read\n");
-        if (clock_gettime(CLOCK_MONOTONIC, &start_io) != 0) {
-            fprintf(stderr, "Couldn't get start_io time\n");
-            return 1;
-        }
-    }
-    for(size_t i = 0; i < IO_PERFORMANCE_TEST_CYCLES; i++) {
-        // Versions 0 to 2 work with RGB images 3 to 5 with grayscale images
-        if (config_params.version < 3) {
-            img_size = loadPicture(config_params.inputFilePath, bmpImage);
-        } else {
-            img_size = loadPicture_graysc(config_params.inputFilePath, bmpImage);
-        }
-    }
-    if (config_params.measure_performance) {
-        if(clock_gettime(CLOCK_MONOTONIC, &end_io) != 0) {
-            fprintf(stderr, "Couldn't get end_io time\n");
-            return 1;
-        }
-        io_time = end_io.tv_sec - start_io.tv_sec + 1e-9 * (end_io.tv_nsec - start_io.tv_nsec);
-        printf("Performance testing took %.9fs to run %d iterations\n", io_time, IO_PERFORMANCE_TEST_CYCLES);
+    if (config_params.version < 3) {
+        img_size = loadPicture(config_params.inputFilePath, bmpImage);
+    } else {
+        img_size = loadPicture_graysc(config_params.inputFilePath, bmpImage);
     }
 
     if (img_size == 0) {
@@ -237,6 +216,34 @@ int main(int argc, char *argv[]) {
         freeImage(bmpImage);
         dealloc_config_params(&config_params);
         return 1;
+    }
+
+    struct timespec start_io;
+    struct timespec end_io;
+    double io_time;
+    if (config_params.measure_performance) {
+        printf("Running performance tests for Image Read\n");
+        if (clock_gettime(CLOCK_MONOTONIC, &start_io) != 0) {
+            fprintf(stderr, "Couldn't get start_io time\n");
+            dealloc_config_params(&config_params);
+            return 1;
+        }
+        if (config_params.version < 3){
+            for (size_t i = 0; i < IO_PERFORMANCE_TEST_CYCLES; i++){
+                img_size = loadPicture(config_params.inputFilePath, bmpImage);
+            }
+        } else {
+            for (size_t i = 0; i < IO_PERFORMANCE_TEST_CYCLES; i++){
+                img_size = loadPicture_graysc(config_params.inputFilePath, bmpImage);
+            }
+        }
+        if(clock_gettime(CLOCK_MONOTONIC, &end_io) != 0) {
+            fprintf(stderr, "Couldn't get end_io time\n");
+            dealloc_config_params(&config_params);
+            return 1;
+        }
+        io_time = end_io.tv_sec - start_io.tv_sec + 1e-9 * (end_io.tv_nsec - start_io.tv_nsec);
+        printf("Performance testing took %.9fs to run %d iterations\n", io_time, IO_PERFORMANCE_TEST_CYCLES);
     }
 
     uint8_t *newPixels = calloc(bmpImage->pxArraySize, sizeof(uint8_t));
