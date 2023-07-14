@@ -44,7 +44,7 @@ void simd_sobel_graysc(uint8_t *img_in, size_t width, size_t height, uint8_t *im
         __m128i zeroEvenBytesMask = _mm_set_epi16(ZERO_EVEN_BYTES_MASK);
         __m128i comparer = _mm_set_epi16(COMP_255);
 
-        size_t i = width + 3;
+        size_t i = width + 1;
 
         for (; i < width * (height - 1) - 1 - 16; i += 16) {
             computeSIMDSobel_graysc(img_in, i, width, img_out, zeroEvenBytesMask, comparer);
