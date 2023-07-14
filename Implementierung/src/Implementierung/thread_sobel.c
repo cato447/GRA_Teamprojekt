@@ -9,7 +9,15 @@
 #include "basic_sobel.h"
 #include "simd_sobel.h"
 
-//#define LINES_PER_THREAD 1400
+#if __linux__ == 1
+    #define THREADCALC size_t hwThreads = get_nprocs(); \
+        size_t LINES_PER_THREAD = 300; \
+        if (hwThreads > 1) { \
+            LINES_PER_THREAD = height / (hwThreads-1); \
+        }
+#else
+    #define THREADCALC size_t LINES_PER_THREAD = 300;
+#endif
 
 typedef struct sobelIntervalArgs {
     uint8_t* img_in;
@@ -31,8 +39,6 @@ void *computeSobelForHeightInterval(void *args) {
     __m128i comparer = _mm_set_epi16(COMP_255);
     __m128i zeroEvenBytesMask = _mm_set_epi16(ZERO_EVEN_BYTES_MASK);
 
-    //printf("Calculating from %zu to %zu\n", fromY, toY);
-
     for (size_t i = width * fromY * 3 + 3; i < width * toY * 3; i += 16) {
         computeSIMDSobel(img_in, i, width, img_out, zeroEvenBytesMask, comparer);
     }
@@ -40,11 +46,8 @@ void *computeSobelForHeightInterval(void *args) {
 }
 
 void thread_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out) {
-    size_t hwThreads = get_nprocs();
-    size_t LINES_PER_THREAD = 300;
-    if (hwThreads > 1) {
-        LINES_PER_THREAD = height / (hwThreads-1);
-    }
+    THREADCALC
+
     if (width * 3 * height >= 16 * 3 + 3 + 3 && height >= LINES_PER_THREAD) {
         size_t amountThreads = height / LINES_PER_THREAD - (height % LINES_PER_THREAD == 0 ? 1 : 0);
         pthread_t threads[amountThreads];
@@ -68,10 +71,7 @@ void thread_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out
             }
 
             ensureOffset = 0;
-            //printf("\nCreated Thread %d: from = %zu, to = %zu, LPT = %d\n", i, args -> fromY, args -> toY, LINES_PER_THREAD);
         }
-
-        //printf("\nCreated %zu Threads: h = %zu, LPT = %d\n", amountThreads, height, LINES_PER_THREAD);
 
         //Remaining image is calculated by normal simd_sobel with adjusted pointers and height
         size_t imgOffset = width * 3 * amountThreads * LINES_PER_THREAD - (amountThreads > 0 ? width * 3 : 0);
