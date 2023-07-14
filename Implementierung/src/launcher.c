@@ -218,32 +218,67 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    struct timespec start_io;
-    struct timespec end_io;
-    double io_time;
+    struct timespec start_read_io;
+    struct timespec end_read_io;
+    double io_read_time;
     if (config_params.measure_performance) {
         printf("Running performance tests for Image Read\n");
-        if (clock_gettime(CLOCK_MONOTONIC, &start_io) != 0) {
-            fprintf(stderr, "Couldn't get start_io time\n");
+        if (clock_gettime(CLOCK_MONOTONIC, &start_read_io) != 0) {
+            fprintf(stderr, "Couldn't get start_read_io time\n");
+            freeImage(bmpImage);
             dealloc_config_params(&config_params);
             return 1;
         }
         if (config_params.version < 3){
             for (size_t i = 0; i < IO_PERFORMANCE_TEST_CYCLES; i++){
-                img_size = loadPicture(config_params.inputFilePath, bmpImage);
+                void *buffer;
+                size_t buffer_size;
+                uBMPImage *test_bmp_image = malloc(sizeof(uBMPImage));
+                //fprintf(stdout, "Loading BMP File: %s\n", path);
+                buffer = readFile(config_params.inputFilePath, &buffer_size);
+                if (buffer == NULL) {
+                    fprintf(stderr, "Couldn't read BMP File\n");
+                    free(bmpImage);
+                    return 1;
+                }
+                if (bmpToArray(buffer, buffer_size, test_bmp_image) == 1) {
+                    fprintf(stderr, "Couldn't parse BMP file\n");
+                    free(buffer);
+                    free(bmpImage);
+                    return 1;
+                }
+                free(buffer);
+                freeImage(test_bmp_image);
             }
         } else {
             for (size_t i = 0; i < IO_PERFORMANCE_TEST_CYCLES; i++){
-                img_size = loadPicture_graysc(config_params.inputFilePath, bmpImage);
+                void *buffer;
+                size_t buffer_size;
+                uBMPImage *test_bmp_image = malloc(sizeof(uBMPImage));
+                //fprintf(stdout, "Loading BMP File: %s\n", path);
+                buffer = readFile(config_params.inputFilePath, &buffer_size);
+                if (buffer == NULL) {
+                    fprintf(stderr, "Couldn't read BMP File\n");
+                    free(bmpImage);
+                    return 1;
+                }
+                if (bmpToArray_graysc(buffer, buffer_size, test_bmp_image) == 1) {
+                    fprintf(stderr, "Couldn't parse BMP file\n");
+                    free(buffer);
+                    free(bmpImage);
+                    return 1;
+                }
+                free(buffer);
+                freeImage(test_bmp_image);
             }
         }
-        if(clock_gettime(CLOCK_MONOTONIC, &end_io) != 0) {
-            fprintf(stderr, "Couldn't get end_io time\n");
+        if(clock_gettime(CLOCK_MONOTONIC, &end_read_io) != 0) {
+            fprintf(stderr, "Couldn't get end_read_io time\n");
             dealloc_config_params(&config_params);
             return 1;
         }
-        io_time = end_io.tv_sec - start_io.tv_sec + 1e-9 * (end_io.tv_nsec - start_io.tv_nsec);
-        printf("Performance testing took %.9fs to run %d iterations\n", io_time, IO_PERFORMANCE_TEST_CYCLES);
+        io_read_time = end_read_io.tv_sec - start_read_io.tv_sec + 1e-9 * (end_read_io.tv_nsec - start_read_io.tv_nsec);
+        printf("IO read performance testing took %.9fs to run %d iterations\n", io_read_time, IO_PERFORMANCE_TEST_CYCLES);
     }
 
     uint8_t *newPixels = calloc(bmpImage->pxArraySize, sizeof(uint8_t));
@@ -314,10 +349,10 @@ int main(int argc, char *argv[]) {
             return 1;
         }
         exec_time = end_exec.tv_sec - start_exec.tv_sec + 1e-9 * (end_exec.tv_nsec - start_exec.tv_nsec);
-        printf("Performance testing took %.9fs to run %ld iterations\n", exec_time, config_params.measure_performance_cycles);
+        printf("Sobel calc performance testing took %.9fs to run %ld iterations\n", exec_time, config_params.measure_performance_cycles);
     }
 
-    printf("\nCalculated sobel for image %s using version %d\n", config_params.inputFilePath, config_params.version);
+    printf("Calculated sobel for image %s using version %d\n", config_params.inputFilePath, config_params.version);
 
     //#---------------------
     //#Erste Output Integration im Launcher - up to change
@@ -337,6 +372,39 @@ int main(int argc, char *argv[]) {
         dealloc_config_params(&config_params);
         free(newBuf);
         return 1;
+    }
+
+    struct timespec start_write_io;
+    struct timespec end_write_io;
+    double io_write_time;
+    if (config_params.measure_performance) {
+        char* testBuf;
+        printf("Running performance tests for image write\n");
+        if (clock_gettime(CLOCK_MONOTONIC, &start_write_io) != 0) {
+            fprintf(stderr, "Couldn't get start_write_io time\n");
+            dealloc_config_params(&config_params);
+            return 1;
+        }
+        if (config_params.version < 3){
+            for (size_t i = 0; i < IO_PERFORMANCE_TEST_CYCLES; i++){
+                testBuf = arrayToBmp(&exportImage, &newSize);
+                writeFile(config_params.outputFilePath, newBuf, newSize);
+                free(testBuf);
+            }
+        } else {
+            for (size_t i = 0; i < IO_PERFORMANCE_TEST_CYCLES; i++){
+                testBuf = arrayToBmp_graysc(&exportImage, &newSize);
+                writeFile(config_params.outputFilePath, newBuf, newSize);
+                free(testBuf);
+            }
+        }
+        if(clock_gettime(CLOCK_MONOTONIC, &end_write_io) != 0) {
+            fprintf(stderr, "Couldn't get end_write_io time\n");
+            dealloc_config_params(&config_params);
+            return 1;
+        }
+        io_write_time = end_write_io.tv_sec - start_write_io.tv_sec + 1e-9 * (end_write_io.tv_nsec - start_write_io.tv_nsec);
+        printf("IO write testing took %.9fs to run %d iterations\n", io_write_time, IO_PERFORMANCE_TEST_CYCLES);
     }
 
     free(newBuf);
@@ -365,11 +433,13 @@ int main(int argc, char *argv[]) {
 
     if (config_params.measure_performance) {
         double avg_exec_time = exec_time / config_params.measure_performance_cycles;
-        double avg_io_time = io_time / IO_PERFORMANCE_TEST_CYCLES;
+        double avg_io_read_time = io_read_time / IO_PERFORMANCE_TEST_CYCLES;
+        double avg_io_write_time = io_write_time / IO_PERFORMANCE_TEST_CYCLES;
         printf("Sobel calculation from version %d took on average %.9fs\n", config_params.version,
                avg_exec_time);
-        printf("Loading the image took on average %.9fs\n", avg_io_time);
-        printf("Percentage io/calc = %f%% \n", (avg_io_time / avg_exec_time) * 100);
+        printf("Loading the image took on average %.9fs\n", avg_io_read_time);
+        printf("Writing the image took on average %.9fs\n", avg_io_write_time);
+        printf("Percentage io/calc = %f%% \n", ((avg_io_read_time + avg_io_write_time) / avg_exec_time) * 100);
     }
 
     freeImage(bmpImage);
