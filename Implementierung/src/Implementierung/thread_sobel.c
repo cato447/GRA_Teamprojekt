@@ -10,16 +10,6 @@
 #include "basic_sobel.h"
 #include "simd_sobel.h"
 
-#if __linux__ == 1
-    #define THREADCALC size_t hwThreads = get_nprocs(); \
-        size_t LINES_PER_THREAD = 300; \
-        if (hwThreads > 1) { \
-            LINES_PER_THREAD = height / (hwThreads-1); \
-        }
-#else
-    #define THREADCALC size_t LINES_PER_THREAD = 300;
-#endif
-
 typedef struct sobelIntervalArgs {
     uint8_t* img_in;
     size_t width;
@@ -63,7 +53,13 @@ void *computeSobelForHeightInterval(void *args) {
 }
 
 void thread_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out) {
-    THREADCALC
+    size_t LINES_PER_THREAD = 300;
+    if (__linux__) {
+        size_t hwThreads = get_nprocs();
+        if (hwThreads > 1) {
+            LINES_PER_THREAD = height / (hwThreads-1);
+        }
+    }
 
     if (width * 3 * height >= 16 * 3 + 3 + 3 && height >= LINES_PER_THREAD) {
         size_t amountThreads = height / LINES_PER_THREAD - (height % LINES_PER_THREAD == 0 ? 1 : 0);
@@ -106,7 +102,13 @@ void thread_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out
 }
 
 void thread_sobel_graysc(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out) {
-    THREADCALC
+    size_t LINES_PER_THREAD = 300;
+    if (__linux__) {
+        size_t hwThreads = get_nprocs();
+        if (hwThreads > 1) {
+            LINES_PER_THREAD = height / (hwThreads-1);
+        }
+    }
 
     if (width * height >= 16 + 1 + 1 && height >= LINES_PER_THREAD) {
         size_t amountThreads = height / LINES_PER_THREAD - (height % LINES_PER_THREAD == 0 ? 1 : 0);
