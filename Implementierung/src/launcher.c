@@ -31,6 +31,7 @@
 
 #define BMP_EXTENSION ".bmp"
 #define OUTPUT_MARK "_out" BMP_EXTENSION
+#define IO_PERFORMANCE_TEST_CYCLES 100
 
 void print_help_msg(void) {
     printf("Program to calculate sobel from BMP file\n");
@@ -200,12 +201,30 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     printf("Loading image from %s\n", config_params.inputFilePath);
+
     struct timespec start_io;
     struct timespec end_io;
-    clock_gettime(CLOCK_MONOTONIC, &start_io);
-    size_t img_size = loadPicture(config_params.inputFilePath, bmpImage);
-    clock_gettime(CLOCK_MONOTONIC, &end_io);
-    double io_time = end_io.tv_sec - start_io.tv_sec + 1e-9 * (end_io.tv_nsec - start_io.tv_nsec);
+    double io_time;
+    size_t img_size;
+    if (config_params.measure_performance) {
+        printf("Running performance tests for Image Read\n");
+        if (clock_gettime(CLOCK_MONOTONIC, &start_io) != 0) {
+            fprintf(stderr, "Couldn't get start_io time\n");
+            return 1;
+        }
+    }
+    for(size_t i = 0; i < IO_PERFORMANCE_TEST_CYCLES; i++){
+        img_size = loadPicture(config_params.inputFilePath, bmpImage);
+    }
+    if (config_params.measure_performance) {
+        if(clock_gettime(CLOCK_MONOTONIC, &end_io) != 0) {
+            fprintf(stderr, "Couldn't get end_io time\n");
+            return 1;
+        }
+        io_time = end_io.tv_sec - start_io.tv_sec + 1e-9 * (end_io.tv_nsec - start_io.tv_nsec);
+        printf("Performance testing took %.17gs to run %ld iterations\n", io_time, IO_PERFORMANCE_TEST_CYCLES);
+    }
+
     if (img_size == 0) {
         fprintf(stderr, "Couldn't load picture from input file %s\n", config_params.inputFilePath);
         freeImage(bmpImage);
@@ -230,7 +249,7 @@ int main(int argc, char *argv[]) {
     double exec_time;
     long num_of_execute_cycles = config_params.measure_performance ? config_params.measure_performance_cycles : 1;
     if (config_params.measure_performance) {
-        printf("Running performance tests\n");
+        printf("Running performance tests for Calculation\n");
         if (clock_gettime(CLOCK_MONOTONIC, &start_exec) != 0) {
             fprintf(stderr, "Couldn't get start_exec time\n");
             return 1;
@@ -302,10 +321,11 @@ int main(int argc, char *argv[]) {
 
     if (config_params.measure_performance) {
         double avg_exec_time = exec_time / config_params.measure_performance_cycles;
+        double avg_io_time = io_time / IO_PERFORMANCE_TEST_CYCLES;
         printf("Sobel calculation from version %d took on average %.17fs\n", config_params.version,
                avg_exec_time);
-        printf("Loading the image took %.17gs\n", io_time);
-        printf("Percentage io/calc = %f%% \n", (io_time / avg_exec_time) * 100);
+        printf("Loading the image took %.17gs\n", avg_io_time);
+        printf("Percentage io/calc = %f%% \n", (avg_io_time / avg_exec_time) * 100);
     }
 
     freeImage(bmpImage);

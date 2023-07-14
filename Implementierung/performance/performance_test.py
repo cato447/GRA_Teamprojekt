@@ -19,10 +19,11 @@ def get_pixel_count(path: str):
 def getTimes(output: str):
     time = re.findall('[0-9]+\.[0-9]+', output)
     if time:
-        exec_time = float(time[0])
-        avg_exec_time = float(time[1])
-        io_time = float(time[2])
-        return (exec_time, avg_exec_time, io_time)
+        io_time = float(time[0])
+        exec_time = float(time[1])
+        avg_exec_time = float(time[2])
+        avg_io_time = float(time[3])
+        return (io_time, exec_time, avg_exec_time, avg_io_time)
 
 # Sample images can be downloaded here: https://www.dwsamplefiles.com/download-bmp-sample-files/
 
@@ -35,6 +36,7 @@ def getTimes(output: str):
 if __name__ == "__main__":
     os.chdir("../build")
     test_files = glob.glob("../performance/sample_images/*.bmp")
+    avg_io_times = []
     execTimes = []
     avg_exec_times = []
     ioTimes = []
@@ -46,18 +48,19 @@ if __name__ == "__main__":
     for test_file in test_files:
         print(f"Running program for input {test_file}")
         pixel_count = get_pixel_count(test_file)
-        process = subprocess.run(["./program", "-V", version, f"-B{(1/pixel_count)*600000000}", "-o", "output.bmp", test_file], stdout=subprocess.PIPE)
+        process = subprocess.run(["./program", "-V", version, f"-B{int((1/pixel_count)*1800000000)}", "-o", "output.bmp", test_file], stdout=subprocess.PIPE)
         output = process.stdout.decode('utf-8')
-        execTime, avg_exec_time, io_time = getTimes(output)
+        ioTime, execTime, avg_exec_time, avg_io_time = getTimes(output)
+        avg_io_times.append(avg_io_time)
         avg_exec_times.append(avg_exec_time)
         execTimes.append(execTime)
         ioTimes.append(io_time)
         pixelNum.append(pixel_count)
 
-    df = pd.DataFrame({'fileName': test_files, 'execTime': execTimes, 'avg_exec_time': avg_exec_times, 'ioTime': ioTimes, 'pixelNum': pixelNum, 'version': version})
+    df = pd.DataFrame({'fileName': test_files, 'execTime': execTimes, 'avg_exec_time': avg_exec_times, 'ioTime': ioTimes, 'avg_io_time' : avg_io_times, 'pixelNum': pixelNum, 'version': version})
     df = df.sort_values(by=['pixelNum'])
     print(df)
     df.to_csv(f"../performance/results/testresult_preformance_{time.strftime('%Y%m%d_%H%M%S')}.csv", index=False)
-    res = df.plot(x='pixelNum', y=['avg_exec_time', 'ioTime'], style='.-').get_figure()
+    res = df.plot(x='pixelNum', y=['avg_exec_time', 'avg_io_time'], style='.-', title=f"Performance Version {version}").get_figure()
     res.savefig(f"../performance/graphs/testresult_version_{version}_preformance_graph_{time.strftime('%Y%m%d_%H%M%S')}.png")
     plt.show()
