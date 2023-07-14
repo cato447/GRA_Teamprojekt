@@ -50,6 +50,7 @@ In der zweiten Version haben wir die den Algorithmus mit Hilfe von SIMD-Instrukt
 Alle Implementierungen arbeiten mit 24-Bit BMP Bildern. Ein Pixel besteht dabei aus drei Bytes, die die Farbwerte Rot, Grün und Blau repräsentieren.
 
 \subsection{Vergleichsimplementierung}
+\label{sec:vergleichsimplementierung}
 Die Vergleichsimplementierung ist eine naive Implementierung des Sobel-Filter Algorithmus.
 Dabei werden die beiden Filtermatritzen $M^{v}$ und $M^{h}$ mit jedem Pixel des Bildes verrechnet.
 \begin{equation}
@@ -87,9 +88,10 @@ Um nun den Sobelwert eines Pixels zu berechnen wird der Betrag der horizontalen 
     \label{eq:betrag}
 \end{equation}
 Pixel, die sich am Rand des Bildes befinden, können nicht mit allen Werten der Filtermatritzen verrechnet werden.
-Der Fall wird behandelt, indem die Sobelwerte dieser Pixel als schwarz angenommen werden. Hierdurch entsteht ein schwarzer Rand um das Bild.
+Der Fall wird behandelt, indem die Sobelwerte dieser Pixel nicht berechnet werden. Hierdurch entsteht ein schwarzer Rand um das Bild.
+\label{sec:rand}
 \\\\
-Normalerweise wird im letzten Schritt der endgültige Sobel Wert mit der Wurzel der Summe der Quadrate berechnet.
+Normalerweise wird im letzten Schritt der Endgültige Sobel Wert mit der Wurzel der Summe der Quadrate berechnet.
 \begin{equation}
     O^{F}_{x,y} = \sqrt{(A^{v,F}_{x,y})^2 + (A^{h,F}_{x,y})^2}
     \label{eq:wurzel}
@@ -111,11 +113,12 @@ Normalerweise wird im letzten Schritt der endgültige Sobel Wert mit der Wurzel 
 Zwischen {\ref{fig:abs-bild}} und {\ref{fig:sqrt-bild}} besteht nur ein kleiner Unterschied in der Helligkeit des Bildes, was für Kantenerkennung nicht relevant ist.
 Da keine SIMD-Instruktion zur Berechnung der Wurzel eines 8 bzw. 16 Bit Integers existiert und diese Version als Vergleichsimplementierung genutzt werden soll, haben wir uns für die Variante {\ref{eq:betrag}} entschieden.
 \subsection{SIMD Implementierung}
+\label{sec:simd-implementierung}
 Die SIMD Implementierung basiert auf der Vergleichsimplementierung, benutzt zur Berechnung jedoch SIMD Instruktionen.
-Ein großes Problem, bei der Arbeit mit 8-Bit-Ganzzahlen ist der kleine Wertebereich.
+Ein großes Problem bei der Arbeit mit 8-Bit-Ganzzahlen ist der kleine Wertebereich.
 Da die Werte der einzelnen Farbchannel der Pixel als 8 Bit Integer gespeichert werden, kann es folglich bei der Faltungsoperation schnell zu einem Überlauf kommen.
-Der naive Lösungsansatz, um dem entgegen zu wirken, ist, das Input-Bild einfach um 75\% zu verdunkeln.
-Durch die Verdunkelung wird der Überlauf zwar verhindert, das Output Bild ist jedoch (wesentlich) dunkler {\ref{fig:dark}}, wodurch auch die erkannten Kanten signifikant dunkler werden.
+Der naive Lösungsansatz, um dem entgegen zu wirken, ist das Input-Bild einfach um 75\% zu verdunkeln.
+Durch die Verdunkelung wird der Überlauf zwar verhindert, das Output Bild ist jedoch auch (wesentlich) dunkler {\ref{fig:dark}}, wodurch die erkannten Kanten signifikant dunkler werden.
 \begin{figure}[H]
     \begin{subfigure}{.5\columnwidth}
         \centering
@@ -136,25 +139,53 @@ werden die Daten aus einem 16-Byte-Speicherbereich so in zwei Vektoren geladen, 
 als 16-Bit-Integer interpretiert werden können.
 Dabei werden insgesamt 16 xmm Register benutzt, um jeweils die Sobel Werte für 16 Farbchannel zu berechnen.
 Das funktioniert so, dass ein 16 Byte-Speicherbereich gelesen wird und anschließend das jeweils höherwertige Byte eines jeden
-16-Bit-Integers in diesem Vektor mit einer Bitmaske genullt wird.
-Das geschieht analog mit den 16-Byte an der um einen Byte höheren Speicheradresse.
-Für jeden der 16 Farbchannel, die mit einem Schleifendurchlauf berechnet werden können, werden so die acht umliegenden Farbchannel geladen.
-Dadurch lassen sich die Farbwerte für 16 Byte gleichzeitig berechnen.
-Durch den dadurch entstehenden Overhead ist dieser Lösungsansatz zwar ca.
-nur halb so schnell, wie der naive SIMD-Ansatz, erzeugt jedoch wesentlich
+16-Bit-Integers in diesem Vektor mit einer Bitmaske genullt wird. Das geschieht analog mit den 16-Byte an der um einen Byte höheren Speicheradresse.
+Für jeden der 16 Farbchannel, die mit einem Schleifendurchlauf berechnet werden können, werden so die acht umliegenden
+Farbchannel geladen. Dadurch lassen sich die Farbwerte für 16 Byte gleichzeitig berechnen. Durch den dadurch entstehenden Overhead
+ist dieser Lösungsansatz zwar ca. nur halb so schnell, wie der naive SIMD-Ansatz, erzeugt jedoch wesentlich
 akkuratere Ergebnisse, weshalb das Programm auch diesen Ansatz implementiert.
-In Relation zur Vergleichsimplementierung erzielt dieser Ansatz in etwa einen Speedup von x10.
 
 \subsection{SIMD-Implementierung mit Threading}
+\label{sec:simd-threading}
 Die SIMD-Implementierung mit Threading basiert auf der SIMD-Implementierung mit der Besonderheit, dass das Bild in Abschnitte eingeteilt werden, die jeweils von einem eigenen Thread bearbeitet werden.
-Um diese Abschnitte zu erzeugen, wird das Bild in horizontale Streifen geschnitten.
-Die Anzahl dieser Streifen hängt davon ab, wie viele Zeilen pro Thread berechnet werden sollen.
+Um diese Abschnitte zu erzeugen, wird das Bild in horizontale Streifen geschnitten. Die Anzahl der Streifen wird von der Anzahl der durch die CPU bereitgesellten Threads bestimmt. Dies führt zu einer Optimalen Auslastung der CPU.
 Das horizontale Zerteilen des Bildes hat den Vorteil, dass der Cache besser genutzt wird, als zum Beispiel beim Aufteilen in Quadranten, weil die Daten hintereinander Zeile für Zeile im Speicher liegen.
 Desweiteren besteht der Vorteil, fortlaufende Indizes bei der Berechnung nutzen zu können und nicht, wie zum Beispiel bei einer Aufteilung in Quadranten, diese Indizes aufwendig berechenen zu müssen.
 
 \section{Genauigkeit}
-Wir haben uns dafür entschieden, die Genauigkeit unseres Lösungsansatzes zu analysieren, da es bei Kantenerkennung keine fest definierte "source of truth", wie zum Beispiel bei einer pur mathematischen Operation, gibt.
-Öffentlich existierende Sobel Filter Implementierungen wie zum Beispiel die von OpenCV
+Im folgenden wird die Genauigkeit unseres Lösungsansatzes analysiert, da es beim Sobel Operator keine fest definierte "source of truth", wie zum Beispiel bei einer Addition, gibt.
+Dei öffentlich existierende Sobel Filter Implementierungen von OpenCV zum Beispiel liefert leicht andere Ergebnisse als unsere Implementierung.
+Desweiteren arbeitet diese auf Grayscale images, wohingegen unsere Implementierung auf RGB images arbeitet. Wir haben die OpenCV Implementierung so angepasst, dass sie auf RGB Bildern arbeitet.
+\begin{figure}[H]
+    \begin{subfigure}{.5\columnwidth}
+        \centering
+        \includegraphics[width=\columnwidth]{graphics/basic.png}
+        \caption{Vergleichsimplementierung}
+        \label{fig:basic}
+    \end{subfigure}
+    \begin{subfigure}{.5\columnwidth}
+        \centering
+        \includegraphics[width=\columnwidth]{graphics/open_cv.png}
+        \caption{Open CV Version}
+        \label{fig:opencv}
+    \end{subfigure}
+\end{figure}
+In {\ref{fig:basic}} ist die Vergleichsimplementierung zu sehen, in {\ref{fig:opencv}} die OpenCV Implementierung.
+Es ist zu erkennen, dass die OpenCV Implementierung wesentlich dunkler ist als die Vergleichsimplementierung.
+Wenn die Pixelwerte der Vergleichsimplementierung halbiert werden, würde die Helligkeit sich sehr ähneln.
+Dies wurde nicht umgesetzt, damit die selben Ergebnisse mit den optimierten Versionen erzielt werden können und somit die Vergleichbarkeit gewahrt bleibt. 
+\\\\
+Bei der Bewertung der Genauigkeit wird dir Vergleichsimplementierung als Referenzpunkt genommen. Sie gilt als das richtige Ergebnis und ist, um Fehler zu vermeiden, so simpel gehalten wie nur irgendwie möglich.
+Die mathematische Defintion, wie in \ref{sec:vergleichsimplementierung} beschrieben, wurde ohne weiter Optimierungen umgesetzt.
+Des weiteren wurden Unittests hinzugefügt, die überprüfen, dass die Hilfsfunktionen korrekt implementiert sind.
+Die beiden Versionen SIMD \ref{sec:simd-implementierung} und SIMD Threading \ref{sec:simd-threading} entsprechen der Vergleichsimplementierung exakt.
+Dies wird erreicht, in dem der schwarze Rand an den beiden Seiten künstlich nach der Berechnung hinzugefügt wird. Dies hat einen kleinen performance overhead, der aber kaum spürbar ist.
+\\\\
+*TODO: Performance overhead zeigen*
+\\\\
+Es gibt außerdem einen automatisierten Test, der überprüft ob die Ergebnisse der SIMD und SIMD + Threading Versionen mit den
+Ergebnissen der Vergleichsimplementierung übereinstimmen.
+
 \section{Performanzanalyse}
 
 TODO: Geben Sie hier die Performanz Ihres Lösungsansatzes ein.
