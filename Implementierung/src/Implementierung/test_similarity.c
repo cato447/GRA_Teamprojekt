@@ -9,46 +9,32 @@
 #include "../Testsystem/unittest.h"
 #include "../Testsystem/image_similarity.h"
 #include "../IOSystem/test_functionality.h"
-
+static uint8_t *sobel_pixels;
 static size_t sobel_buffer_size;
-static uBMPImage *sobelImage;
 static uint8_t *ref_pixels;
 static size_t ref_px_array_size;
 
-static int setup(char *pathSobelImage, uint8_t *reference_pixel_array, size_t reference_px_array_size) {
-    sobelImage = malloc(sizeof(uBMPImage));
-    if (sobelImage == NULL) {
-        fprintf(stderr, "Failed allocating memory for sobelImage\n");
-        return 1;
-    }
-    sobel_buffer_size = loadPicture(pathSobelImage, sobelImage);
-    if (sobel_buffer_size == 0) {
-        fprintf(stderr, "Couldn't load sobel image %s\n", pathSobelImage);
-        free(sobelImage);
-        return 1;
-    }
-    ref_pixels = reference_pixel_array;
-    ref_px_array_size = reference_px_array_size;
-    return 0;
-}
-
-static void tearDown() {
-    free(sobelImage->pxArray);    
-    free(sobelImage);
-}
-
 static void testSimilarity() {
-    double similarity = compareImages(ref_pixels, ref_px_array_size,sobelImage->pxArray, sobelImage->pxArraySize);
+    double similarity = compareImages(ref_pixels, ref_px_array_size,sobel_pixels, sobel_buffer_size);
     ASSERT_EQUAL_DOUBLE(1.0, similarity, 1e-9);
 }
 
-int runTestSimilarity(char *pathSobelImage, uint8_t *reference_pixel_array, size_t reference_px_array_size) {
-    if (setup(pathSobelImage, reference_pixel_array, reference_px_array_size) == 1) {
-        return 1;
-    }
+static void testSimilarity_graysc() {
+    double similarity = compareImages_graysc(ref_pixels, ref_px_array_size,sobel_pixels, sobel_buffer_size);
+    ASSERT_EQUAL_DOUBLE(1.0, similarity, 1e-9);
+}
+
+int runTestSimilarity(uint8_t *sobel_pixel_array, size_t sobel_px_array_size, uint8_t *reference_pixel_array, size_t reference_px_array_size, bool isGraysc) {
+    sobel_pixels = sobel_pixel_array;
+    sobel_buffer_size = sobel_px_array_size;
+    ref_pixels = reference_pixel_array;
+    ref_px_array_size = reference_px_array_size;
     START_TESTING;
-    RUN_TEST(testSimilarity);
+    if (isGraysc) {
+        RUN_TEST(testSimilarity_graysc);
+    } else {
+        RUN_TEST(testSimilarity);
+    }
     STOP_TESTING;
-    tearDown();
     return 0;
 }
