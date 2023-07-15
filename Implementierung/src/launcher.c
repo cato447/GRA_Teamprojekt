@@ -231,6 +231,8 @@ int main(int argc, char *argv[]) {
         }
         if (config_params.version < 3){
             for (size_t i = 0; i < IO_PERFORMANCE_TEST_CYCLES; i++){
+                // This code is nearly the same as the one in loadPicture
+                // We had to copy it here to not mess up our memory
                 void *buffer;
                 size_t buffer_size;
                 uBMPImage *test_bmp_image = malloc(sizeof(uBMPImage));
@@ -252,6 +254,8 @@ int main(int argc, char *argv[]) {
             }
         } else {
             for (size_t i = 0; i < IO_PERFORMANCE_TEST_CYCLES; i++){
+                // This code is nearly the same as the one in loadPicture
+                // We had to copy it here to not mess up our memory
                 void *buffer;
                 size_t buffer_size;
                 uBMPImage *test_bmp_image = malloc(sizeof(uBMPImage));

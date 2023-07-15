@@ -1,0 +1,5 @@
+fileName,execTime,avg_exec_time,ioReadTime,avg_io_read_time,ioWriteTime,avg_io_write_time,pixelNum,version
+../performance/sample_images/dwsample-bmp-640.bmp,4.819395274,0.000731764,0.047722739,0.000477227,0.095614156,0.000956142,273280,3
+../performance/sample_images/dwsample-bmp-1280.bmp,5.222083038,0.00316874,0.178245664,0.001782457,0.415441893,0.004154419,1091840,3
+../performance/sample_images/dwsample-bmp-1920.bmp,4.908498689,0.006705599,0.429201268,0.004292013,0.796714477,0.007967145,2457600,3
+../performance/sample_images/dwsample-bmp-4k.bmp,5.491882291,0.025308213,1.348834879,0.013488349,2.476016838,0.024760168,8294400,3

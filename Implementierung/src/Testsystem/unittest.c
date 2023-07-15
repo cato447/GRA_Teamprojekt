@@ -221,7 +221,7 @@ int _unitAssertDouble(const double expected, const double actual, double toleran
         return 0;
     } else {
         assertFailMsg(funcName, lineNum);
-        printf("Expected %f but was %f\n", expected, actual);
+        printf("Expected %.9f but was %.9f\n", expected, actual);
         return 1;
     }
 }

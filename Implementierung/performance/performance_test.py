@@ -20,8 +20,8 @@ def getTimes(output: str):
     time = re.findall('[0-9]+\.[0-9]+', output)
     if time:
         io_read_time = float(time[0])
-        io_write_time = float(time[1])
-        exec_time = float(time[2])
+        exec_time = float(time[1])
+        io_write_time = float(time[2])
         avg_exec_time = float(time[3])
         avg_io_read_time = float(time[4])
         avg_io_write_time = float(time[5])
@@ -52,8 +52,16 @@ if __name__ == "__main__":
     for test_file in test_files:
         print(f"Running program for input {test_file}")
         pixel_count = get_pixel_count(test_file)
-        process = subprocess.run(["./program", "-V", version, f"-B{int((1/pixel_count)*1800000000)}", "-o", "output.bmp", test_file], stdout=subprocess.PIPE)
+        process = subprocess.run(["./program", "-V", version, f"-B{int((1/pixel_count)*1800000000)}", "-o", f"../performance/output_images/{test_file.split('/')[-1]}", test_file], stdout=subprocess.PIPE)
         output = process.stdout.decode('utf-8')
+        if process.returncode != 0:
+            print(output)
+            exit(1)
+        if "FAIL testSimilarity" in output:
+            print(f"Error on file {test_file}")
+            print("================== Output ==================")
+            print(output)
+            exit(1)
         ioReadTime, ioWriteTime, execTime, avg_exec_time, avg_io_read_time, avg_io_write_time = getTimes(output)
         avg_exec_times.append(avg_exec_time)
         execTimes.append(execTime)
