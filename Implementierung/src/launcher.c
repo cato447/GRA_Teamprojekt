@@ -123,6 +123,10 @@ int parse_args(int argc, char *argv[], config *config_params) {
                     print_arg_error("Output path can't start with a dash");
                     return 1;
                 }
+                if (optarg[0] == '\0') {
+                    print_arg_error("Output path can't be an empty string");
+                    return 1;
+                }
                 size_t output_path_len = strlen(optarg) + 1;
                 config_params->output_file_path = malloc(output_path_len);
                 if (config_params->output_file_path == NULL) {
@@ -148,7 +152,7 @@ int parse_args(int argc, char *argv[], config *config_params) {
     argc -= optind;
     argv += optind;
 
-    if (argc == 0) {
+    if (argc == 0 || strlen(argv[0]) == 0) {
         print_arg_error("No input path was given");
         return 1;
     } else if (argc > 1) {
@@ -173,22 +177,21 @@ int parse_args(int argc, char *argv[], config *config_params) {
             *c = tolower(*c);
         }
 
-        size_t len_input_name;
-        if (strstr(search_string, BMP_FILE_EXT) !=
-            search_string + input_path_len - strlen(BMP_FILE_EXT) - 1) {
-            len_input_name = input_path_len - 1;
+        size_t input_justname_len;
+        if (strstr(search_string, BMP_FILE_EXT) != search_string + input_path_len - strlen(BMP_FILE_EXT) - 1) {
+            input_justname_len = input_path_len;
         } else {
-            len_input_name = input_path_len - strlen(BMP_FILE_EXT) - 1;
+            input_justname_len = input_path_len - strlen(BMP_FILE_EXT);
         }
-        config_params->output_file_path = malloc(len_input_name + strlen(OUT_FILE_SUFFIX) + 1);
+        config_params->output_file_path = malloc(input_justname_len + strlen(OUT_FILE_SUFFIX));
         if (config_params->output_file_path == NULL) {
             fprintf(stderr, "Failed allocating memory for output_file_path\n");
             return 1;
         }
 
-        strncpy(config_params->output_file_path, config_params->input_file_path, len_input_name);
-        strncat(config_params->output_file_path, OUT_FILE_SUFFIX,
-                strlen(OUT_FILE_SUFFIX) + 1);
+        strncpy(config_params->output_file_path, config_params->input_file_path, input_justname_len - 1);
+        config_params->output_file_path[input_justname_len - 1] = '\0';
+        strncat(config_params->output_file_path, OUT_FILE_SUFFIX, strlen(OUT_FILE_SUFFIX));
     }
     return 0;
 }
