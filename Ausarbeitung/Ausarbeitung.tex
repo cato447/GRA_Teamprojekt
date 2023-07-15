@@ -94,7 +94,6 @@ Um nun den Sobelwert O für einen Farbkanal eines Pixels zu berechnen, werden di
 \end{equation}
 
 \label{sec:rand}
-\\\\
 Alternativ kann im letzten Schritt der endgültige Sobelwert analog mit der Wurzel aus der Summe der Quadrate berechnet.
 \begin{equation}
     O^{F}_{x,y} = \sqrt{(A^{v,F}_{x,y})^2 + (A^{h,F}_{x,y})^2}
@@ -114,8 +113,8 @@ Alternativ kann im letzten Schritt der endgültige Sobelwert analog mit der Wurz
         \label{fig:sqrt-bild}
     \end{subfigure}
 \end{figure}
-Zwischen {\ref{fig:abs-bild}} und {\ref{fig:sqrt-bild}} besteht nur ein kleiner Unterschied in der Helligkeit des Bildes, was für Kantenerkennung nicht relevant ist.
-Da keine SIMD-Instruktion zur Berechnung der Wurzel eines 8 bzw. 16 Bit Integers existiert und diese Version als Vergleichsimplementierung genutzt werden soll, haben wir uns für die Variante {\ref{eq:betrag}} entschieden.
+Zwischen \ref{fig:abs-bild} und \ref{fig:sqrt-bild} besteht nur ein kleiner Unterschied in der Helligkeit des Bildes, was für Kantenerkennung nicht relevant ist.
+Da keine SIMD-Instruktion zur Berechnung der Wurzel eines 8 bzw. 16 Bit Integers existiert und diese Version als Vergleichsimplementierung genutzt werden soll, haben wir uns für die Variante \ref{eq:betrag} entschieden.
 \subsection{SIMD Implementierung}
 \label{sec:simd-implementierung}
 Die SIMD Implementierung basiert auf der Vergleichsimplementierung, benutzt zur Berechnung jedoch SIMD Instruktionen.
@@ -175,7 +174,7 @@ Wir haben die Implementierung von OpenCV so angepasst, dass sie ebenfalls auf RG
         \label{fig:opencv}
     \end{subfigure}
 \end{figure}
-In {\ref{fig:basic}} ist die Vergleichsimplementierung zu sehen, in {\ref{fig:opencv}} die OpenCV Implementierung.
+In \ref{fig:basic} ist die Vergleichsimplementierung zu sehen, in \ref{fig:opencv} die OpenCV Implementierung.
 Es ist zu erkennen, dass die OpenCV Implementierung wesentlich dunkler (~50\%) ist als die Vergleichsimplementierung.
 Da die Kanten dennoch korrekt (!und kontrastreicher!) erkannt werden und um unnötige Rechenschritte zu vermeiden, wird die Helligkeit der Vergleichsimplementierung nicht angepasst.
 \\\\
