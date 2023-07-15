@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <inttypes.h>
+#include <stddef.h>
 
 // Controls
 void _unitStartTesting(char* fileName);
@@ -13,8 +14,10 @@ void _unitRunTest(void (*f)(), const char* f_name);
 int _unitPass(const char *funcName, int lineNum);
 int _unitFail(char* message, const char *funcName, int lineNum);
 int _unitAssert(bool condition, const char *funcName, int lineNum);
+int _unitAsserEqualPointer(void* expected, void* actual, const char *funcName, int lineNum);
 int _unitAssertFalse(bool condition, const char *funcName, int lineNum);
 int _unitAssertTrue(bool condition, const char *funcName, int lineNum);
+int _unitAssertEqualSizeT(const size_t expected, const size_t actual, const char *funcName, int lineNum);
 int _unitAssertEqualInt(const int expected, const int actual, const char *funcName, int lineNum);
 int _unitAssertEqualInt8(const int8_t expected, const int8_t actual, const char *funcName, int lineNum);
 int _unitAssertEqualUInt8(const uint8_t expected, const uint8_t actual, const char *funcName, int lineNum);
@@ -28,8 +31,8 @@ int _unitAssertEqualString(const char *expected, const char *actual, const char 
 int _unitAssertDouble(const double expected, const double actual, double tolerance, const char *funcName, int fileNum);
 
 
-#define START_TESTING _unitStartTesting(__BASE_FILE__)
-#define STOP_TESTING _unitStopTesting()
+#define START_TESTING() _unitStartTesting(__BASE_FILE__)
+#define STOP_TESTING() _unitStopTesting()
 #define RUN_TEST(F) _unitRunTest(F, #F "()")
 
 #define PASS() _unitPass(__func__, __LINE__)
@@ -37,6 +40,8 @@ int _unitAssertDouble(const double expected, const double actual, double toleran
 #define ASSERT(CONDITION) _unitAssert(CONDITION, __func__, __LINE__)
 #define ASSERT_FALSE(CONDITION) _unitAssertFalse(CONDITION, __func__, __LINE__)
 #define ASSERT_TRUE(CONDITION) _unitAssertTrue(CONDITION, __func__, __LINE__)
+#define ASSERT_EQUAL_POINTER(EXPECTED, ACTUAL) _unitAssertEqualPointer(EXPECTED, ACTUAL, __func__, __LINE__)
+#define ASSERT_EQUAL_SIZE_T(EXPECTED, ACTUAL) _unitAssertEqualSizeT(EXPECTED, ACTUAL, __func__, __LINE__)
 #define ASSERT_EQUAL_INT(EXPECTED, ACTUAL) _unitAssertEqualInt(EXPECTED, ACTUAL, __func__, __LINE__)
 #define ASSERT_EQUAL_INT8(EXPECTED, ACTUAL) _unitAssertEqualInt8(EXPECTED, ACTUAL, __func___, __LINE__)
 #define ASSERT_EQUAL_U_INT8(EXPECTED, ACTUAL) _unitAssertEqualUInt8(EXPECTED, ACTUAL, __func__, __LINE__)

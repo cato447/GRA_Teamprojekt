@@ -28,7 +28,7 @@ struct __attribute__((__packed__)) parseBMPHeader {
 
 char* parseHeader(char* buf, size_t bufSize, size_t* _pxDataWidth, uint32_t* _pxWidth, uint32_t* _pxHeight, int* _negHeight) {
     if (bufSize < sizeof(struct parseBMPHeader)) {
-        fprintf(stderr, "Error: file too small\n");
+        fprintf(stderr, "Error: file too small to contain relevant BMP header information\n");
         return NULL;
     }
 
@@ -63,7 +63,7 @@ char* parseHeader(char* buf, size_t bufSize, size_t* _pxDataWidth, uint32_t* _px
     size_t byteWidth = header->pxWidth * sizeof(pixel24_t);
     *_pxDataWidth = (byteWidth & 0x3) ? ((byteWidth & ~0x3) + 4) : byteWidth;
 
-    if (header->dataOffset + *_pxDataWidth * (*_pxHeight) > bufSize) {
+    if ((header->dataOffset + *_pxDataWidth * (*_pxHeight)) > bufSize) {
         fprintf(stderr, "Error: file size doesn't match file info\n");
         fprintf(stderr, "  Expected (at max) %luB, got %luB\n", bufSize, header->dataOffset + *_pxDataWidth * (*_pxHeight));
         return NULL;
@@ -74,7 +74,7 @@ char* parseHeader(char* buf, size_t bufSize, size_t* _pxDataWidth, uint32_t* _px
 
 /*
 Returns 0 on success and 1 on failure.
-Sets "width", "height" and "pxArray" of "_bmpImgBuf" to an unpadded copy of the of the parameter "bmpFile".
+Sets "width", "height", "pxArraySize" and "pxArray" of "_bmpImgBuf" to an unpadded copy of the of the parameter "bmpFile".
 Pixelarray starts in bottom left of picture.
 */
 int bmpToArray(char* buf, size_t bufSize, uBMPImage* _bmpImgBuf) {
@@ -84,7 +84,7 @@ int bmpToArray(char* buf, size_t bufSize, uBMPImage* _bmpImgBuf) {
     int negHeight;
     char* pxData = parseHeader(buf, bufSize, &pxDataWidth, &pxWidth, &pxHeight, &negHeight);
     if (pxData == NULL) {
-        fprintf(stderr, "Failed parsing the file header\n");
+        fprintf(stderr, " → Failed parsing the file header\n");
         return 1;
     }
 
@@ -117,9 +117,10 @@ int bmpToArray(char* buf, size_t bufSize, uBMPImage* _bmpImgBuf) {
     return 0;
 }
 
-#define R_SCALING .299
-#define G_SCALING .587
-#define B_SCALING .114
+//Scaling factors: https://www.itu.int/dms_pubrec/itu-r/rec/bt/R-REC-BT.709-6-201506-I!!PDF-E.pdf
+#define R_SCALING .2126f
+#define G_SCALING .7152f
+#define B_SCALING .0722f
 /*
 Returns 0 on success and 1 on failure.
 Sets "width", "height" and "pxArray" of "_bmpImgBuf" to an unpadded copy of the of the parameter "bmpFile".
@@ -132,7 +133,7 @@ int bmpToArray_graysc (char* buf, size_t bufSize, uBMPImage* _bmpImgBuf) {
     int negHeight;
     char* pxData = parseHeader(buf, bufSize, &pxDataWidth, &pxWidth, &pxHeight, &negHeight);
     if (pxData == NULL) {
-        fprintf(stderr, "Failed parsing the file header\n");
+        fprintf(stderr, " → Failed parsing the file header\n");
         return 1;
     }
 

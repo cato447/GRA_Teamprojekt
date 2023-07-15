@@ -116,13 +116,13 @@ int runTestsSobel(void) {
     if (setUp() == 1) {
         return 1;
     }
-    START_TESTING;
+    START_TESTING();
     RUN_TEST(testColorOfPixelRed);
     RUN_TEST(testColorOfPixelBlue);
     RUN_TEST(testColorOfPixelGreen);
     RUN_TEST(testSetColorOfPixel);
     RUN_TEST(testSobel);
-    STOP_TESTING;
+    STOP_TESTING();
     tearDown();
     return 0;
 }
