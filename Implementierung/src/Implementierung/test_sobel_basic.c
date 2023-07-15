@@ -1,14 +1,14 @@
-#include "test_basic_sobel.h"
+#include "test_sobel_basic.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#include "../Implementierung/basic_sobel.h"
+#include "../Implementierung/sobel_basic.h"
 #include "../Testsystem/unittest.h"
 #include "../Testsystem/image_similarity.h"
-#include "../IOSystem/test_functionality.h"
+#include "../IOSystem/bmp_loader.h"
 
 #define MUSTER_PATH "../res/raw/muster.bmp"
 #define MUSTER_REF_PATH "../res/reference/muster_sobel.bmp"
@@ -17,31 +17,31 @@
 static size_t buffer_size;
 static s_image *bmp_image;
 
-int free_bmp_image(s_image *img) {
+static int free_bmp_image(s_image *img) {
     free(img->px_array);
     free(img);
     return 0;
 }
 
-void test_color_of_pixel_red() {
+void test_color_of_pixel_red(void) {
     int x = 1;
     int y = 1;
     ASSERT_EQUAL_UINT8(34, color_of_pixel(bmp_image->px_array, bmp_image->px_width, x, y, RED));
 }
 
-void test_color_of_pixel_green() {
+void test_color_of_pixel_green(void) {
     int x = 2;
     int y = 2;
     ASSERT_EQUAL_UINT8(133, color_of_pixel(bmp_image->px_array, bmp_image->px_width, x, y, GREEN));
 }
 
-void test_color_of_pixel_blue() {
+void test_color_of_pixel_blue(void) {
     int x = 2;
     int y = 1;
     ASSERT_EQUAL_UINT8(102, color_of_pixel(bmp_image->px_array, bmp_image->px_width, x, y, BLUE));
 }
 
-void test_set_color_of_pixel() {
+void test_set_color_of_pixel(void) {
     uint8_t red = 32;
     uint8_t green = 42;
     uint8_t blue = 52;
@@ -63,7 +63,7 @@ void test_set_color_of_pixel() {
     free(px_array_copy);
 }
 
-void test_sobel() {
+void test_sobel(void) {
     uint8_t *new_pixels = calloc(bmp_image->px_array_size, sizeof(uint8_t));
     if (new_pixels == NULL) {
         FAIL("Failed allocating memory for new_pixels\n");
@@ -95,7 +95,7 @@ void test_sobel() {
     ASSERT_EQUAL_DOUBLE(1.0, similarity, 1e-9);
 }
 
-int setup() {
+static int setup(void) {
     bmp_image = malloc(sizeof(s_image));
     if (bmp_image == NULL) {
         fprintf(stderr, "Failed allocating memory for bmp_image\n");
@@ -109,7 +109,7 @@ int setup() {
     return 0;
 }
 
-void tear_down() {
+static void tear_down() {
     free_bmp_image(bmp_image);
 }
 
@@ -117,13 +117,15 @@ int run_tests_sobel(void) {
     if (setup() == 1) {
         return 1;
     }
+
     START_TESTING();
     RUN_TEST(test_color_of_pixel_red);
     RUN_TEST(test_color_of_pixel_blue);
     RUN_TEST(test_color_of_pixel_green);
     RUN_TEST(test_set_color_of_pixel);
     RUN_TEST(test_sobel);
-    STOP_TESTING();
+    STOP_TESTING_VERBOSE();
+
     tear_down();
     return 0;
 }

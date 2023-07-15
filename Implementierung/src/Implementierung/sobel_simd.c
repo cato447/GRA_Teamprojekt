@@ -1,10 +1,10 @@
-#include "simd_sobel.h"
+#include "sobel_simd.h"
 
 #include <immintrin.h>
 
-#include "basic_sobel.h"
+#include "sobel_basic.h"
 
-void simd_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out) {
+void sobel_simd(const uint8_t *img_in, size_t width, size_t height, uint8_t *img_out) {
     if (width * 3 * height >= 16 * 3 + 3 + 3 && height >= 3) {
         __m128i zero_even_bytes_mask = _mm_set_epi16(ZERO_EVEN_BYTES_MASK);
         __m128i comparer = _mm_set_epi16(COMP_255);
@@ -12,7 +12,7 @@ void simd_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out) 
         size_t i = width * 3 + 3;
 
         for (; i < width * (height - 1) * 3 - 3 - 16; i += 16) {
-            compute_simd_sobel(img_in, i, width, img_out, zero_even_bytes_mask, comparer);
+            compute_sobel_simd(img_in, i, width, img_out, zero_even_bytes_mask, comparer);
         }
 
         for (; i < width * (height - 1) * 3 - 3; ++i) {
@@ -39,7 +39,7 @@ void simd_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out) 
     }
 }
 
-void simd_sobel_graysc(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out) {
+void sobel_simd_graysc(const uint8_t *img_in, size_t width, size_t height, uint8_t *img_out) {
     if (width * height >= 16 + 1 + 1 && height >= 1) {
         __m128i zero_even_bytes_mask = _mm_set_epi16(ZERO_EVEN_BYTES_MASK);
         __m128i comparer = _mm_set_epi16(COMP_255);
@@ -47,7 +47,7 @@ void simd_sobel_graysc(uint8_t *img_in, size_t width, size_t height, uint8_t *im
         size_t i = width + 1;
 
         for (; i < width * (height - 1) - 1 - 16; i += 16) {
-            compute_simd_sobel_graysc(img_in, i, width, img_out, zero_even_bytes_mask, comparer);
+            compute_sobel_simd_graysc(img_in, i, width, img_out, zero_even_bytes_mask, comparer);
         }
 
         for (; i < width * (height - 1) - 1; ++i) {
@@ -74,10 +74,10 @@ void simd_sobel_graysc(uint8_t *img_in, size_t width, size_t height, uint8_t *im
     }
 }
 
-__m128i applyFilter(__m128i upper_left, __m128i upper, __m128i upper_right, __m128i left, __m128i right, __m128i lower_left, __m128i lower, __m128i lower_right, __m128i comparer, __m128i zero_even_bytes_mask);
+static __m128i apply_filter(__m128i upper_left, __m128i upper, __m128i upper_right, __m128i left, __m128i right, __m128i lower_left, __m128i lower, __m128i lower_right, __m128i comparer, __m128i zero_even_bytes_mask);
 
 __attribute__((__always_inline__, __hot__)) inline
-void compute_simd_sobel(uint8_t *img_in, size_t i, size_t width, uint8_t *img_out, __m128i zero_even_bytes_mask,
+void compute_sobel_simd(const uint8_t *img_in, size_t i, size_t width, uint8_t *img_out, __m128i zero_even_bytes_mask,
                       __m128i comparer) {
     __m128i upper_left = _mm_loadu_si128((const __m128i *) (img_in + i - width * 3 - 3));
     __m128i upper = _mm_loadu_si128((const __m128i *) (img_in + i - width * 3));
@@ -97,8 +97,8 @@ void compute_simd_sobel(uint8_t *img_in, size_t i, size_t width, uint8_t *img_ou
     __m128i lower_2 = _mm_loadu_si128((const __m128i *) (img_in + i + width * 3 + 1));
     __m128i lower_right_2 = _mm_loadu_si128((const __m128i *) (img_in + i + width * 3 + 3 + 1));
 
-    __m128i result = applyFilter(upper_left, upper, upper_right, left, right, lower_left, lower, lower_right, comparer, zero_even_bytes_mask);
-    __m128i result_2 = applyFilter(upper_left_2, upper_2, upper_right_2, left_2, right_2, lower_left_2, lower_2, lower_right_2, comparer, zero_even_bytes_mask);
+    __m128i result = apply_filter(upper_left, upper, upper_right, left, right, lower_left, lower, lower_right, comparer, zero_even_bytes_mask);
+    __m128i result_2 = apply_filter(upper_left_2, upper_2, upper_right_2, left_2, right_2, lower_left_2, lower_2, lower_right_2, comparer, zero_even_bytes_mask);
 
     //Shift the bits from addr + 1 in place
     result_2 = _mm_slli_epi16(result_2, 8);
@@ -108,7 +108,7 @@ void compute_simd_sobel(uint8_t *img_in, size_t i, size_t width, uint8_t *img_ou
 
 
 __attribute__((__always_inline__, __hot__)) inline
-void compute_simd_sobel_graysc(uint8_t *img_in, size_t i, size_t width, uint8_t *img_out, __m128i zero_even_bytes_mask,
+void compute_sobel_simd_graysc(const uint8_t *img_in, size_t i, size_t width, uint8_t *img_out, __m128i zero_even_bytes_mask,
                       __m128i comparer) {
     __m128i upper_left = _mm_loadu_si128((const __m128i *) (img_in + i - width - 1));
     __m128i upper = _mm_loadu_si128((const __m128i *) (img_in + i - width));
@@ -128,8 +128,8 @@ void compute_simd_sobel_graysc(uint8_t *img_in, size_t i, size_t width, uint8_t 
     __m128i lower_2 = _mm_loadu_si128((const __m128i *) (img_in + i + width + 1));
     __m128i lower_right_2 = _mm_loadu_si128((const __m128i *) (img_in + i + width + 1 + 1));
 
-    __m128i result = applyFilter(upper_left, upper, upper_right, left, right, lower_left, lower, lower_right, comparer, zero_even_bytes_mask);
-    __m128i result_2 = applyFilter(upper_left_2, upper_2, upper_right_2, left_2, right_2, lower_left_2, lower_2, lower_right_2, comparer, zero_even_bytes_mask);
+    __m128i result = apply_filter(upper_left, upper, upper_right, left, right, lower_left, lower, lower_right, comparer, zero_even_bytes_mask);
+    __m128i result_2 = apply_filter(upper_left_2, upper_2, upper_right_2, left_2, right_2, lower_left_2, lower_2, lower_right_2, comparer, zero_even_bytes_mask);
 
     //Shift the bits from addr + 1 in place
     result_2 = _mm_slli_epi16(result_2, 8);
@@ -137,8 +137,8 @@ void compute_simd_sobel_graysc(uint8_t *img_in, size_t i, size_t width, uint8_t 
     _mm_storeu_si128((__m128i *) (img_out + i), _mm_or_si128(result_2, result));
 }
 
-__attribute__((__always_inline__, __hot__)) inline
-__m128i applyFilter(__m128i upper_left, __m128i upper, __m128i upper_right, __m128i left, __m128i right, __m128i lower_left, __m128i lower, __m128i lower_right, __m128i comparer, __m128i zero_even_bytes_mask) {
+__attribute__((__always_inline__, __hot__)) inline static
+__m128i apply_filter(__m128i upper_left, __m128i upper, __m128i upper_right, __m128i left, __m128i right, __m128i lower_left, __m128i lower, __m128i lower_right, __m128i comparer, __m128i zero_even_bytes_mask) {
     /*
      * We avoid Byte overflows by using word sized integers. To do this, we load 16 Bytes from the current
      * address as well as from the current address + 1. This way we can use a bit mask to zero out every second byte

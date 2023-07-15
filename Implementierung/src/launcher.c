@@ -16,16 +16,16 @@
 #include "IOSystem/bmp_definitions.h"
 #include "IOSystem/IO_tools.h"
 #include "IOSystem/bmp_parser.h"
-#include "IOSystem/test_functionality.h"
-#include "Implementierung/basic_sobel.h"
-#include "Implementierung/simd_sobel.h"
-#include "Implementierung/thread_sobel.h"
-#include "Implementierung/test_basic_sobel.h"
+#include "IOSystem/bmp_loader.h"
+#include "Implementierung/sobel_basic.h"
+#include "Implementierung/sobel_simd.h"
+#include "Implementierung/sobel_threaded.h"
+#include "Implementierung/test_sobel_basic.h"
 #include "Implementierung/test_similarity.h"
 #include "IOSystem/test_IO_parser.h"
 
-#define BMP_EXTENSION ".bmp"
-#define OUTPUT_MARK "_out" BMP_EXTENSION
+#define BMP_FILE_EXT ".bmp"
+#define OUT_FILE_SUFFIX "_out" BMP_FILE_EXT
 #define IO_PERFORMANCE_TEST_CYCLES 100
 
 typedef struct config {
@@ -39,13 +39,13 @@ typedef struct config {
 
 void print_help_msg(void) {
     printf("Program to calculate sobel from BMP file\n");
-    printf("Usage: ./program [arguments] output_path\n");
-    printf("Arguments:\n");
+    printf("Usage: ./program [arguments] input_file_path\n");
+    printf("arguments:\n");
     printf("\t-V <version_number>   Which implementation to use (0: reference, 1: SIMD, 2: SIMD+Threads\n");
     printf("\t                                                   3: grayscale reference, 4: grayscale SIMD\n");
     printf("\t                                                   5: grayscale SIMD+Threads)\n");
     printf("\t-o <output_file_path> Output path to write the resulting image to\n");
-    printf("\t-B [cycles]           Run performance tests 1 or if provided cycle times\n");
+    printf("\t-B [cycles]           Run performance tests 3 or if provided [cycles] (at least 3) times\n");
     printf("\t-t                    Run all unit tests\n");
     printf("\t-h | --help           Display this message\n");
 }
@@ -71,7 +71,7 @@ void free_image(s_image *img) {
 }
 
 
-void print_arg_error(char *errorMsg) {
+void print_arg_error(const char *errorMsg) {
     fprintf(stderr, "%s\n", errorMsg);
     print_help_msg();
 }
@@ -92,7 +92,7 @@ int parse_args(int argc, char *argv[], config *config_params) {
                     return 1;
                 }
                 config_params->version = (uint8_t) strtoul(optarg, NULL, 10);
-                // check if version is 0,1 or 2
+                // check if version is 0, 1 or 2
                 if (config_params->version > 5) {
                     print_arg_error("Version number is not valid");
                     return 1;
@@ -137,10 +137,10 @@ int parse_args(int argc, char *argv[], config *config_params) {
             case ':':
                 switch (optopt) {
                     case 'V':
-                        print_arg_error("Missing version number -V version_num");
+                        print_arg_error("Missing version number -V <version_num>");
                         return 1;
                     case 'o':
-                        print_arg_error("No output path for generated file was given -o output_path");
+                        print_arg_error("No output path for generated file was given -o <output_file_path>");
                         return 1;
                 }
         }
@@ -174,32 +174,44 @@ int parse_args(int argc, char *argv[], config *config_params) {
         }
 
         size_t len_input_name;
-        if (strstr(search_string, BMP_EXTENSION) !=
-            search_string + input_path_len - strlen(BMP_EXTENSION) - 1) {
+        if (strstr(search_string, BMP_FILE_EXT) !=
+            search_string + input_path_len - strlen(BMP_FILE_EXT) - 1) {
             len_input_name = input_path_len - 1;
         } else {
-            len_input_name = input_path_len - strlen(BMP_EXTENSION) - 1;
+            len_input_name = input_path_len - strlen(BMP_FILE_EXT) - 1;
         }
-        config_params->output_file_path = malloc(len_input_name + strlen(OUTPUT_MARK) + 1);
+        config_params->output_file_path = malloc(len_input_name + strlen(OUT_FILE_SUFFIX) + 1);
         if (config_params->output_file_path == NULL) {
             fprintf(stderr, "Failed allocating memory for output_file_path\n");
             return 1;
         }
 
         strncpy(config_params->output_file_path, config_params->input_file_path, len_input_name);
-        strncat(config_params->output_file_path, OUTPUT_MARK,
-                strlen(OUTPUT_MARK) + 1);
+        strncat(config_params->output_file_path, OUT_FILE_SUFFIX,
+                strlen(OUT_FILE_SUFFIX) + 1);
     }
     return 0;
 }
 
 int main(int argc, char *argv[]) {
-    config config_params = {0, false, 3, false, NULL, NULL};
+    config config_params = {
+        .version = 0,
+        .measure_performance = false,
+        .measure_performance_cycles = 3,
+        .run_tests = false,
+        .output_file_path = NULL,
+        .input_file_path = NULL
+    };
     if (parse_args(argc, argv, &config_params)) {
-        fprintf(stderr, "Couldn't parse arguments\n");
         dealloc_config_params(&config_params);
         return 1;
     }
+
+    if (config_params.run_tests) {
+        run_tests_IO_parser();
+        run_tests_sobel();
+    }
+
     s_image *bmp_image = malloc(sizeof(s_image));
     if (bmp_image == NULL) {
         fprintf(stderr, "Failed allocating memory for bmp_image\n");
@@ -217,7 +229,7 @@ int main(int argc, char *argv[]) {
 
     if (img_size == 0) {
         fprintf(stderr, "Couldn't load picture from input file %s\n", config_params.input_file_path);
-        free_image(bmp_image);
+        free(bmp_image);
         dealloc_config_params(&config_params);
         return 1;
     }
@@ -297,11 +309,6 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    if (config_params.run_tests) {
-        run_tests_IO_parser();
-        run_tests_sobel();
-    }
-
     struct timespec start_exec;
     struct timespec end_exec;
     double exec_time = 0;
@@ -322,13 +329,13 @@ int main(int argc, char *argv[]) {
             break;
         case 1:
             for (unsigned long i = 0; i < num_of_execute_cycles; ++i) {
-                simd_sobel(bmp_image->px_array, bmp_image->px_width, bmp_image->px_height,
+                sobel_simd(bmp_image->px_array, bmp_image->px_width, bmp_image->px_height,
                                                      new_pixels);
             }
             break;
         case 2:
             for (unsigned long i = 0; i < num_of_execute_cycles; ++i) {
-                thread_sobel(bmp_image->px_array, bmp_image->px_width, bmp_image->px_height,
+                sobel_thread(bmp_image->px_array, bmp_image->px_width, bmp_image->px_height,
                                                      new_pixels);
             }
             break;
@@ -340,13 +347,13 @@ int main(int argc, char *argv[]) {
             break;
         case 4:
             for (unsigned long i = 0; i < num_of_execute_cycles; ++i) {
-                simd_sobel_graysc(bmp_image->px_array, bmp_image->px_width, bmp_image->px_height,
+                sobel_simd_graysc(bmp_image->px_array, bmp_image->px_width, bmp_image->px_height,
                              new_pixels);
             }
             break;
         case 5:
             for (unsigned long i = 0; i < num_of_execute_cycles; ++i) {
-                thread_sobel_graysc(bmp_image->px_array, bmp_image->px_width, bmp_image->px_height,
+                sobel_thread_graysc(bmp_image->px_array, bmp_image->px_width, bmp_image->px_height,
                              new_pixels);
             }
             break;
@@ -363,9 +370,6 @@ int main(int argc, char *argv[]) {
 
     printf("Calculated sobel for image %s using version %d\n", config_params.input_file_path, config_params.version);
 
-    //#---------------------
-    //#Erste Output Integration im Launcher - up to change
-    //#
     s_image export_image = {.px_array = new_pixels, .px_array_size = bmp_image->px_array_size, .px_height = bmp_image->px_height, .px_width = bmp_image->px_width};
     size_t new_size;
     char *new_buf;
@@ -417,7 +421,6 @@ int main(int argc, char *argv[]) {
     }
 
     free(new_buf);
-    //#---------------------
 
     if (config_params.run_tests || config_params.measure_performance) {
         uint8_t *sobel_reference_version = calloc(bmp_image->px_array_size, sizeof(uint8_t));

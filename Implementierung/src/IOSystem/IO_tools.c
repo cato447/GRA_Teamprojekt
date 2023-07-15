@@ -12,9 +12,9 @@
 
 /*
 Returns a pointer to the data buffer of the file read at parameter "path" or a null pointer on failure.
-Sets "buf_size" accordingly on successful read.
+Sets "_buf_size" accordingly on successful read.
 */
-char *read_file(const char *path, size_t *buf_size) {
+char *read_file(const char *path, size_t *_buf_size) {
     FILE *file = fopen(path, "rb");
     if (!file) {
         fprintf(stderr, "Error trying to open file at \"%s\": %s\n", path, strerror(errno));
@@ -48,7 +48,7 @@ char *read_file(const char *path, size_t *buf_size) {
         return NULL;
     }
     
-    *buf_size = statbuf.st_size;
+    *_buf_size = statbuf.st_size;
     fclose(file);
     return file_buf;
 }

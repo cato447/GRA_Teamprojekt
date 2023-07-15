@@ -18,7 +18,7 @@ static struct test_results {
     int assert_Failure;
 } testResults;
 
-void _unit_start_testing(char *fileName) {
+void _unit_start_testing(const char *fileName) {
     tmp_stdout = stdout;
     tmp_stderr = stderr;
     stdout = tmpfile();
@@ -31,12 +31,12 @@ void _unit_start_testing(char *fileName) {
     testResults.tests_run = 0;
     testResults.tests_passed = 0;
     testResults.assert_Failure = false;
-    fprintf(tmp_stdout, "\n╔══════════════════════════════════════════════════════════════════════════\n");
+    fprintf(tmp_stdout, "╔══════════════════════════════════════════════════════════════════════════\n");
     fprintf(tmp_stdout, "║ " C_BLUE "Running tests of %s" C_RESET "\n", fileName);
     fprintf(tmp_stdout, "║\n");
 }
 
-void _unit_stop_testing() {
+void _unit_stop_testing(bool print_messages) {
     if (testResults.tests_passed == testResults.tests_run) {
         fprintf(tmp_stdout, "║\n");
         fprintf(tmp_stdout, "║ " C_GREEN "%d of %d Tests passed" C_RESET "\n", testResults.tests_passed, testResults.tests_run);
@@ -48,35 +48,41 @@ void _unit_stop_testing() {
         fprintf(tmp_stdout, "║ " C_RED "%d of %d Tests passed" C_RESET "\n", testResults.tests_passed, testResults.tests_run);
     }
 
-    char redir[150];
 
     if (stdout != tmp_stdout) {
-        rewind(stdout);
-        if (fgets(redir, sizeof(redir), stdout)) {
-            fprintf(tmp_stdout, "║\n");
-            fprintf(tmp_stdout, "║ " C_YELLOW "❯ Messages generated while running the tests:" C_RESET "\n");
-            fprintf(tmp_stdout,"║ " C_YELLOW "   ▐ %s" C_RESET, redir);
-            while (fgets(redir, sizeof(redir), stdout)) {
-                fprintf(tmp_stdout, "║ " C_YELLOW "   ▐ %s" C_RESET, redir);
+        if (print_messages) {
+            char redir[150];
+            rewind(stdout);
+            if (fgets(redir, sizeof(redir), stdout)) {
+                fprintf(tmp_stdout, "║\n");
+                fprintf(tmp_stdout, "║ " C_YELLOW "❯ Messages generated while running the tests:" C_RESET "\n");
+                fprintf(tmp_stdout,"║ " C_YELLOW "   ▐ %s" C_RESET, redir);
+                while (fgets(redir, sizeof(redir), stdout)) {
+                    fprintf(tmp_stdout, "║ " C_YELLOW "   ▐ %s" C_RESET, redir);
+                }
             }
         }
         fclose(stdout);
     }
 
     if (stderr != tmp_stderr) {
-        rewind(stderr);
-        if (fgets(redir, sizeof(redir), stderr)) {
-            fprintf(tmp_stdout, "║\n");
-            fprintf(tmp_stderr, "║ " C_RED "❯ Errors generated while running the tests:" C_RESET "\n");
-            fprintf(tmp_stderr, "║ " C_RED "   ▐ %s" C_RESET, redir);
-            while (fgets(redir, sizeof(redir), stderr)) {
+        if (print_messages) {
+            char redir[150];
+            rewind(stderr);
+            if (fgets(redir, sizeof(redir), stderr)) {
+                fprintf(tmp_stdout, "║\n");
+                fprintf(tmp_stderr, "║ " C_RED "❯ Errors generated while running the tests:" C_RESET "\n");
                 fprintf(tmp_stderr, "║ " C_RED "   ▐ %s" C_RESET, redir);
+                while (fgets(redir, sizeof(redir), stderr)) {
+                    fprintf(tmp_stderr, "║ " C_RED "   ▐ %s" C_RESET, redir);
+                }
             }
         }
         fclose(stderr);
     }
 
     fprintf(tmp_stdout, "╚══════════════════════════════════════════════════════════════════════════\n");
+    fprintf(tmp_stdout, "\n");
 
     stdout = tmp_stdout;
     stderr = tmp_stderr;
@@ -111,7 +117,7 @@ int _unit_pass(const char *func_name, int line_num) {
     return 0;
 }
 
-int _unit_fail(char *message, const char *func_name, int line_num) {
+int _unit_fail(const char *message, const char *func_name, int line_num) {
     assert_fail_msg(func_name, line_num);
     fprintf(tmp_stdout, "%s\n", message);
     return 1;

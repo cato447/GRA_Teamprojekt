@@ -1,4 +1,4 @@
-#include "thread_sobel.h"
+#include "sobel_threaded.h"
 
 #include <stddef.h>
 #include <pthread.h>
@@ -7,11 +7,11 @@
 #include <sys/sysinfo.h>
 #include <stdbool.h>
 
-#include "basic_sobel.h"
-#include "simd_sobel.h"
+#include "sobel_basic.h"
+#include "sobel_simd.h"
 
 typedef struct sobel_interval_args {
-    uint8_t *img_in;
+    const uint8_t *img_in;
     size_t width;
     size_t from_y;
     size_t to_y;
@@ -19,10 +19,10 @@ typedef struct sobel_interval_args {
     bool graysc;
 } sobel_interval_args;
 
-void *compute_sobel_for_height_interval(void *args) {
+static void *compute_sobel_for_height_interval(void *args) {
     sobel_interval_args arguments = *(sobel_interval_args *) args;
 
-    uint8_t *img_in = arguments.img_in;
+    const uint8_t *img_in = arguments.img_in;
     size_t width = arguments.width;
     size_t from_y = arguments.from_y;
     size_t to_y = arguments.to_y;
@@ -33,7 +33,7 @@ void *compute_sobel_for_height_interval(void *args) {
 
     if (!arguments.graysc) {
         for (size_t i = width * from_y * 3 + 3; i < width * to_y * 3; i += 16) {
-            compute_simd_sobel(img_in, i, width, img_out, zero_even_bytes_mask, comparer);
+            compute_sobel_simd(img_in, i, width, img_out, zero_even_bytes_mask, comparer);
         }
         for (size_t y = from_y; y <= to_y; y++) {
             set_pixel_at(img_out, width, 0, y, 0, 0, 0);
@@ -41,7 +41,7 @@ void *compute_sobel_for_height_interval(void *args) {
         }
     } else {
         for (size_t i = width * from_y + 1; i < width * to_y; i += 16) {
-            compute_simd_sobel_graysc(img_in, i, width, img_out, zero_even_bytes_mask, comparer);
+            compute_sobel_simd_graysc(img_in, i, width, img_out, zero_even_bytes_mask, comparer);
         }
         for (size_t y = from_y; y <= to_y; y++) {
             img_out[y * width] = 0;
@@ -54,7 +54,7 @@ void *compute_sobel_for_height_interval(void *args) {
 
 #define LINES_PER_THREAD_NO_NPROC 300
 
-void thread_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out) {
+void sobel_thread(const uint8_t *img_in, size_t width, size_t height, uint8_t *img_out) {
     size_t lines_per_thread = LINES_PER_THREAD_NO_NPROC;
     if (__linux__) {
         size_t hw_threads = get_nprocs();
@@ -92,18 +92,18 @@ void thread_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out
         //Remaining image is calculated by normal simd_sobel with adjusted pointers and height
         size_t img_offset = width * 3 * amount_threads * lines_per_thread - (amount_threads > 0 ? width * 3 : 0);
 
-        simd_sobel(img_in + img_offset, width, (height % lines_per_thread == 0 ? lines_per_thread : height % lines_per_thread) + (amount_threads > 0 ? 1 : 0), img_out + img_offset);
+        sobel_simd(img_in + img_offset, width, (height % lines_per_thread == 0 ? lines_per_thread : height % lines_per_thread) + (amount_threads > 0 ? 1 : 0), img_out + img_offset);
 
         for (size_t i = 0; i < amount_threads; ++i) {
             pthread_join(threads[i], NULL);
         }
     } else {
         //If image is too small for the thread logic to work properly, fall back to normal simd
-        simd_sobel(img_in, width, height, img_out);
+        sobel_simd(img_in, width, height, img_out);
     }
 }
 
-void thread_sobel_graysc(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out) {
+void sobel_thread_graysc(const uint8_t *img_in, size_t width, size_t height, uint8_t *img_out) {
     size_t lines_per_thread = 300;
     if (__linux__) {
         size_t hw_threads = get_nprocs();
@@ -138,16 +138,16 @@ void thread_sobel_graysc(uint8_t *img_in, size_t width, size_t height, uint8_t *
             ensure_offset = 0;
         }
 
-        //Remaining image is calculated by normal simd_sobel with adjusted pointers and height
+        //Remaining image is calculated by normal sobel_simd with adjusted pointers and height
         size_t img_offset = width * amount_threads * lines_per_thread - (amount_threads > 0 ? width : 0);
 
-        simd_sobel_graysc(img_in + img_offset, width, (height % lines_per_thread == 0 ? lines_per_thread : height % lines_per_thread) + (amount_threads > 0 ? 1 : 0), img_out + img_offset);
+        sobel_simd_graysc(img_in + img_offset, width, (height % lines_per_thread == 0 ? lines_per_thread : height % lines_per_thread) + (amount_threads > 0 ? 1 : 0), img_out + img_offset);
 
         for (size_t i = 0; i < amount_threads; ++i) {
             pthread_join(threads[i], NULL);
         }
     } else {
         //If image is too small for the thread logic to work properly, fall back to normal simd
-        simd_sobel(img_in, width, height, img_out);
+        sobel_simd(img_in, width, height, img_out);
     }
 }
