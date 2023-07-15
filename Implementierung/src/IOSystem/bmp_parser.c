@@ -103,7 +103,7 @@ int bmp_to_array(const char *buf, size_t buf_size, s_image *_bmp_img_buf) {
     size_t px_data_rowlength;
     uint32_t px_width;
     uint32_t px_height;
-    int neg_height;
+    int neg_height = 0;
     const char *buf_px_data = parseHeader(buf, buf_size, &px_data_rowlength, &px_width, &px_height, &neg_height);
     if (buf_px_data == NULL) {
         fprintf(stderr, " → Failed parsing the file header\n");
@@ -152,7 +152,7 @@ int bmp_to_array_graysc (const char *buf, size_t buf_size, s_image *_bmp_img_buf
     size_t px_data_rowlength;
     uint32_t px_width;
     uint32_t px_height;
-    int neg_height;
+    int neg_height = 0;
     const char *buf_px_data = parseHeader(buf, buf_size, &px_data_rowlength, &px_width, &px_height, &neg_height);
     if (buf_px_data == NULL) {
         fprintf(stderr, " → Failed parsing the file header\n");

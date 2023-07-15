@@ -155,6 +155,9 @@ void test_grayscale(void) {
     ASSERT_EQUAL_UINT32(bmp_img_ref.px_height, bmp_img_test.px_height);
     ASSERT_EQUAL_SIZE_T(bmp_img_ref.px_array_size / 3, bmp_img_test.px_array_size);
     ASSERT_EQUAL_DOUBLE(bmp_img_ref.px_array[0]  *.0722 + bmp_img_ref.px_array[1]  *.7152 + bmp_img_ref.px_array[2]  *.2126, bmp_img_test.px_array[0], 0.9999);
+
+    free(bmp_img_test.px_array);
+    free(bmp_img_ref.px_array);
 }
 
 void test_coreheader(void) {
@@ -175,6 +178,8 @@ void test_coreheader(void) {
 
     ASSERT_EQUAL_UINT32(512, bmp_img.px_width);
     ASSERT_EQUAL_UINT32(512, bmp_img.px_height);
+
+    free(bmp_img.px_array);
 }
 
 void run_tests_IO_parser(void) {
