@@ -11,11 +11,11 @@
 #include "simd_sobel.h"
 
 typedef struct sobelIntervalArgs {
-    uint8_t* img_in;
+    uint8_t *img_in;
     size_t width;
     size_t fromY;
     size_t toY;
-    uint8_t* img_out;
+    uint8_t *img_out;
     bool graysc;
 } sobelIntervalArgs;
 

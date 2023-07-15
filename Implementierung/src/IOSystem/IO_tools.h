@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include "bmp_parser.h"
 
-char* readFile (const char* path, size_t* bufSize);
-int writeFile (const char* path, char* buf, size_t bufSize);
+char *readFile (const char *path, size_t *bufSize);
+int writeFile (const char *path, char *buf, size_t bufSize);
 
 #endif

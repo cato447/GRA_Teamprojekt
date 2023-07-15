@@ -48,7 +48,7 @@ void testSetColorOfPixel() {
     int x = 0;
     int y = 0;
 
-    uint8_t* pxArrayCopy = malloc(bmpImage->pxArraySize);
+    uint8_t *pxArrayCopy = malloc(bmpImage->pxArraySize);
     if (pxArrayCopy == NULL) {
         FAIL("Failed allocating memory for pxArrayCopy\n");
         return;

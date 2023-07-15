@@ -9,8 +9,8 @@
 #define C_BLUE "\x1b[34m"
 #define C_RESET "\x1b[0m"
 
-static FILE* tmp_stdout;
-static FILE* tmp_stderr;
+static FILE *tmp_stdout;
+static FILE *tmp_stderr;
 
 static struct TestResults {
     int testsRun;
@@ -18,7 +18,7 @@ static struct TestResults {
     int assertFailure;
 } testResults;
 
-void _unitStartTesting(char* fileName) {
+void _unitStartTesting(char *fileName) {
     tmp_stdout = stdout;
     tmp_stderr = stderr;
     stdout = tmpfile();
@@ -82,7 +82,7 @@ void _unitStopTesting() {
     stderr = tmp_stderr;
 }
 
-void _unitRunTest(void (*f)(), const char* f_name) {
+void _unitRunTest(void (*f)(), const char *f_name) {
     testResults.assertFailure = false;
     fprintf(tmp_stdout, "║  ▗ ❯ %s\n", f_name);
     f();
@@ -96,11 +96,11 @@ void _unitRunTest(void (*f)(), const char* f_name) {
 static void assertPass(const char *funcName, int lineNum) {
     fprintf(tmp_stdout, "║  ▕" C_GREEN "     PASS %s:%d" C_RESET "\n", funcName, lineNum);
 }
-static void assertFailMsg(const char* funcName, int lineNum) {
+static void assertFailMsg(const char *funcName, int lineNum) {
     testResults.assertFailure = true;
     fprintf(tmp_stdout, "║  ▕" C_RED "     FAIL %s:%d  ▶  " C_RESET, funcName, lineNum);
 }
-static void assertFailNoMsg(const char* funcName, int lineNum) {
+static void assertFailNoMsg(const char *funcName, int lineNum) {
     testResults.assertFailure = true;
     fprintf(tmp_stdout, "║  ▕" C_RED "     FAIL %s:%d" C_RESET "\n", funcName, lineNum);
 }
@@ -111,7 +111,7 @@ int _unitPass(const char *funcName, int lineNum) {
     return 0;
 }
 
-int _unitFail(char* message, const char *funcName, int lineNum) {
+int _unitFail(char *message, const char *funcName, int lineNum) {
     assertFailMsg(funcName, lineNum);
     fprintf(tmp_stdout, "%s\n", message);
     return 1;
@@ -127,7 +127,7 @@ int _unitAssert(bool condition, const char *funcName, int lineNum) {
     }
 }
 
-int _unitAsserEqualPointer(void* expected, void* actual, const char *funcName, int lineNum) {
+int _unitAsserEqualPointer(void *expected, void *actual, const char *funcName, int lineNum) {
     if (expected != actual) {
         assertFailNoMsg(funcName, lineNum);
         return 1;

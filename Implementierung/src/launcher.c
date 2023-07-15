@@ -311,37 +311,37 @@ int main(int argc, char *argv[]) {
     switch (config_params.version) {
         case 0:
             for (long i = 0; i < num_of_execute_cycles; ++i) {
-                sobel((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight,
+                sobel(bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight,
                                                      newPixels);
             }
             break;
         case 1:
             for (long i = 0; i < num_of_execute_cycles; ++i) {
-                simd_sobel((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight,
+                simd_sobel(bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight,
                                                      newPixels);
             }
             break;
         case 2:
             for (long i = 0; i < num_of_execute_cycles; ++i) {
-                thread_sobel((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight,
+                thread_sobel(bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight,
                                                      newPixels);
             }
             break;
         case 3:
             for (long i = 0; i < num_of_execute_cycles; ++i) {
-                sobel_graysc((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight,
+                sobel_graysc(bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight,
                              newPixels);
             }
             break;
         case 4:
             for (long i = 0; i < num_of_execute_cycles; ++i) {
-                simd_sobel_graysc((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight,
+                simd_sobel_graysc(bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight,
                              newPixels);
             }
             break;
         case 5:
             for (long i = 0; i < num_of_execute_cycles; ++i) {
-                thread_sobel_graysc((uint8_t *) bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight,
+                thread_sobel_graysc(bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight,
                              newPixels);
             }
             break;
@@ -382,7 +382,7 @@ int main(int argc, char *argv[]) {
     struct timespec end_write_io;
     double io_write_time;
     if (config_params.measure_performance) {
-        char* testBuf;
+        char *testBuf;
         printf("Running performance tests for image write\n");
         if (clock_gettime(CLOCK_MONOTONIC, &start_write_io) != 0) {
             fprintf(stderr, "Couldn't get start_write_io time\n");

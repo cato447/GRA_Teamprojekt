@@ -14,8 +14,8 @@
 Returns a pointer to the data buffer of the file read at parameter "path" or a null pointer on failure.
 Sets "bufSize" accordingly on successful read.
 */
-char* readFile(const char* path, size_t* bufSize) {
-    FILE* file = fopen(path, "rb");
+char *readFile(const char *path, size_t *bufSize) {
+    FILE *file = fopen(path, "rb");
     if (!file) {
         fprintf(stderr, "Error trying to open file at \"%s\": %s\n", path, strerror(errno));
         return NULL;
@@ -34,7 +34,7 @@ char* readFile(const char* path, size_t* bufSize) {
         return NULL;
     }
 
-    void* fileBuf = malloc(statbuf.st_size);
+    void *fileBuf = malloc(statbuf.st_size);
     if (fileBuf == NULL) {
         fprintf(stderr, "Failed allocating memory for fileBuf\n");
         fclose(file);
@@ -56,8 +56,8 @@ char* readFile(const char* path, size_t* bufSize) {
 /*
 Writes "bufSize" bytes from buffer at parameter "buf" to file at location "path", creates files if doesn't exist prior.
 */
-int writeFile(const char* path, char* buf, size_t bufSize) {
-    FILE* file = fopen(path, "wb+");
+int writeFile(const char *path, char *buf, size_t bufSize) {
+    FILE *file = fopen(path, "wb+");
     if (!file) {
         fprintf(stderr, "Failed trying to create/overwrite file at \"%s\": %s\n", path, strerror(errno));
         return 1;

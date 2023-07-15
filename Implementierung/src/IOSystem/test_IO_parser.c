@@ -8,9 +8,9 @@
 #include "IO_tools.h"
 #include "bmp_parser.h"
 
-void parseFailure(const char* path) {
+void parseFailure(const char *path) {
     size_t bufSize;
-    char* buf = readFile(path, &bufSize);
+    char *buf = readFile(path, &bufSize);
     if (buf == NULL) {
         FAIL("Failed to load test file");
         return;
@@ -28,7 +28,7 @@ void parseFailure(const char* path) {
 
 void testFileError() {
     size_t bufSize;
-    char* buf = readFile("/mostLikelyDoesntExist", &bufSize);
+    char *buf = readFile("/mostLikelyDoesntExist", &bufSize);
     if (buf != NULL) {
         FAIL("Managed to read non-existing file");
         free(buf);
@@ -58,7 +58,7 @@ void testPicTooSmall() {
 
 void testWidthHeight() {
     size_t bufSize;
-    char* buf = readFile("res/parserTests/testWidthHeight.bmp", &bufSize);
+    char *buf = readFile("res/parserTests/testWidthHeight.bmp", &bufSize);
     if (buf == NULL) {
         FAIL("Failed to load test file");
         return;
@@ -74,19 +74,21 @@ void testWidthHeight() {
 
     ASSERT_EQUAL_U_INT32(199, bmpImg.pxWidth);
     ASSERT_EQUAL_U_INT32(323, bmpImg.pxHeight);
-    ASSERT_EQUAL_SIZE_T(199 * 323 * 3, bmpImg.pxArraySize);
+    ASSERT_EQUAL_SIZE_T(199  *323  *3, bmpImg.pxArraySize);
+
+    free(bmpImg.pxArray);
 }
 
 void testNegativeWidthHeight() {
     size_t bufSizeTest;
-    char* bufTest = readFile("res/parserTests/negativeHeight.bmp", &bufSizeTest);
+    char *bufTest = readFile("res/parserTests/negativeHeight.bmp", &bufSizeTest);
     if (bufTest == NULL) {
         FAIL("Failed to load test file");
         return;
     }
 
     size_t bufSizeRef;
-    char* bufRef = readFile("res/parserTests/negativeHeightRef.bmp", &bufSizeRef);
+    char *bufRef = readFile("res/parserTests/negativeHeightRef.bmp", &bufSizeRef);
     if (bufRef == NULL) {
         free(bufTest);
         FAIL("Failed to load reference file");
@@ -130,7 +132,7 @@ void testNegativeWidthHeight() {
 
 void testGrayscale() {
     size_t bufSizeTest;
-    char* bufTest = readFile("res/parserTests/testRef.bmp", &bufSizeTest);
+    char *bufTest = readFile("res/parserTests/testRef.bmp", &bufSizeTest);
     if (bufTest == NULL) {
         FAIL("Failed to load test file");
         return;
@@ -154,7 +156,7 @@ void testGrayscale() {
     ASSERT_EQUAL_U_INT32(bmpImgRef.pxWidth, bmpImgTest.pxWidth);
     ASSERT_EQUAL_U_INT32(bmpImgRef.pxHeight, bmpImgTest.pxHeight);
     ASSERT_EQUAL_SIZE_T(bmpImgRef.pxArraySize / 3, bmpImgTest.pxArraySize);
-    ASSERT_EQUAL_DOUBLE(bmpImgRef.pxArray[0] * .0722 + bmpImgRef.pxArray[1] * .7152 + bmpImgRef.pxArray[2] * .2126, bmpImgTest.pxArray[0], 0.9999);
+    ASSERT_EQUAL_DOUBLE(bmpImgRef.pxArray[0]  *.0722 + bmpImgRef.pxArray[1]  *.7152 + bmpImgRef.pxArray[2]  *.2126, bmpImgTest.pxArray[0], 0.9999);
 }
 
 void runTestsParser(void) {

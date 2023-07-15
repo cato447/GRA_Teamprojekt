@@ -6,15 +6,15 @@
 #include <stddef.h>
 
 // Controls
-void _unitStartTesting(char* fileName);
+void _unitStartTesting(char *fileName);
 void _unitStopTesting();
-void _unitRunTest(void (*f)(), const char* f_name);
+void _unitRunTest(void (*f)(), const char *f_name);
 
 // Assertions
 int _unitPass(const char *funcName, int lineNum);
-int _unitFail(char* message, const char *funcName, int lineNum);
+int _unitFail(char *message, const char *funcName, int lineNum);
 int _unitAssert(bool condition, const char *funcName, int lineNum);
-int _unitAsserEqualPointer(void* expected, void* actual, const char *funcName, int lineNum);
+int _unitAsserEqualPointer(void *expected, void *actual, const char *funcName, int lineNum);
 int _unitAssertFalse(bool condition, const char *funcName, int lineNum);
 int _unitAssertTrue(bool condition, const char *funcName, int lineNum);
 int _unitAssertEqualSizeT(const size_t expected, const size_t actual, const char *funcName, int lineNum);
