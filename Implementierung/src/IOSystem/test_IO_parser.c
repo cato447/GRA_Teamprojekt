@@ -45,20 +45,20 @@ void test_file_error(void) {
 }
 
 void test_invalid_header_signature(void) {
-    parse_failure("res/parserTests/invalidHeaderSignature.bmp");
+    parse_failure("../res/parserTests/invalidHeaderSignature.bmp");
 }
 
 void test_too_small_for_header(void) {
-    parse_failure("res/parserTests/tooSmallForHeader.bmp");
+    parse_failure("../res/parserTests/tooSmallForHeader.bmp");
 }
 
 void test_pic_too_small(void) {
-    parse_failure("res/parserTests/picTooSmall.bmp");
+    parse_failure("../res/parserTests/picTooSmall.bmp");
 }
 
 void test_width_height(void) {
     size_t buf_size;
-    char *buf = read_file("res/parserTests/testWidthHeight.bmp", &buf_size);
+    char *buf = read_file("../res/parserTests/testWidthHeight.bmp", &buf_size);
     if (buf == NULL) {
         FAIL("Failed to load test file");
         return;
@@ -81,14 +81,14 @@ void test_width_height(void) {
 
 void test_negative_width_height(void) {
     size_t buf_size_test;
-    char *buf_test = read_file("res/parserTests/negativeHeight.bmp", &buf_size_test);
+    char *buf_test = read_file("../res/parserTests/negativeHeight.bmp", &buf_size_test);
     if (buf_test == NULL) {
         FAIL("Failed to load test file");
         return;
     }
 
     size_t buf_size_ref;
-    char *buf_ref = read_file("res/parserTests/negativeHeightRef.bmp", &buf_size_ref);
+    char *buf_ref = read_file("../res/parserTests/negativeHeightRef.bmp", &buf_size_ref);
     if (buf_ref == NULL) {
         free(buf_test);
         FAIL("Failed to load reference file");
@@ -132,7 +132,7 @@ void test_negative_width_height(void) {
 
 void test_grayscale(void) {
     size_t buf_size_test;
-    char *buf_test = read_file("res/parserTests/testRef.bmp", &buf_size_test);
+    char *buf_test = read_file("../res/parserTests/testRef.bmp", &buf_size_test);
     if (buf_test == NULL) {
         FAIL("Failed to load test file");
         return;
@@ -159,7 +159,7 @@ void test_grayscale(void) {
     ASSERT_EQUAL_DOUBLE(bmp_img_ref.px_array[0]  *.0722 + bmp_img_ref.px_array[1]  *.7152 + bmp_img_ref.px_array[2]  *.2126, bmp_img_test.px_array[0], 0.9999);
 }
 
-void run_tests_parser(void) {
+void run_tests_IO_parser(void) {
     START_TESTING();
     RUN_TEST(test_file_error);
     RUN_TEST(test_invalid_header_signature);

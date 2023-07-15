@@ -22,6 +22,7 @@
 #include "Implementierung/thread_sobel.h"
 #include "Implementierung/test_basic_sobel.h"
 #include "Implementierung/test_similarity.h"
+#include "IOSystem/test_IO_parser.h"
 
 #define BMP_EXTENSION ".bmp"
 #define OUTPUT_MARK "_out" BMP_EXTENSION
@@ -297,6 +298,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (config_params.run_tests) {
+        run_tests_IO_parser();
         run_tests_sobel();
     }
 
