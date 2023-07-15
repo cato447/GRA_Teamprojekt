@@ -32,3 +32,30 @@ compareImages(uint8_t *img1, size_t img1_size, uint8_t *img2, size_t img2_size) 
     }
     return 1.0 - ((double) differingPixels / img1_size);
 }
+
+// gives ratio of differing pixels to total pixel count of image
+// returns -1 if parameters are not valid
+double
+compareImages_graysc(uint8_t *img1, size_t img1_size, uint8_t *img2, size_t img2_size) {
+    if (img1 == NULL) {
+        fprintf(stderr, "Img1 is null\n");
+        return -1;
+    }
+    if (img2 == NULL) {
+        fprintf(stderr, "Img2 is null\n");
+        return -1;
+    }
+    if (img1_size != img2_size) {
+        fprintf(stderr, "Images are not the same size\n");
+        return -1;
+    }
+    size_t differingPixels = 0;
+    // every image has a black border after the sobel calculation
+    // that's why we don't have to check those pixels
+    for(size_t i = 0; i < img1_size; i++){
+        if(img1[i] != img2[i]){
+            differingPixels++;
+        }
+    }
+    return 1.0 - ((double) differingPixels / img1_size);
+}

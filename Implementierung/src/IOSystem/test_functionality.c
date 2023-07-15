@@ -17,7 +17,7 @@ size_t loadPicture(char *path, uBMPImage *img) {
         return 0;
     }
     if (bmpToArray(buffer, buffer_size, img) == 1) {
-        fprintf(stderr, "Couldn't parse BMP file");
+        fprintf(stderr, "Couldn't parse BMP file\n");
         free(buffer);
         return 0;
     }
@@ -35,7 +35,7 @@ size_t loadPicture_graysc(char *path, uBMPImage *img) {
         return 0;
     }
     if (bmpToArray_graysc(buffer, buffer_size, img) == 1) {
-        fprintf(stderr, "Couldn't parse BMP file");
+        fprintf(stderr, "Couldn't parse BMP file\n");
         free(buffer);
         return 0;
     }

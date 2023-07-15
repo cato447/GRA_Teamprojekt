@@ -25,4 +25,5 @@ $(DIR_OBJ)/%.o: %.c $(INCS)
 PHONY += clean
 clean:
 	rm -rf $(OUTDIR)/* $(DIR_OBJ)/*
+
 .PHONY = $(PHONY)
