@@ -193,41 +193,59 @@ Es wird mit einem automatisierten Test überprüft, ob die Ergebnisse der SIMD u
 Ergebnissen der Vergleichsimplementierung übereinstimmen.
 \section{Performanzanalyse}
 Im folgenden Abschnitt wird die Performanz der einzelnen Lösungsansätze verglichen und analysiert.
-Unsere Messungen sind alle auf einem AMD Ryzen 5 1600 mit 6 Kernen und 12 Threads durchgeführt worden.
-Bei den Messungen ist genaustens darauf geachtet worden, dass eine Messung mindestens eine Sekunde lief, um Messfehler zu vermeiden.
-Als Testdaten dienen Bilder mit verschiedensten gängigen Größenverhaltnissen (4:3, 16:9, 1:1, 3:4, 9:16, etc).
-Diese Bilder werden mit zufälligen Pixeln gefüllt. Dies ändert nichts an der Performanz, da die Berechnung der Sobel-Werte unabhängig von den Pixelwerten ist.
-Als Basis dient hier auch wieder die Vergleichsimplementierung.
+Als gemeinsame Basis für alle Messergebnisse dient hierbei das mit GCC's Optimierungsstufe 3 kompilierte Programm, das auf einem AMD Ryzen 5 1600 mit 6 Kernen und 12 Threads ausgeführt wurde.
+Bei den Messungen wurde großen Wert auf die Mindestlaufzeit von über einer Sekunde gelegt, um Messungenauigkeiten möglichst zu vermeiden.
+Als Testdaten dienen Bilder mit verschiedenen gängigen Größenverhaltnissen (4:3, 16:9, 1:1, 3:4, 9:16, etc) und entsprechenden Auflösungen (1024x768, 1920x1080, 256x256, etc).
+Diese Bilder werden mit zufälligen Pixeln gefüllt, was die Performanz jedoch nicht beeinflusst, da die Berechnung der Sobel-Werte unabhängig von den Pixelwerten ausgeführt wird.
+Das ist insbesondere deshalb der Fall, weil der Algorithmus - sofern er auf unkomprimierten Bildern arbeitet - den Wert jedes Pixels einmal berechnen muss, wodurch auch die Laufzeit in O(n) liegen muss.
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\columnwidth]{graphics/performance_vergleich.png}
+    \includegraphics[width=0.5\columnwidth]{graphics/performance_vergleich}
     \caption{Performanz der Vergleichsimplementierung}
     \label{fig:performanz}
 \end{figure}
-Die Vergleichsimplementierung ist stumpf nach mathematischer Definition implementiert und lässt Optimierung wie Speicherzugriffsoptimierungen außenvor.
-Die Daten des Bildes liegen Zeile für Zeile im Speicher. Die mathematische Definition arbeitet jedoch Spalte für Spalte.
-Würden diese Optimierung hinzugefügt werden, würde die Vergleichsimplementierung um Faktor 2 schneller werden, da der Cache nun sinnvoll genutzt wird.
+Da die Vergleichsimplementierung schlicht die mathematische Definition des Verfahrens in C-Code übersetzt, wurden etwaige Verbesserungen wie Speicherzugriffsoptimierungen außenvor gelassen.
+Die Daten des Bildes liegen Zeile für Zeile im Speicher, wobei die mathematische Definition über die einzelnen Spalten funktioniert.
+Diese (kleine) Optimierung würde die Laufzeit der Vergleichsimplementierung um Faktor 2 beschleunigen, da dadurch Cachemisses signifikant reduziert werden können, aufgrund der Einfachheit wurde darauf jedoch verzichtet.
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\columnwidth]{graphics/performance_simd.png}
+    \includegraphics[width=0.5\columnwidth]{graphics/performance_simd}
     \caption{Performanz der SIMD-Implementierung}
     \label{fig:performanz-simd}
 \end{figure}
-Die SIMD-Implementierung ist ca. 10 mal schneller als die Vergleichsimplementierung.
-Dies ist darauf zurückzuführen, dass zum einen die Berechnung der Sobel-Werte vektorisiert zum anderen aber auch die Speicherzugriffe optimiert werden (Zugriff Zeile für Zeile und nicht Spalte für Spalte).
-Bei der SIMD-Implementierung werden 16 Farbchannel gleichzeitig verarbeitet im Gegensatz zu den 3 Farbchannel der Vergleichsimplementierung.
-Der Theoretische Speedup sollte also bei 16/3 liegen, was in etwa 5,3 entspricht. Dies wiederspricht erstmal dem gemessenen Speedup von 10.
-Wenn man nun jedoch bedenkt, dass hier nicht nur die Berechnung der Sobel-Werte vektorisiert ist, sondern auch die Speicherzugriffe optimiert wurden, ist der Speedup von 10 nicht mehr verwunderlich.
-Nimmt man nun noch die Information hinzu, dass eine speicherzugriffsoptimierte Vergleichsimplementierung um Faktor 2 schneller wäre, ist der Speedup von 10 sogar noch etwas zu gering.
-Dies hat wahrscheinlich mit dem SIMD Overhead zu tun.
+Die SIMD-Implementierung erzielt in Relation zur Vergleichsimplementierung einen Speedup von circa 10.
+Dies ist darauf zurückzuführen, dass zum einen die Berechnung der Sobel-Werte vektorisiert zum anderen aber auch die Speicherzugriffe optimiert werden (zeilenweiser statt spaltenweiser Zugriff).
+Durch die Vektorisierung können 16 Farbchannel gleichzeitig verarbeitet werden, im Gegensatz zu der vollständig sequentiellen Berechnung der Vergleichsimplementierung.
+Basierend auf dieser Information wäre der theoretisch maximale Speedup 16, was jedoch vom gemessenen Speedup von x10 abweicht, was auf den durch das versetzte Laden und aufbereiten der Vektoren entstehenden Overhead zurückzuführen ist.
+Optimiert man die Speicherzugriffe der Vergleichsimplementierung, kann GCC ab Optimierungsstufe 3 interessanterweise die hohe Vektorisierbarkeit des Problems erkennen und übersetzt diese ebenfalls in Vektorinstruktionen.
+Da der durch GCC generierte Ansatz jedoch nur 8 Byte gleichzeitig verarbeiten kann, ist unsere SIMD-Implementierung immer noch in etwa doppelt so schnell.
 
-In der Einleitung wurde bereits erwähnt, dass normalerweise die Berechnung der Sobel-Werte auf Graustufenbildern durchgeführt wird.
-Wir haben unsere Implementierung der interesse halber auch auf Graustufenbildern getestet.
+Die Threading-Implementierung kann durch ihren noch paralleleren Ansatz gegenüber der SIMD-Implementierung eine noch bessere Laufzeit mit einem Speedup von x2 (TO BE TESTED) erzielen.
+Hierbei haben unsere Messungen ergeben, dass die optimale Anzahl an Streifen, in die das Bild aufgeteilt werden soll, den durch die CPU bereitgestellten Threads entspricht.
+Dadurch kann die Parallelität von modernen CPUs bestmöglich ausgenutzt werden, während der Overhead für die Verwaltung der Threads möglichst gering bleibt.
+Der durch diesen Ansatz theoretisch maximal mögliche Speedup gegenüber der SIMD-Implementierung entspräche der Anzahl an Threads, die die ausführende CPU bereitstellt.
+Da jedoch nicht alle Threads dieselbe Rechenleistung liefern können, bzw. das Programm aufgrund des Schedulers nicht zu allen Zeitpunkten vollständig parallel arbeiten kann, weicht der gemessene Speedup stark vom theoretischen Maximum ab.
+Des Weiteren ist es wichtig anzumerken, dass für besonders kleine Bilder die Threading-Implementierung - aufgrund des Thread-Verwaltungsoverheads - langsamer als die SIMD-Implementierung sein kann.
+
+Bei der Rechereche zum Sobel-Operator fiel auf, dass so gut wie jede Implementierung Graustufenbilder zur Berechnung verwendet.
+Deswegen wurden alle drei Versionen auch für Graustufenbilder implementiert.
+(Bilder mit Performance)
+Es zeigt sich, dass die Ausführungszeit auf den Graustufenbildern rund 1/3 der Ausführungszeit auf Farbbildern beträgt.
+Somit wäre die Beschränkung auf Graustufenbilder ein einfacher Weg um eine signifikante Optimierung der Ausführungszeit zu erreichen.
+Des Weiteren leidet die Kantenerkennung unter dem Fehlen der Farbe nicht, die Kanten sogar besser zu erkennen.
+
+(2 Bilder mit Kante Farbe Kante grau)
+
+Dies erklärt, warum so gut wie jede Impelementierung Graustufenbilder zur Berechnung benutzt.
+
+Wie in der Einleitung bereits erwähnt, wird die Berechnung der Sobel-Werte normalerweise auf Graustufenbildern durchgeführt, da das die weitere Verarbeitung der erkannten Kanten erleichtert.
+Durch diesen de-facto-Industriestandard produzieren die zusätzlichen Versionen (3-5) analog zu den Versionen 0-2 Graustufenbilder.
+Da hierbei jedoch der einzige Unterschied die Pixelbreite - nämlich 8, statt 24 Bit - ist, entspricht der erwartete Speedup von 24/8 = 3 gegenüber der entsprechenden 24-Bit Implementierung genau dem gemessenen.
 \section{Zusammenfassung und Ausblick}
 TODO: Geben Sie hier eine kurze Zusammenfassung und einen Ausblick ein.
 % TODO: Fuegen Sie Ihre Quellen der Datei Ausarbeitung.bib hinzu
 % Referenzieren Sie diese dann mit \cite{}.
-% Beispiel: CR2 ist ein Register der x86-Architektur~\cite{intel2017man}.
+% Beispiel: CR7 ist ein portugiesischer Fußballspieler ~\cite{intel2017man}.
 \bibliographystyle{plain}
 \bibliography{Ausarbeitung}
 \end{document}
