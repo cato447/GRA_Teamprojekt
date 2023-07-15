@@ -217,13 +217,14 @@ Die SIMD-Implementierung erzielt in Relation zur Vergleichsimplementierung einen
 Dies ist darauf zurückzuführen, dass zum einen die Berechnung der Sobel-Werte vektorisiert zum anderen aber auch die Speicherzugriffe optimiert werden (zeilenweiser statt spaltenweiser Zugriff).
 Durch die Vektorisierung können 16 Farbchannel gleichzeitig verarbeitet werden, im Gegensatz zu der vollständig sequentiellen Berechnung der Vergleichsimplementierung.
 Basierend auf dieser Information wäre der theoretisch maximale Speedup 16, was jedoch vom gemessenen Speedup von x10 abweicht, was auf den durch das versetzte Laden und aufbereiten der Vektoren entstehenden Overhead zurückzuführen ist.
+Auf Assembly-Ebene entspricht dieser Overhead fast der Hälfte der Instruktionen, die für die vektorisierte Berechnung ausgeführt werden.
 Optimiert man die Speicherzugriffe der Vergleichsimplementierung, kann GCC ab Optimierungsstufe 3 interessanterweise die hohe Vektorisierbarkeit des Problems erkennen und übersetzt diese ebenfalls in Vektorinstruktionen.
 Da der durch GCC generierte Ansatz jedoch nur 8 Byte gleichzeitig verarbeiten kann, ist unsere SIMD-Implementierung immer noch in etwa doppelt so schnell.
 
-Die Threading-Implementierung kann durch ihren noch paralleleren Ansatz gegenüber der SIMD-Implementierung eine noch bessere Laufzeit mit einem Speedup von x2 (TO BE TESTED) erzielen.
-Hierbei haben unsere Messungen ergeben, dass die optimale Anzahl an Streifen, in die das Bild aufgeteilt werden soll, den durch die CPU bereitgestellten Threads entspricht.
-Dadurch kann die Parallelität von modernen CPUs bestmöglich ausgenutzt werden, während der Overhead für die Verwaltung der Threads möglichst gering bleibt.
-Der durch diesen Ansatz theoretisch maximal mögliche Speedup gegenüber der SIMD-Implementierung entspräche der Anzahl an Threads, die die ausführende CPU bereitstellt.
+Die Threading-Implementierung kann durch ihren noch paralleleren Ansatz gegenüber der SIMD-Implementierung eine noch bessere Laufzeit mit einem theoretisch unendlichen Speedup erzielen.
+Da unsere Messungen ergeben haben, dass die optimale Anzahl an Streifen, in die das Bild aufgeteilt werden soll, den durch die CPU bereitgestellten Threads entspricht, kann der Speedup durch Hinzufügen beliebig vieler Kerne beliebig groß werden.
+Dadurch, dass jeder Thread theoretisch genau einen Streifen bearbeiten kann, kann die Parallelität von modernen CPUs bestmöglich ausgenutzt werden, während der Overhead für die Verwaltung der Threads möglichst gering bleibt.
+Der theoretisch maximal zu erwartende Speedup gegenüber der Single-Thread-SIMD-Implementierung würde also der Anzahl der durch die CPU bereitgestellten Threads entsprechen.
 Da jedoch nicht alle Threads dieselbe Rechenleistung liefern können, bzw. das Programm aufgrund des Schedulers nicht zu allen Zeitpunkten vollständig parallel arbeiten kann, weicht der gemessene Speedup stark vom theoretischen Maximum ab.
 Des Weiteren ist es wichtig anzumerken, dass für besonders kleine Bilder die Threading-Implementierung - aufgrund des Thread-Verwaltungsoverheads - langsamer als die SIMD-Implementierung sein kann.
 
