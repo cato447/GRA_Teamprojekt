@@ -445,7 +445,6 @@ int main(int argc, char *argv[]) {
         printf("Writing the image took on average %.9fs\n", avg_io_write_time);
         printf("Percentage io/calc = %f%% \n", ((avg_io_read_time + avg_io_write_time) / avg_exec_time) * 100);
     }
-
     freeImage(bmpImage);
     dealloc_config_params(&config_params);
     return 0;

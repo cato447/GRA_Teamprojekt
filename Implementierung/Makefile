@@ -14,6 +14,7 @@ OBJS = $(addprefix $(DIR_OBJ)/, $(SRCS:c=o))
 INC_DIRS = -I./ $(addprefix -I, $(SUBDIR))
 
 PHONY := $(TARGET)
+
 $(TARGET): $(OBJS)
 	mkdir -p $(OUTDIR)
 	$(CC) -o $(OUTDIR)/$@ $(OBJS) $(LIBS)
@@ -21,6 +22,9 @@ $(TARGET): $(OBJS)
 $(DIR_OBJ)/%.o: %.c $(INCS)
 	mkdir -p $(@D)
 	$(CC) -o $@ $(CFLAGS) -c $< $(INC_DIRS)
+
+PHONY += compile
+compile: $(TARGET)
 
 PHONY += clean
 clean:
