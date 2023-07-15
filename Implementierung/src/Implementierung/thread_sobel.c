@@ -32,18 +32,18 @@ void *computeSobelForHeightInterval(void *args) {
     __m128i zeroEvenBytesMask = _mm_set_epi16(ZERO_EVEN_BYTES_MASK);
 
     if (!arguments.graysc) {
-        for (size_t i = width * fromY * 3 + 3; i < width * toY * 3; i += 16) {
+        for (size_t i = width * fromY * 3 + 3; i <= width * toY * 3; i += 16) {
             computeSIMDSobel(img_in, i, width, img_out, zeroEvenBytesMask, comparer);
         }
-        for (size_t y = fromY; y < toY; y++) {
+        for (size_t y = fromY; y <= toY; y++) {
             setPixelAt(img_out, width, 0, y, 0, 0, 0);
             setPixelAt(img_out, width, width-1, y, 0, 0, 0);
         }
     } else {
-        for (size_t i = width * fromY + 1; i < width * toY; i += 16) {
+        for (size_t i = width * fromY + 1; i <= width * toY; i += 16) {
             computeSIMDSobel_graysc(img_in, i, width, img_out, zeroEvenBytesMask, comparer);
         }
-        for (size_t y = fromY; y < toY; y++) {
+        for (size_t y = fromY; y <= toY; y++) {
             img_out[y * width] = 0;
             img_out[y * width + width - 1] = 0;
         }

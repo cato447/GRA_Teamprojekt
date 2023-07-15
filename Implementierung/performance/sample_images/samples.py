@@ -18,7 +18,7 @@ def generate(w, h):
     global pixel
     img = Image.new("RGB", (w, h))
     img.putdata(pixel[:w*h])
-    img.save("random" + str(w) + ", " + str(h) + ".bmp")
+    img.save("random" + str(w) + "x" + str(h) + ".bmp")
 
 generate(16, 16)
 generate(24, 24)
