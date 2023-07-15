@@ -185,24 +185,45 @@ Des weiteren wurden Unittests hinzugefügt, die überprüfen, ob die Hilfsfunkti
 Die optimierten Versionen SIMD \ref{sec:simd-implementierung} und SIMD mit Threading \ref{sec:simd-threading} erzielen Ergebnisse, die denen der Verlgiechimplementierung exakt entsprechen.
 Um das zu erreichen, wird der in Version 1 implizit entstehende schwarze Rand explizit links und rechts nach der Berechnung hinzugefügt.
 Da dafür - für Bilder mit herkömmlicher Größe - verschwindend wenig Schreiboperationen benötigt werden ist die Perfromanzeinbuße kaum messbar.
-\\\\
-*TODO: Performance overhead zeigen*
-\\\\
-Es gibt außerdem einen automatisierten Test, der überprüft ob die Ergebnisse der SIMD und SIMD + Threading Versionen mit den
+Es wird mit einem automatisierten Test überprüft, ob die Ergebnisse der SIMD und SIMD + Threading Versionen mit den
 Ergebnissen der Vergleichsimplementierung übereinstimmen.
-
 \section{Performanzanalyse}
+Im folgenden Abschnitt wird die Performanz der einzelnen Lösungsansätze verglichen und analysiert.
+Unsere Messungen sind alle auf einem AMD Ryzen 5 1600 mit 6 Kernen und 12 Threads durchgeführt worden.
+Bei den Messungen ist genaustens darauf geachtet worden, dass eine Messung mindestens eine Sekunde lief, um Messfehler zu vermeiden.
+Als Testdaten dienen Bilder mit verschiedensten gängigen Größenverhaltnissen (4:3, 16:9, 1:1, 3:4, 9:16, etc).
+Diese Bilder werden mit zufälligen Pixeln gefüllt. Dies ändert nichts an der Performanz, da die Berechnung der Sobel-Werte unabhängig von den Pixelwerten ist.
+Als Basis dient hier auch wieder die Vergleichsimplementierung. 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\columnwidth]{graphics/performance_vergleich.png}
+    \caption{Performanz der Vergleichsimplementierung}
+    \label{fig:performanz}
+\end{figure}
+Die Vergleichsimplementierung ist stumpf nach mathematischer Definition implementiert und lässt Optimierung wie Speicherzugriffsoptimierungen außenvor.
+Die Daten des Bildes liegen Zeile für Zeile im Speicher. Die mathematische Definition arbeitet jedoch Spalte für Spalte.
+Würden diese Optimierung hinzugefügt werden, würde die Vergleichsimplementierung um Faktor 2 schneller werden, da der Cache nun sinnvoll genutzt wird.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\columnwidth]{graphics/performance_simd.png}
+    \caption{Performanz der SIMD-Implementierung}
+    \label{fig:performanz-simd}
+\end{figure}
+Die SIMD-Implementierung ist ca. 10 mal schneller als die Vergleichsimplementierung.
+Dies ist darauf zurückzuführen, dass zum einen die Berechnung der Sobel-Werte vektorisiert zum anderen aber auch die Speicherzugriffe optimiert werden (Zugriff Zeile für Zeile und nicht Spalte für Spalte).
+Bei der SIMD-Implementierung werden 16 Farbchannel gleichzeitig verarbeitet im Gegensatz zu den 3 Farbchannel der Vergleichsimplementierung.
+Der Theoretische Speedup sollte also bei 16/3 liegen, was in etwa 5,3 entspricht. Dies wiederspricht erstmal dem gemessenen Speedup von 10.
+Wenn man nun jedoch bedenkt, dass hier nicht nur die Berechnung der Sobel-Werte vektorisiert ist, sondern auch die Speicherzugriffe optimiert wurden, ist der Speedup von 10 nicht mehr verwunderlich.
+Nimmt man nun noch die Information hinzu, dass eine speicherzugriffsoptimierte Vergleichsimplementierung um Faktor 2 schneller wäre, ist der Speedup von 10 sogar noch etwas zu gering.
+Dies hat wahrscheinlich mit dem SIMD Overhead zu tun.
 
-TODO: Geben Sie hier die Performanz Ihres Lösungsansatzes ein.
-
+In der Einleitung wurde bereits erwähnt, dass normalerweise die Berechnung der Sobel-Werte auf Graustufenbildern durchgeführt wird.
+Wir haben unsere Implementierung der interesse halber auch auf Graustufenbildern getestet.
 \section{Zusammenfassung und Ausblick}
-
 TODO: Geben Sie hier eine kurze Zusammenfassung und einen Ausblick ein.
-
 % TODO: Fuegen Sie Ihre Quellen der Datei Ausarbeitung.bib hinzu
 % Referenzieren Sie diese dann mit \cite{}.
 % Beispiel: CR2 ist ein Register der x86-Architektur~\cite{intel2017man}.
 \bibliographystyle{plain}
 \bibliography{Ausarbeitung}
-
 \end{document}
