@@ -1,57 +1,57 @@
-#ifndef UNITTEST_H_
-#define UNITTEST_H_
+#ifndef _UNITTEST_H_
+#define _UNITTEST_H_
 
 #include <stdbool.h>
 #include <inttypes.h>
 #include <stddef.h>
 
 // Controls
-void _unitStartTesting(char *fileName);
-void _unitStopTesting();
-void _unitRunTest(void (*f)(), const char *f_name);
+void _unit_start_testing(char *fileName);
+void _unit_stop_testing();
+void _unit_run_test(void (*f)(), const char *f_name);
 
 // Assertions
-int _unitPass(const char *funcName, int lineNum);
-int _unitFail(char *message, const char *funcName, int lineNum);
-int _unitAssert(bool condition, const char *funcName, int lineNum);
-int _unitAsserEqualPointer(void *expected, void *actual, const char *funcName, int lineNum);
-int _unitAssertFalse(bool condition, const char *funcName, int lineNum);
-int _unitAssertTrue(bool condition, const char *funcName, int lineNum);
-int _unitAssertEqualSizeT(const size_t expected, const size_t actual, const char *funcName, int lineNum);
-int _unitAssertEqualInt(const int expected, const int actual, const char *funcName, int lineNum);
-int _unitAssertEqualInt8(const int8_t expected, const int8_t actual, const char *funcName, int lineNum);
-int _unitAssertEqualUInt8(const uint8_t expected, const uint8_t actual, const char *funcName, int lineNum);
-int _unitAssertEqualInt16(const int16_t expected, const int16_t actual, const char *funcName, int lineNum);
-int _unitAssertEqualUInt16(const uint16_t expected, const uint16_t actual, const char *funcName, int lineNum);
-int _unitAssertEqualInt32(const int32_t expected, const int32_t actual, const char *funcName, int lineNum);
-int _unitAssertEqualUInt32(const uint32_t expected, const uint32_t actual, const char *funcName, int lineNum);
-int _unitAssertEqualInt64(const int64_t expected, const int64_t actual, const char *funcName, int lineNum);
-int _unitAssertEqualUInt64(const uint64_t expected, const uint64_t actual, const char *funcName, int lineNum);
-int _unitAssertEqualString(const char *expected, const char *actual, const char *funcName, int lineNum);
-int _unitAssertDouble(const double expected, const double actual, double tolerance, const char *funcName, int fileNum);
+int _unit_pass(const char *funcName, int lineNum);
+int _unit_fail(char *message, const char *funcName, int lineNum);
+int _unit_assert(bool condition, const char *funcName, int lineNum);
+int _unit_assert_false(bool condition, const char *funcName, int lineNum);
+int _unit_assert_true(bool condition, const char *funcName, int lineNum);
+int _unit_assert_equal_pointer(void *expected, void *actual, const char *funcName, int lineNum);
+int _unit_assert_equal_size_t(const size_t expected, const size_t actual, const char *funcName, int lineNum);
+int _unit_assert_equal_int(const int expected, const int actual, const char *funcName, int lineNum);
+int _unit_assert_equal_int8(const int8_t expected, const int8_t actual, const char *funcName, int lineNum);
+int _unit_assert_equal_uint8(const uint8_t expected, const uint8_t actual, const char *funcName, int lineNum);
+int _unit_assert_equal_int16(const int16_t expected, const int16_t actual, const char *funcName, int lineNum);
+int _unit_assert_equal_uint16(const uint16_t expected, const uint16_t actual, const char *funcName, int lineNum);
+int _unit_assert_equal_int32(const int32_t expected, const int32_t actual, const char *funcName, int lineNum);
+int _unit_assert_equal_uint32(const uint32_t expected, const uint32_t actual, const char *funcName, int lineNum);
+int _unit_assert_equal_int64(const int64_t expected, const int64_t actual, const char *funcName, int lineNum);
+int _unit_assert_equal_uint64(const uint64_t expected, const uint64_t actual, const char *funcName, int lineNum);
+int _unit_assert_equal_string(const char *expected, const char *actual, const char *funcName, int lineNum);
+int _unit_assert_equal_double(const double expected, const double actual, double tolerance, const char *funcName, int fileNum);
 
 
-#define START_TESTING() _unitStartTesting(__BASE_FILE__)
-#define STOP_TESTING() _unitStopTesting()
-#define RUN_TEST(F) _unitRunTest(F, #F "()")
+#define START_TESTING() _unit_start_testing(__BASE_FILE__)
+#define STOP_TESTING() _unit_stop_testing()
+#define RUN_TEST(F) _unit_run_test(F, #F "()")
 
-#define PASS() _unitPass(__func__, __LINE__)
-#define FAIL(MESSAGE) _unitFail(MESSAGE, __func__, __LINE__)
-#define ASSERT(CONDITION) _unitAssert(CONDITION, __func__, __LINE__)
-#define ASSERT_FALSE(CONDITION) _unitAssertFalse(CONDITION, __func__, __LINE__)
-#define ASSERT_TRUE(CONDITION) _unitAssertTrue(CONDITION, __func__, __LINE__)
-#define ASSERT_EQUAL_POINTER(EXPECTED, ACTUAL) _unitAssertEqualPointer(EXPECTED, ACTUAL, __func__, __LINE__)
-#define ASSERT_EQUAL_SIZE_T(EXPECTED, ACTUAL) _unitAssertEqualSizeT(EXPECTED, ACTUAL, __func__, __LINE__)
-#define ASSERT_EQUAL_INT(EXPECTED, ACTUAL) _unitAssertEqualInt(EXPECTED, ACTUAL, __func__, __LINE__)
-#define ASSERT_EQUAL_INT8(EXPECTED, ACTUAL) _unitAssertEqualInt8(EXPECTED, ACTUAL, __func___, __LINE__)
-#define ASSERT_EQUAL_U_INT8(EXPECTED, ACTUAL) _unitAssertEqualUInt8(EXPECTED, ACTUAL, __func__, __LINE__)
-#define ASSERT_EQUAL_INT16(EXPECTED, ACTUAL) _unitAssertEqualInt16(EXPECTED, ACTUAL, __func___, __LINE__)
-#define ASSERT_EQUAL_U_INT16(EXPECTED, ACTUAL) _unitAssertEqualUInt16(EXPECTED, ACTUAL, __func__, __LINE__)
-#define ASSERT_EQUAL_INT32(EXPECTED, ACTUAL) _unitAssertEqualInt32(EXPECTED, ACTUAL, __func__, __LINE__)
-#define ASSERT_EQUAL_U_INT32(EXPECTED, ACTUAL) _unitAssertEqualUInt32(EXPECTED, ACTUAL, __func__, __LINE__)
-#define ASSERT_EQUAL_INT64(EXPECTED, ACTUAL) _unitAssertEqualInt64(EXPECTED, ACTUAL, __func__, __LINE__)
-#define ASSERT_EQUAL_U_INT64(EXPECTED, ACTUAL) _unitAssertEqualUInt64(EXPECTED, ACTUAL, __func__, __LINE__)
-#define ASSERT_EQUAL_STRING(EXPECTED, ACTUAL) _unitAssertEqualString(EXPECTED, ACTUAL, __func__, __LINE__)
-#define ASSERT_EQUAL_DOUBLE(EXPECTED, ACTUAL, TOLERANCE) _unitAssertDouble(EXPECTED, ACTUAL, TOLERANCE, __func__, __LINE__)
+#define PASS() _unit_pass(__func__, __LINE__)
+#define FAIL(MESSAGE) _unit_fail(MESSAGE, __func__, __LINE__)
+#define ASSERT(CONDITION) _unit_assert(CONDITION, __func__, __LINE__)
+#define ASSERT_FALSE(CONDITION) _unit_assert_false(CONDITION, __func__, __LINE__)
+#define ASSERT_TRUE(CONDITION) _unit_assert_true(CONDITION, __func__, __LINE__)
+#define ASSERT_EQUAL_POINTER(EXPECTED, ACTUAL) _unit_assert_equal_pointer(EXPECTED, ACTUAL, __func__, __LINE__)
+#define ASSERT_EQUAL_SIZE_T(EXPECTED, ACTUAL) _unit_assert_equal_size_t(EXPECTED, ACTUAL, __func__, __LINE__)
+#define ASSERT_EQUAL_INT(EXPECTED, ACTUAL) _unit_assert_equal_int(EXPECTED, ACTUAL, __func__, __LINE__)
+#define ASSERT_EQUAL_INT8(EXPECTED, ACTUAL) _unit_assert_equal_int8(EXPECTED, ACTUAL, __func___, __LINE__)
+#define ASSERT_EQUAL_UINT8(EXPECTED, ACTUAL) _unit_assert_equal_uint8(EXPECTED, ACTUAL, __func__, __LINE__)
+#define ASSERT_EQUAL_INT16(EXPECTED, ACTUAL) _unit_assert_equal_int16(EXPECTED, ACTUAL, __func___, __LINE__)
+#define ASSERT_EQUAL_UINT16(EXPECTED, ACTUAL) _unit_assert_equal_uint16(EXPECTED, ACTUAL, __func__, __LINE__)
+#define ASSERT_EQUAL_INT32(EXPECTED, ACTUAL) _unit_assert_equal_int32(EXPECTED, ACTUAL, __func__, __LINE__)
+#define ASSERT_EQUAL_UINT32(EXPECTED, ACTUAL) _unit_assert_equal_uint32(EXPECTED, ACTUAL, __func__, __LINE__)
+#define ASSERT_EQUAL_INT64(EXPECTED, ACTUAL) _unit_assert_equal_int64(EXPECTED, ACTUAL, __func__, __LINE__)
+#define ASSERT_EQUAL_UINT64(EXPECTED, ACTUAL) _unit_assert_equal_uint64(EXPECTED, ACTUAL, __func__, __LINE__)
+#define ASSERT_EQUAL_STRING(EXPECTED, ACTUAL) _unit_assert_equal_string(EXPECTED, ACTUAL, __func__, __LINE__)
+#define ASSERT_EQUAL_DOUBLE(EXPECTED, ACTUAL, TOLERANCE) _unit_assert_equal_double(EXPECTED, ACTUAL, TOLERANCE, __func__, __LINE__)
 
 #endif

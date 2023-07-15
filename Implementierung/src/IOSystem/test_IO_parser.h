@@ -1,6 +1,6 @@
-#ifndef TEST_PARSER_H
-#define TEST_PARSER_H
+#ifndef _TEST_IO_PARSER_H_
+#define _TEST_IO_PARSER_H_
 
-void runTestsParser(void);
+void run_tests_parser(void);
 
 #endif

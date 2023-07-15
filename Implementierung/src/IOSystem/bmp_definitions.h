@@ -1,5 +1,5 @@
-#ifndef BMP_DEFINITIONS_H
-#define BMP_DEFINITIONS_H
+#ifndef _BMP_DEFINITIONS_H_
+#define _BMP_DEFINITIONS_H_
 
 #include <stdint.h>
 #include <stddef.h>
@@ -14,11 +14,11 @@ typedef struct pixel8_t {
     uint8_t v;
 } pixel8_t;
 
-typedef struct uBMPImage {
-    uint32_t pxWidth;
-    uint32_t pxHeight;
-    size_t pxArraySize;
-    uint8_t *pxArray;
-} uBMPImage;
+typedef struct s_image {
+    uint32_t px_width;
+    uint32_t px_height;
+    size_t px_array_size;
+    uint8_t *px_array;
+} s_image;
 
 #endif

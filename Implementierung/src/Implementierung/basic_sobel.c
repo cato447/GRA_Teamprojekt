@@ -13,34 +13,34 @@ const int8_t M_h[3][3] = { { 1, 2, 1 },
 void sobel(const uint8_t *img_in, size_t width, size_t height, uint8_t *img_out) {
     for (size_t x = 1; x < width - 1; ++x) {
         for (size_t y = 1; y < height - 1; ++y) {
-            int32_t A_v_R = 0;
-            int32_t A_h_R = 0;
+            int32_t A_v_r = 0;
+            int32_t A_h_r = 0;
 
-            int32_t A_v_G = 0;
-            int32_t A_h_G = 0;
+            int32_t A_v_g = 0;
+            int32_t A_h_g = 0;
 
-            int32_t A_v_B = 0;
-            int32_t A_h_B = 0;
+            int32_t A_v_b = 0;
+            int32_t A_h_b = 0;
 
             for (int8_t i = -1; i <= 1; i++) {
                 for (int8_t j = -1; j <= 1; j++) {
-                    A_v_R += (int32_t)(M_v[1 + i][1 + j] * (colorOfPixel(img_in, width, x + i, y + j, RED)));
-                    A_h_R += (int32_t)(M_h[1 + i][1 + j] * (colorOfPixel(img_in, width, x + i, y + j, RED)));
+                    A_v_r += (int32_t)(M_v[1 + i][1 + j] * (color_of_pixel(img_in, width, x + i, y + j, RED)));
+                    A_h_r += (int32_t)(M_h[1 + i][1 + j] * (color_of_pixel(img_in, width, x + i, y + j, RED)));
 
-                    A_v_G += (int32_t)(M_v[1 + i][1 + j] * (colorOfPixel(img_in, width, x + i, y + j, GREEN)));
-                    A_h_G += (int32_t)(M_h[1 + i][1 + j] * (colorOfPixel(img_in, width, x + i, y + j, GREEN)));
+                    A_v_g += (int32_t)(M_v[1 + i][1 + j] * (color_of_pixel(img_in, width, x + i, y + j, GREEN)));
+                    A_h_g += (int32_t)(M_h[1 + i][1 + j] * (color_of_pixel(img_in, width, x + i, y + j, GREEN)));
 
-                    A_v_B += (int32_t)(M_v[1 + i][1 + j] * (colorOfPixel(img_in, width, x + i, y + j, BLUE)));
-                    A_h_B += (int32_t)(M_h[1 + i][1 + j] * (colorOfPixel(img_in, width, x + i, y + j, BLUE)));
+                    A_v_b += (int32_t)(M_v[1 + i][1 + j] * (color_of_pixel(img_in, width, x + i, y + j, BLUE)));
+                    A_h_b += (int32_t)(M_h[1 + i][1 + j] * (color_of_pixel(img_in, width, x + i, y + j, BLUE)));
                 }
             }
 
-            int32_t A_R = abs(A_v_R) + abs(A_h_R);
-            int32_t A_G = abs(A_v_G) + abs(A_h_G);
-            int32_t A_B = abs(A_v_B) + abs(A_h_B);
+            int32_t A_r = abs(A_v_r) + abs(A_h_r);
+            int32_t A_g = abs(A_v_g) + abs(A_h_g);
+            int32_t A_b = abs(A_v_b) + abs(A_h_b);
 
             //Cap value at 255
-            setPixelAt(img_out, width, x, y, A_R > 255 ? 255 : A_R, A_G  > 255 ? 255 : A_G, A_B  > 255 ? 255 : A_B);
+            set_pixel_at(img_out, width, x, y, A_r > 255 ? 255 : A_r, A_g  > 255 ? 255 : A_g, A_b  > 255 ? 255 : A_b);
         }
     }
 }
@@ -66,12 +66,12 @@ void sobel_graysc(const uint8_t *img_in, size_t width, size_t height, uint8_t *i
     }
 }
 
-uint8_t colorOfPixel(const uint8_t *img, size_t width, size_t x, size_t y, enum Color color) {
+uint8_t color_of_pixel(const uint8_t *img, size_t width, size_t x, size_t y, enum Color color) {
     // Pixel are 24 bit wide to compensate this we multiply x and y by 3
     return *(img + (width * 3) * y + x * 3 + color);
 }
 
-void setPixelAt(uint8_t *img, size_t width, size_t x, size_t y, uint8_t red, uint8_t green, uint8_t blue) {
+void set_pixel_at(uint8_t *img, size_t width, size_t x, size_t y, uint8_t red, uint8_t green, uint8_t blue) {
     // Pixel are 24 bit wide to compensate this we multiply x and y by 3
     *(img + (width * 3) * y + x * 3 + BLUE) = blue;
     *(img + (width * 3) * y + x * 3 + GREEN) = green;

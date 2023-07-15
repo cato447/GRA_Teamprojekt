@@ -1,12 +1,7 @@
-//
-// Created by Cato on 22.06.23.
-//
 #define _POSIX_C_SOURCE 199309L
 
-#define _POSIX_C_SOURCE 199309L
-
-#include "IOSystem/bmp_definitions.h"
-
+#include <stdint.h>
+#include <stdbool.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <getopt.h>
@@ -14,15 +9,14 @@
 #include <string.h>
 #include <time.h>
 
-
 #ifdef _WIN32
 #include <pthread_time.h>
 #endif
 
+#include "IOSystem/bmp_definitions.h"
 #include "IOSystem/IO_tools.h"
 #include "IOSystem/bmp_parser.h"
 #include "IOSystem/test_functionality.h"
-#include "launcher.h"
 #include "Implementierung/basic_sobel.h"
 #include "Implementierung/simd_sobel.h"
 #include "Implementierung/thread_sobel.h"
@@ -32,6 +26,15 @@
 #define BMP_EXTENSION ".bmp"
 #define OUTPUT_MARK "_out" BMP_EXTENSION
 #define IO_PERFORMANCE_TEST_CYCLES 100
+
+typedef struct config {
+    uint8_t version;
+    bool measure_performance;
+    long measure_performance_cycles;
+    bool run_tests;
+    char *output_file_path;
+    char *input_file_path;
+} config;
 
 void print_help_msg(void) {
     printf("Program to calculate sobel from BMP file\n");
@@ -48,19 +51,19 @@ void print_help_msg(void) {
 
 void dealloc_config_params(config *config_params) {
     if (config_params != NULL) {
-        if (config_params->inputFilePath != NULL) {
-            free(config_params->inputFilePath);
+        if (config_params->input_file_path != NULL) {
+            free(config_params->input_file_path);
         }
-        if (config_params->outputFilePath != NULL) {
-            free(config_params->outputFilePath);
+        if (config_params->output_file_path != NULL) {
+            free(config_params->output_file_path);
         }
     }
 }
 
-void freeImage(uBMPImage *img) {
+void free_image(s_image *img) {
     if (img != NULL) {
-        if (img->pxArray != NULL) {
-            free(img->pxArray);
+        if (img->px_array != NULL) {
+            free(img->px_array);
         }
         free(img);
     }
@@ -72,7 +75,7 @@ void print_arg_error(char *errorMsg) {
     print_help_msg();
 }
 
-int parseArgs(int argc, char *argv[], config *config_params) {
+int parse_args(int argc, char *argv[], config *config_params) {
     static struct option longopts[] = {
             {"help", no_argument, NULL, 'h'},
             {NULL, 0,             NULL, 0}
@@ -119,13 +122,13 @@ int parseArgs(int argc, char *argv[], config *config_params) {
                     print_arg_error("Output path can't start with a dash");
                     return 1;
                 }
-                size_t outputPathLen = strlen(optarg) + 1;
-                config_params->outputFilePath = malloc(outputPathLen);
-                if (config_params->outputFilePath == NULL) {
-                    fprintf(stderr, "Failed allocating memory for outputFilePath\n");
+                size_t output_path_len = strlen(optarg) + 1;
+                config_params->output_file_path = malloc(output_path_len);
+                if (config_params->output_file_path == NULL) {
+                    fprintf(stderr, "Failed allocating memory for output_file_path\n");
                     return 1;
                 }
-                strncpy(config_params->outputFilePath, optarg, outputPathLen);
+                strncpy(config_params->output_file_path, optarg, output_path_len);
                 break;
             case '?':
                 print_arg_error("Unknown argument");
@@ -153,37 +156,37 @@ int parseArgs(int argc, char *argv[], config *config_params) {
     }
 
     size_t input_path_len = strlen(argv[0]) + 1;
-    config_params->inputFilePath = malloc(input_path_len);
-    if (config_params->inputFilePath == NULL) {
-        fprintf(stderr, "Failed allocating memory for inputFilePath\n");
+    config_params->input_file_path = malloc(input_path_len);
+    if (config_params->input_file_path == NULL) {
+        fprintf(stderr, "Failed allocating memory for input_file_path\n");
         return 1;
     }
 
-    strncpy(config_params->inputFilePath, argv[0], input_path_len);
+    strncpy(config_params->input_file_path, argv[0], input_path_len);
 
-    //Set outputFilePath if not given
-    if (config_params->outputFilePath == NULL) {
-        char searchString[input_path_len];
-        strncpy(searchString, config_params->inputFilePath, input_path_len);
-        for (char *c = searchString; *c; c++) {
+    //Set output_file_path if not given
+    if (config_params->output_file_path == NULL) {
+        char search_string[input_path_len];
+        strncpy(search_string, config_params->input_file_path, input_path_len);
+        for (char *c = search_string; *c; c++) {
             *c = tolower(*c);
         }
 
         size_t len_input_name;
-        if (strstr(searchString, BMP_EXTENSION) !=
-            searchString + input_path_len - strlen(BMP_EXTENSION) - 1) {
+        if (strstr(search_string, BMP_EXTENSION) !=
+            search_string + input_path_len - strlen(BMP_EXTENSION) - 1) {
             len_input_name = input_path_len - 1;
         } else {
             len_input_name = input_path_len - strlen(BMP_EXTENSION) - 1;
         }
-        config_params->outputFilePath = malloc(len_input_name + strlen(OUTPUT_MARK) + 1);
-        if (config_params->outputFilePath == NULL) {
-            fprintf(stderr, "Failed allocating memory for outputFilePath\n");
+        config_params->output_file_path = malloc(len_input_name + strlen(OUTPUT_MARK) + 1);
+        if (config_params->output_file_path == NULL) {
+            fprintf(stderr, "Failed allocating memory for output_file_path\n");
             return 1;
         }
 
-        strncpy(config_params->outputFilePath, config_params->inputFilePath, len_input_name);
-        strncat(config_params->outputFilePath, OUTPUT_MARK,
+        strncpy(config_params->output_file_path, config_params->input_file_path, len_input_name);
+        strncat(config_params->output_file_path, OUTPUT_MARK,
                 strlen(OUTPUT_MARK) + 1);
     }
     return 0;
@@ -191,29 +194,29 @@ int parseArgs(int argc, char *argv[], config *config_params) {
 
 int main(int argc, char *argv[]) {
     config config_params = {0, false, 3, false, NULL, NULL};
-    if (parseArgs(argc, argv, &config_params)) {
+    if (parse_args(argc, argv, &config_params)) {
         fprintf(stderr, "Couldn't parse arguments\n");
         dealloc_config_params(&config_params);
         return 1;
     }
-    uBMPImage *bmpImage = malloc(sizeof(uBMPImage));
-    if (bmpImage == NULL) {
-        fprintf(stderr, "Failed allocating memory for bmpImage\n");
+    s_image *bmp_image = malloc(sizeof(s_image));
+    if (bmp_image == NULL) {
+        fprintf(stderr, "Failed allocating memory for bmp_image\n");
         dealloc_config_params(&config_params);
         return 1;
     }
-    printf("Loading image from %s\n", config_params.inputFilePath);
+    printf("Loading image from %s\n", config_params.input_file_path);
 
     size_t img_size;
     if (config_params.version < 3) {
-        img_size = loadPicture(config_params.inputFilePath, bmpImage);
+        img_size = load_picture(config_params.input_file_path, bmp_image);
     } else {
-        img_size = loadPicture_graysc(config_params.inputFilePath, bmpImage);
+        img_size = load_picture_graysc(config_params.input_file_path, bmp_image);
     }
 
     if (img_size == 0) {
-        fprintf(stderr, "Couldn't load picture from input file %s\n", config_params.inputFilePath);
-        freeImage(bmpImage);
+        fprintf(stderr, "Couldn't load picture from input file %s\n", config_params.input_file_path);
+        free_image(bmp_image);
         dealloc_config_params(&config_params);
         return 1;
     }
@@ -225,55 +228,55 @@ int main(int argc, char *argv[]) {
         printf("Running performance tests for Image Read\n");
         if (clock_gettime(CLOCK_MONOTONIC, &start_read_io) != 0) {
             fprintf(stderr, "Couldn't get start_read_io time\n");
-            freeImage(bmpImage);
+            free_image(bmp_image);
             dealloc_config_params(&config_params);
             return 1;
         }
         if (config_params.version < 3){
             for (size_t i = 0; i < IO_PERFORMANCE_TEST_CYCLES; i++){
-                // This code is nearly the same as the one in loadPicture
+                // This code is nearly the same as the one in load_picture
                 // We had to copy it here to not mess up our memory
                 void *buffer;
                 size_t buffer_size;
-                uBMPImage *test_bmp_image = malloc(sizeof(uBMPImage));
+                s_image *test_bmp_image = malloc(sizeof(s_image));
                 //fprintf(stdout, "Loading BMP File: %s\n", path);
-                buffer = readFile(config_params.inputFilePath, &buffer_size);
+                buffer = read_file(config_params.input_file_path, &buffer_size);
                 if (buffer == NULL) {
                     fprintf(stderr, "Couldn't read BMP File\n");
-                    free(bmpImage);
+                    free(bmp_image);
                     return 1;
                 }
-                if (bmpToArray(buffer, buffer_size, test_bmp_image) == 1) {
+                if (bmp_to_array(buffer, buffer_size, test_bmp_image) == 1) {
                     fprintf(stderr, "Couldn't parse BMP file\n");
                     free(buffer);
-                    free(bmpImage);
+                    free(bmp_image);
                     return 1;
                 }
                 free(buffer);
-                freeImage(test_bmp_image);
+                free_image(test_bmp_image);
             }
         } else {
             for (size_t i = 0; i < IO_PERFORMANCE_TEST_CYCLES; i++){
-                // This code is nearly the same as the one in loadPicture
+                // This code is nearly the same as the one in load_picture
                 // We had to copy it here to not mess up our memory
                 void *buffer;
                 size_t buffer_size;
-                uBMPImage *test_bmp_image = malloc(sizeof(uBMPImage));
+                s_image *test_bmp_image = malloc(sizeof(s_image));
                 //fprintf(stdout, "Loading BMP File: %s\n", path);
-                buffer = readFile(config_params.inputFilePath, &buffer_size);
+                buffer = read_file(config_params.input_file_path, &buffer_size);
                 if (buffer == NULL) {
                     fprintf(stderr, "Couldn't read BMP File\n");
-                    free(bmpImage);
+                    free(bmp_image);
                     return 1;
                 }
-                if (bmpToArray_graysc(buffer, buffer_size, test_bmp_image) == 1) {
+                if (bmp_to_array_graysc(buffer, buffer_size, test_bmp_image) == 1) {
                     fprintf(stderr, "Couldn't parse BMP file\n");
                     free(buffer);
-                    free(bmpImage);
+                    free(bmp_image);
                     return 1;
                 }
                 free(buffer);
-                freeImage(test_bmp_image);
+                free_image(test_bmp_image);
             }
         }
         if(clock_gettime(CLOCK_MONOTONIC, &end_read_io) != 0) {
@@ -285,16 +288,16 @@ int main(int argc, char *argv[]) {
         printf("IO read performance testing took %.9fs to run %d iterations\n", io_read_time, IO_PERFORMANCE_TEST_CYCLES);
     }
 
-    uint8_t *newPixels = calloc(bmpImage->pxArraySize, sizeof(uint8_t));
-    if (newPixels == NULL) {
-        fprintf(stderr, "Couldn't allocate memory for newPixels\n");
-        freeImage(bmpImage);
+    uint8_t *new_pixels = calloc(bmp_image->px_array_size, sizeof(uint8_t));
+    if (new_pixels == NULL) {
+        fprintf(stderr, "Couldn't allocate memory for new_pixels\n");
+        free_image(bmp_image);
         dealloc_config_params(&config_params);
         return 1;
     }
 
     if (config_params.run_tests) {
-        runTestsSobel();
+        run_tests_sobel();
     }
 
     struct timespec start_exec;
@@ -311,38 +314,38 @@ int main(int argc, char *argv[]) {
     switch (config_params.version) {
         case 0:
             for (long i = 0; i < num_of_execute_cycles; ++i) {
-                sobel(bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight,
-                                                     newPixels);
+                sobel(bmp_image->px_array, bmp_image->px_width, bmp_image->px_height,
+                                                     new_pixels);
             }
             break;
         case 1:
             for (long i = 0; i < num_of_execute_cycles; ++i) {
-                simd_sobel(bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight,
-                                                     newPixels);
+                simd_sobel(bmp_image->px_array, bmp_image->px_width, bmp_image->px_height,
+                                                     new_pixels);
             }
             break;
         case 2:
             for (long i = 0; i < num_of_execute_cycles; ++i) {
-                thread_sobel(bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight,
-                                                     newPixels);
+                thread_sobel(bmp_image->px_array, bmp_image->px_width, bmp_image->px_height,
+                                                     new_pixels);
             }
             break;
         case 3:
             for (long i = 0; i < num_of_execute_cycles; ++i) {
-                sobel_graysc(bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight,
-                             newPixels);
+                sobel_graysc(bmp_image->px_array, bmp_image->px_width, bmp_image->px_height,
+                             new_pixels);
             }
             break;
         case 4:
             for (long i = 0; i < num_of_execute_cycles; ++i) {
-                simd_sobel_graysc(bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight,
-                             newPixels);
+                simd_sobel_graysc(bmp_image->px_array, bmp_image->px_width, bmp_image->px_height,
+                             new_pixels);
             }
             break;
         case 5:
             for (long i = 0; i < num_of_execute_cycles; ++i) {
-                thread_sobel_graysc(bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight,
-                             newPixels);
+                thread_sobel_graysc(bmp_image->px_array, bmp_image->px_width, bmp_image->px_height,
+                             new_pixels);
             }
             break;
 
@@ -356,25 +359,25 @@ int main(int argc, char *argv[]) {
         printf("Sobel calc performance testing took %.9fs to run %ld iterations\n", exec_time, config_params.measure_performance_cycles);
     }
 
-    printf("Calculated sobel for image %s using version %d\n", config_params.inputFilePath, config_params.version);
+    printf("Calculated sobel for image %s using version %d\n", config_params.input_file_path, config_params.version);
 
     //#---------------------
     //#Erste Output Integration im Launcher - up to change
     //#
-    uBMPImage exportImage = {.pxArray = newPixels, .pxArraySize = bmpImage->pxArraySize, .pxHeight = bmpImage->pxHeight, .pxWidth = bmpImage->pxWidth};
-    size_t newSize;
-    char *newBuf;
+    s_image export_image = {.px_array = new_pixels, .px_array_size = bmp_image->px_array_size, .px_height = bmp_image->px_height, .px_width = bmp_image->px_width};
+    size_t new_size;
+    char *new_buf;
     if (config_params.version < 3) {
-        newBuf = arrayToBmp(&exportImage, &newSize);
+        new_buf = array_to_bmp(&export_image, &new_size);
     } else {
-        newBuf = arrayToBmp_graysc(&exportImage, &newSize);
+        new_buf = array_to_bmp_graysc(&export_image, &new_size);
     }
 
-    printf("Writing to file %s\n", config_params.outputFilePath);
-    if (writeFile(config_params.outputFilePath, newBuf, newSize)) {
-        freeImage(bmpImage);
+    printf("Writing to file %s\n", config_params.output_file_path);
+    if (write_file(config_params.output_file_path, new_buf, new_size)) {
+        free_image(bmp_image);
         dealloc_config_params(&config_params);
-        free(newBuf);
+        free(new_buf);
         return 1;
     }
 
@@ -382,7 +385,7 @@ int main(int argc, char *argv[]) {
     struct timespec end_write_io;
     double io_write_time;
     if (config_params.measure_performance) {
-        char *testBuf;
+        char *test_buf;
         printf("Running performance tests for image write\n");
         if (clock_gettime(CLOCK_MONOTONIC, &start_write_io) != 0) {
             fprintf(stderr, "Couldn't get start_write_io time\n");
@@ -391,15 +394,15 @@ int main(int argc, char *argv[]) {
         }
         if (config_params.version < 3){
             for (size_t i = 0; i < IO_PERFORMANCE_TEST_CYCLES; i++){
-                testBuf = arrayToBmp(&exportImage, &newSize);
-                writeFile(config_params.outputFilePath, newBuf, newSize);
-                free(testBuf);
+                test_buf = array_to_bmp(&export_image, &new_size);
+                write_file(config_params.output_file_path, new_buf, new_size);
+                free(test_buf);
             }
         } else {
             for (size_t i = 0; i < IO_PERFORMANCE_TEST_CYCLES; i++){
-                testBuf = arrayToBmp_graysc(&exportImage, &newSize);
-                writeFile(config_params.outputFilePath, newBuf, newSize);
-                free(testBuf);
+                test_buf = array_to_bmp_graysc(&export_image, &new_size);
+                write_file(config_params.output_file_path, new_buf, new_size);
+                free(test_buf);
             }
         }
         if(clock_gettime(CLOCK_MONOTONIC, &end_write_io) != 0) {
@@ -411,29 +414,29 @@ int main(int argc, char *argv[]) {
         printf("IO write testing took %.9fs to run %d iterations\n", io_write_time, IO_PERFORMANCE_TEST_CYCLES);
     }
 
-    free(newBuf);
+    free(new_buf);
     //#---------------------
 
     if (config_params.run_tests || config_params.measure_performance) {
-        uint8_t *sobelReferenceVersion = calloc(bmpImage->pxArraySize, sizeof(uint8_t));
-        if (sobelReferenceVersion == NULL) {
-            fprintf(stderr, "Failed allocating memory for sobelReferenceVersion\n");
-            freeImage(bmpImage);
+        uint8_t *sobel_reference_version = calloc(bmp_image->px_array_size, sizeof(uint8_t));
+        if (sobel_reference_version == NULL) {
+            fprintf(stderr, "Failed allocating memory for sobel_reference_version\n");
+            free_image(bmp_image);
             dealloc_config_params(&config_params);
             return 1;
         }
         printf("Comparing generated output image to output of reference algorithm\n");
         if (config_params.version < 3) {
-            sobel(bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, sobelReferenceVersion);
+            sobel(bmp_image->px_array, bmp_image->px_width, bmp_image->px_height, sobel_reference_version);
         } else {
-            sobel_graysc(bmpImage->pxArray, bmpImage->pxWidth, bmpImage->pxHeight, sobelReferenceVersion);
+            sobel_graysc(bmp_image->px_array, bmp_image->px_width, bmp_image->px_height, sobel_reference_version);
         }
-        runTestSimilarity(newPixels, bmpImage->pxArraySize, sobelReferenceVersion,
-                          bmpImage->pxArraySize, config_params.version > 2);
-        free(sobelReferenceVersion);
+        run_test_similarity(new_pixels, bmp_image->px_array_size, sobel_reference_version,
+                          bmp_image->px_array_size, config_params.version > 2);
+        free(sobel_reference_version);
     }
 
-    free(newPixels);
+    free(new_pixels);
 
     if (config_params.measure_performance) {
         double avg_exec_time = exec_time / config_params.measure_performance_cycles;
@@ -445,7 +448,7 @@ int main(int argc, char *argv[]) {
         printf("Writing the image took on average %.9fs\n", avg_io_write_time);
         printf("Percentage io/calc = %f%% \n", ((avg_io_read_time + avg_io_write_time) / avg_exec_time) * 100);
     }
-    freeImage(bmpImage);
+    free_image(bmp_image);
     dealloc_config_params(&config_params);
     return 0;
 }
