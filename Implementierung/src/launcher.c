@@ -31,7 +31,7 @@
 typedef struct config {
     uint8_t version;
     bool measure_performance;
-    long measure_performance_cycles;
+    unsigned long measure_performance_cycles;
     bool run_tests;
     char *output_file_path;
     char *input_file_path;
@@ -224,7 +224,7 @@ int main(int argc, char *argv[]) {
 
     struct timespec start_read_io;
     struct timespec end_read_io;
-    double io_read_time;
+    double io_read_time = 0;
     if (config_params.measure_performance) {
         printf("Running performance tests for Image Read\n");
         if (clock_gettime(CLOCK_MONOTONIC, &start_read_io) != 0) {
@@ -304,8 +304,8 @@ int main(int argc, char *argv[]) {
 
     struct timespec start_exec;
     struct timespec end_exec;
-    double exec_time;
-    long num_of_execute_cycles = config_params.measure_performance ? config_params.measure_performance_cycles : 1;
+    double exec_time = 0;
+    unsigned long num_of_execute_cycles = config_params.measure_performance ? config_params.measure_performance_cycles : 1;
     if (config_params.measure_performance) {
         printf("Running performance tests for Calculation\n");
         if (clock_gettime(CLOCK_MONOTONIC, &start_exec) != 0) {
@@ -315,37 +315,37 @@ int main(int argc, char *argv[]) {
     }
     switch (config_params.version) {
         case 0:
-            for (long i = 0; i < num_of_execute_cycles; ++i) {
+            for (unsigned long i = 0; i < num_of_execute_cycles; ++i) {
                 sobel(bmp_image->px_array, bmp_image->px_width, bmp_image->px_height,
                                                      new_pixels);
             }
             break;
         case 1:
-            for (long i = 0; i < num_of_execute_cycles; ++i) {
+            for (unsigned long i = 0; i < num_of_execute_cycles; ++i) {
                 simd_sobel(bmp_image->px_array, bmp_image->px_width, bmp_image->px_height,
                                                      new_pixels);
             }
             break;
         case 2:
-            for (long i = 0; i < num_of_execute_cycles; ++i) {
+            for (unsigned long i = 0; i < num_of_execute_cycles; ++i) {
                 thread_sobel(bmp_image->px_array, bmp_image->px_width, bmp_image->px_height,
                                                      new_pixels);
             }
             break;
         case 3:
-            for (long i = 0; i < num_of_execute_cycles; ++i) {
+            for (unsigned long i = 0; i < num_of_execute_cycles; ++i) {
                 sobel_graysc(bmp_image->px_array, bmp_image->px_width, bmp_image->px_height,
                              new_pixels);
             }
             break;
         case 4:
-            for (long i = 0; i < num_of_execute_cycles; ++i) {
+            for (unsigned long i = 0; i < num_of_execute_cycles; ++i) {
                 simd_sobel_graysc(bmp_image->px_array, bmp_image->px_width, bmp_image->px_height,
                              new_pixels);
             }
             break;
         case 5:
-            for (long i = 0; i < num_of_execute_cycles; ++i) {
+            for (unsigned long i = 0; i < num_of_execute_cycles; ++i) {
                 thread_sobel_graysc(bmp_image->px_array, bmp_image->px_width, bmp_image->px_height,
                              new_pixels);
             }
@@ -385,7 +385,7 @@ int main(int argc, char *argv[]) {
 
     struct timespec start_write_io;
     struct timespec end_write_io;
-    double io_write_time;
+    double io_write_time = 0;
     if (config_params.measure_performance) {
         char *test_buf;
         printf("Running performance tests for image write\n");
