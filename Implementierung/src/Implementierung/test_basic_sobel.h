@@ -1,8 +1,6 @@
-//
-// Created by Cato on 22.06.23.
-//
+#ifndef _TEST_BASIC_SOBEL_H_
+#define _TEST_BASIC_SOBEL_H_
 
-#ifndef IMPLEMENTIERUNG_TEST_BASIC_SOBEL_H
-#define IMPLEMENTIERUNG_TEST_BASIC_SOBEL_H
-int runTestsSobel(void);
-#endif //IMPLEMENTIERUNG_TEST_BASIC_SOBEL_H
+int run_tests_sobel(void);
+
+#endif

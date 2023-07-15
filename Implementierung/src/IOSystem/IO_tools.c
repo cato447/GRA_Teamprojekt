@@ -12,10 +12,10 @@
 
 /*
 Returns a pointer to the data buffer of the file read at parameter "path" or a null pointer on failure.
-Sets "bufSize" accordingly on successful read.
+Sets "buf_size" accordingly on successful read.
 */
-char* readFile(const char* path, size_t* bufSize) {
-    FILE* file = fopen(path, "rb");
+char *read_file(const char *path, size_t *buf_size) {
+    FILE *file = fopen(path, "rb");
     if (!file) {
         fprintf(stderr, "Error trying to open file at \"%s\": %s\n", path, strerror(errno));
         return NULL;
@@ -34,36 +34,36 @@ char* readFile(const char* path, size_t* bufSize) {
         return NULL;
     }
 
-    void* fileBuf = malloc(statbuf.st_size);
-    if (fileBuf == NULL) {
-        fprintf(stderr, "Failed allocating memory for fileBuf\n");
+    void *file_buf = malloc(statbuf.st_size);
+    if (file_buf == NULL) {
+        fprintf(stderr, "Failed allocating memory for file_buf\n");
         fclose(file);
         return NULL;
     }
 
-    if (fread(fileBuf, 1, statbuf.st_size, file) != (size_t) statbuf.st_size) {
+    if (fread(file_buf, 1, statbuf.st_size, file) != (size_t) statbuf.st_size) {
         fprintf(stderr, "Failed reading file data at %s\n", path);
         fclose(file);
-        free(fileBuf);
+        free(file_buf);
         return NULL;
     }
     
-    *bufSize = statbuf.st_size;
+    *buf_size = statbuf.st_size;
     fclose(file);
-    return fileBuf;
+    return file_buf;
 }
 
 /*
-Writes "bufSize" bytes from buffer at parameter "buf" to file at location "path", creates files if doesn't exist prior.
+Writes "buf_size" bytes from buffer at parameter "buf" to file at location "path", creates files if doesn't exist prior.
 */
-int writeFile(const char* path, char* buf, size_t bufSize) {
-    FILE* file = fopen(path, "wb+");
+int write_file(const char *path, char *buf, size_t buf_size) {
+    FILE *file = fopen(path, "wb+");
     if (!file) {
         fprintf(stderr, "Failed trying to create/overwrite file at \"%s\": %s\n", path, strerror(errno));
         return 1;
     }
 
-    if (fwrite(buf, 1, bufSize, file) != bufSize) {
+    if (fwrite(buf, 1, buf_size, file) != buf_size) {
         fprintf(stderr, "Failed writing buffer data to %s\n", path);
         fclose(file);
         return 1;
