@@ -18,15 +18,16 @@
 \maketitle
 
 \section{Einleitung}
+\label{sec:einleitung}
 In diesem Projekt haben wir uns damit beschäftigt, den Sobel-Filter Algorithmus zu implementieren.
 Dieser Algorithmus wird verwendet, um Kanten in Bildern zu erkennen und findet beispielsweise Anwendung in der Bildverarbeitung und -analyse, sowie in Computer-Vision.
-So kann er z.B. in der Medizin eingesetzt werden, um Tumore in MRT-Bildern besser erkennbar zu machen \cite{7002427},
-oder in der Forensik um Fingerabdruckerkennung zu verbessern. \cite{6900702}
+So kann er z.B.\ in der Medizin eingesetzt werden, um Tumore in MRT-Bildern besser erkennbar zu machen\cite{7002427},
+oder in der Forensik um Fingerabdruckerkennung zu verbessern.\cite{6900702}
 Als Eingabe für den Sobel-Filter wird ein 24-Bit BMP-Bild erwartet.
 Jeder Pixel in einem Bild wird dabei durch drei Bytes repräsentiert, die die Farbwerte für Blau, Grün und Rot enthalten.
 
 \subsection{Mathematische Definition des Sobel-Filters}
-\label{sec:math-def}
+\label{subsec:math-def}
 Der Sobel-Filter besteht daraus, die beiden Filtermatritzen $M^{v}$ und $M^{h}$ für vertikale und horizontale Kanten mit jedem Pixel des Bildes zu verrechnen.
 \begin{equation}
     M^{v} :
@@ -40,23 +41,23 @@ Der Sobel-Filter besteht daraus, die beiden Filtermatritzen $M^{v}$ und $M^{h}$ 
         1 & 2 & 1 \\
         0 & 0 & 0 \\
         -1 & -2 & -1
-    \end{bmatrix}
+    \end{bmatrix}\label{eq:mvmh}
 \end{equation}
 \begin{equation}
-    A^{h} = M^{h} * Image
+    A^{h} = M^{h} * Image\label{eq:faltenhorizontal}
 \end{equation}
 \begin{equation}
-    A^{v} = M^{v} * Image
+    A^{v} = M^{v} * Image\label{eq:faltenvertikal}
 \end{equation}
 Für Kantenerkennung macht es nur Sinn, die drei Farbkanäle F eines jeden Pixels mit Koordinaten (x, y) im Eingabebild B separat zu betrachten.
 Um die Farbinformationen eines Pixels an Stelle x und y der vertikalen und horizontalen Kanten A zu berechnen, wird der entsprechende Farbkanal jedes umittelbar umliegenden Pixels in B mit dem dazugehörigen Wert der Filtermatritzen (Mv und Mh respektive) multipliziert und die Produkte anschließend aufsummiert.
 Sollte diese Berechnung nicht möglich sein, weil sich einer der umliegenden Pixel am Rand des Bildes befindet, wird der Wert dieses Farbwerts (und damit implizit auch der Wert des gesamten Pixels) im Ausgabebild als 0 (schwarz) angenommen.
 Dadurch ergibt sich ein impliziter schwarzer Rand im Ausgabebild.
 \begin{equation}
-    A_(x,y)^{v,F} = \sum_{i=-1}^{1} \sum_{j=-1}^{1} M^{v}_{i,j} * B_{(x+i,y+j)}^{F}
+    A_(x,y)^{v,F} = \sum_{i=-1}^{1} \sum_{j=-1}^{1} M^{v}_{i,j} * B_{(x+i,y+j)}^{F}\label{eq:sumav}
 \end{equation}
 \begin{equation}
-    A_(x,y)^{h,F} = \sum_{i=-1}^{1} \sum_{j=-1}^{1} M^{h}_{i,j} * B_{(x+i,y+j)}^{F}
+    A_(x,y)^{h,F} = \sum_{i=-1}^{1} \sum_{j=-1}^{1} M^{h}_{i,j} * B_{(x+i,y+j)}^{F}\label{eq:sumah}
 \end{equation}
 Um letztendlich den konkreten Sobelwert für einen Pixel zu berechnen, wird der Satz des Pythagoras auf die Ergebnisse der beiden vorherigen Gleichungen angewendet.
 \begin{equation}
@@ -79,13 +80,13 @@ Die hieraus resultierenden Werte werden dann in einem neuen Bild O gespeichert.
     \end{subfigure}
 \end{figure}
 
-Abbildung \ref{fig:input-bild} und \ref{fig:output-bild} zeigen ein Input-Bild das Resultat, das (unsere) Sobel-Implementierung produziert.
+Abbildung\ref{fig:input-bild} und\ref{fig:output-bild} zeigen ein Input-Bild das Resultat, das (unsere) Sobel-Implementierung produziert.
 Es fällt auf, dass sehr viele Kanten im Resultat eine prägnante Farbe haben.
 Da diese Farbe für Kantenerkennung üblicherweise weniger interessant ist, wird der Sobel-Filter in der Regel auf Graustufenbildern angewendet, wodurch alle Kanten weiß und die übrigen Pixel schwarz werden.
 
-\section{Lösungsansatz}
+\section{Lösungsansatz}\label{sec:losungsansatz}
 Unser gewählter Lösungsansatz besteht aus drei verschiedenen Versionen:
-Die Basisversion (Version 0) übersetzt die mathematische Definition des Sobel-Filters aus \ref{sec:math-def} schlicht in C-Code (mit einer kleinen Anpassung, siehe \ref{sec:vergleichsimplementierung}).
+Die Basisversion (Version 0) übersetzt die mathematische Definition des Sobel-Filters aus\ref{subsec:math-def} schlicht in C-Code (mit einer kleinen Anpassung, siehe\ref{subsec:vergleichsimplementierung}).
 Um diese Version als verlässliche Vergleichsimplementierung verwenden zu können, ist sie so einfach und leserlich wie möglich.
 
 Die erste und zweite Version bauen jeweils aufeinander auf und zielen darauf ab, die Laufzeit der Basisversion bedeutend zu verbessern:
@@ -97,9 +98,9 @@ Jede der drei Versionen hat ein Gegenstück (Version 3 - Version 5 respektive), 
 Diese Versionen sind für diesen Teil nicht weiter interessant, da sie exakt dieselbe Funktionsweise haben und sich lediglich in der Anzahl der Bits pro Pixel unterscheiden - wodurch sich natürlich auch die Anzahl der nötigen Berechnungen um Faktor 3 reduziert.
 
 \subsection{Vergleichsimplementierung - Version 0}
-\label{sec:vergleichsimplementierung}
-Die Vergleichsimplementierung ist eine naive Implementierung des Sobel-Filter Algorithmus und orientiert sich, wie bereits erwähnt, sehr stark an der mathematischen Definition aus \ref{sec:math-def}.
-Um diese Version auch tatsächlich als Vergleich zu den Optimierungen verwenden zu können, verwendet sie jedoch eine Annäherung an den Satz des Pythagoras \ref{eq:wurzel}.
+\label{subsec:vergleichsimplementierung}
+Die Vergleichsimplementierung ist eine naive Implementierung des Sobel-Filter Algorithmus und orientiert sich, wie bereits erwähnt, sehr stark an der mathematischen Definition aus\ref{subsec:math-def}.
+Um diese Version auch tatsächlich als Vergleich zu den Optimierungen verwenden zu können, verwendet sie jedoch eine Annäherung an den Satz des Pythagoras\ref{eq:wurzel}.
 Dafür wird, statt die Wurzel aus der Summe der Quadrate zu ziehen, die Summe der Absolutbeträge berechnet.
 
 \begin{equation}
@@ -111,20 +112,20 @@ Dies hat den einfach Grund, dass keine SIMD-Instruktion zur (effizienten) Berech
 \begin{figure}[H]
     \begin{subfigure}{.5\columnwidth}
         \centering
-        \includegraphics[width=\columnwidth]{graphics/sqrt_sobel.png}
-        \caption{Pythagoras \ref{eq:wurzel}}
+        \includegraphics[width=\columnwidth]{graphics/sqrt_sobel}
+        \caption{Pythagoras\ref{eq:wurzel}}
         \label{fig:sqrt-bild}
     \end{subfigure}
     \begin{subfigure}{.5\columnwidth}
         \centering
-        \includegraphics[width=\columnwidth]{graphics/johnmuirtrail_sobel.png}
-        \caption{Annäherung \ref{eq:betrag}}
+        \includegraphics[width=\columnwidth]{graphics/johnmuirtrail_sobel}
+        \caption{Annäherung\ref{eq:betrag}}
         \label{fig:abs-bild}
     \end{subfigure}
 \end{figure}
-Der Unterschied zwischen \ref{fig:abs-bild} und \ref{fig:sqrt-bild} ist marginal und liegt lediglich in der Helligkeit des Bildes, was für Kantenerkennung in diesem Ausmaß vernachlässigbar ist.
+Der Unterschied zwischen\ref{fig:abs-bild} und\ref{fig:sqrt-bild} ist marginal und liegt lediglich in der Helligkeit des Bildes, was für Kantenerkennung in diesem Ausmaß vernachlässigbar ist.
 \subsection{SIMD Implementierung - Version 1}
-\label{sec:simd-implementierung}
+\label{subsec:simd-implementierung}
 Die SIMD Implementierung basiert auf der Vergleichsimplementierung, benutzt zur Berechnung jedoch SIMD Instruktionen.
 Ein großes Problem bei der Arbeit mit 8-Bit-Ganzzahlen ist der kleine Wertebereich.
 Da die Werte der einzelnen Farbchannel der Pixel als 8 Bit Integer gespeichert werden, kann es folglich bei der Faltungsoperation schnell zu einem Überlauf kommen.
@@ -133,14 +134,14 @@ Durch die Verdunkelung wird der Überlauf zwar verhindert, das Resultat ist jedo
 \begin{figure}[H]
     \begin{subfigure}{.5\columnwidth}
         \centering
-        \includegraphics[width=\columnwidth]{graphics/dark.png}
-        \caption{naiver SIMD Ansatz \ref{sec:verdunkeln}}
+        \includegraphics[width=\columnwidth]{graphics/dark}
+        \caption{naiver SIMD Ansatz\ref{sec:verdunkeln}}
         \label{fig:dark}
     \end{subfigure}
     \begin{subfigure}{.5\columnwidth}
         \centering
-        \includegraphics[width=\columnwidth]{graphics/correct.png}
-        \caption{Vergleichsimplementierung \ref{sec:vergleichsimplementierung}}
+        \includegraphics[width=\columnwidth]{graphics/correct}
+        \caption{Vergleichsimplementierung\ref{subsec:vergleichsimplementierung}}
         \label{fig:correct}
     \end{subfigure}
 \end{figure}
@@ -152,10 +153,10 @@ Das funktioniert so, dass ein 16 Byte-Speicherbereich gelesen wird und anschlie�
 16-Bit-Integers in diesem Vektor mit einer Bitmaske genullt wird.
 Das geschieht analog mit den 16-Byte an der um einen Byte höheren Speicheradresse, wodruch danach alle 16 Bytes der Speicheradresse in zwei Vektoren verteilt liegen.
 Für jeden der 16 Farbchannel, die mit einem Schleifendurchlauf berechnet werden können, werden so die acht umliegenden entsprechenden Farbchannel geladen.
-Durch den entstehenden Overhead ist dieser Lösungsansatz zwar ca. nur halb so schnell, wie der naive SIMD-Ansatz, erzeugt jedoch ein korrektes Ergebnis, weshalb das Programm auch diesen Ansatz implementiert.
+Durch den entstehenden Overhead ist dieser Lösungsansatz zwar ca.\ nur halb so schnell, wie der naive SIMD-Ansatz, erzeugt jedoch ein korrektes Ergebnis, weshalb das Programm auch diesen Ansatz implementiert.
 
 \subsection{SIMD-Implementierung mit Threading - Version 2}
-\label{sec:simd-threading}
+\label{subsec:simd-threading}
 Die SIMD-Implementierung mit Threading basiert auf der SIMD-Implementierung mit der Besonderheit, dass das Bild in Abschnitte eingeteilt wird, die jeweils von einem eigenen Thread bearbeitet werden.
 Um diese Abschnitte zu erzeugen, wird das Bild in horizontale Streifen geschnitten.
 Die Anzahl der Streifen wird von der Anzahl der durch die CPU bereitgestellten Threads bestimmt, was auf eine optimale Nutzung der durch die CPU zur Verfügung gestellten Ressourcen abzielt.
@@ -165,7 +166,7 @@ Ein weiterer Vorteil besteht darin, fortlaufende Indizes bei der Berechnung nutz
 Zuletzt lässt sich noch argumentieren, dass auch die Berechnung der Streifen selbst sehr schnell ausführbar ist, da nur eine Division benötigt wird.
 Beispielsweise würde somit ein Bild mit den Dimensionen 1920x1080 (Full-HD), auf einer CPU mit 4 Threads, in 4 Streifen mit den Dimensionen 1920x270 aufgeteilt und auf 4 POSIX-Threads verteilt werden.
 
-\section{Genauigkeit}
+\section{Genauigkeit}\label{sec:genauigkeit}
 Im folgenden wird die Genauigkeit unseres Lösungsansatzes analysiert, da es beim Sobel Operator keine fest definierte \enquote{source of truth}, wie zum Beispiel bei einer Addition, gibt.
 Die öffentlich existierende Sobel-Filter Implementierung von OpenCV liefert beispielsweise Ergebnisse, die sich leicht in der Helligkeit von unserer unterscheiden.
 Desweiteren arbeitet diese auf Graustufenbildern, wohingegen unsere Implementierung auf RGB-Bildern arbeitet.
@@ -184,22 +185,22 @@ Wir haben die Implementierung von OpenCV so angepasst, dass sie ebenfalls auf RG
         \label{fig:opencv}
     \end{subfigure}
 \end{figure}
-In \ref{fig:basic} ist die Vergleichsimplementierung zu sehen, in \ref{fig:opencv} die OpenCV Implementierung.
+In\ref{fig:basic} ist die Vergleichsimplementierung zu sehen, in\ref{fig:opencv} die OpenCV Implementierung.
 Es ist zu erkennen, dass die OpenCV Implementierung anders belichtet erscheint, als das Resultat unserer Basisversion, was auf die automatische Anwendung von Noise-bereinigenden Filtern zurückzuführen sein dürfte.
 Da die Kanten dennoch korrekt (!und kontrastreicher!) erkannt werden, und um überflüssige Rechenschritte zu vermeiden, wird das Ergebnis der Vergleichsimplementierung nicht weiter angepasst.
 \\\\
 Bei der weiteren Bewertung der Genauigkeit wird die Vergleichsimplementierung als Referenzpunkt verwendet.
 Sie gilt als das korrekte Ergebnis und ist, um Fehler zu vermeiden, so simpel und leserlich gehalten wie nur irgendwie möglich.
-Da die mathematische Defintion, wie in \ref{sec:vergleichsimplementierung} beschrieben, ohne weitere Optimierungen umgesetzt wurde, ist deren Übereinstimmung unschwer zu überprüfen.
+Da die mathematische Defintion, wie in\ref{subsec:vergleichsimplementierung} beschrieben, ohne weitere Optimierungen umgesetzt wurde, ist deren Übereinstimmung unschwer zu überprüfen.
 Des Weiteren überprüfen Unittests, ob die Hilfsfunktionen korrekt funktionieren.
-Die optimierten Versionen SIMD \ref{sec:simd-implementierung} und SIMD mit Threading \ref{sec:simd-threading} erzielen Ergebnisse, die denen der Verlgiechimplementierung exakt entsprechen.
+Die optimierten Versionen SIMD\ref{subsec:simd-implementierung} und SIMD mit Threading\ref{subsec:simd-threading} erzielen Ergebnisse, die denen der Verlgiechimplementierung exakt entsprechen.
 Um das zu erreichen, wird der in Version 0 implizit entstehende schwarze Rand explizit links und rechts nach der Berechnung hinzugefügt.
 Ohne diesen Schritt würden diese, aufgrund der sequentiellen Abarbeitung, das linke und rechte Bildende jeweils als (sehr scharfe) Kante zueinander berechnen.
 %Da dafür - für Bilder mit herkömmlicher Größe - verschwindend wenig Schreiboperationen benötigt werden ist die Perfromanzeinbuße kaum messbar.
 Es wird mit einem automatisierten Test überprüft, ob die Ergebnisse der SIMD und SIMD mit Threading Versionen mit den Ergebnissen der Vergleichsimplementierung übereinstimmen.
-\section{Performanzanalyse}
+\section{Performanzanalyse}\label{sec:performanzanalyse}
 Im folgenden Abschnitt wird die Performanz der einzelnen Lösungsansätze verglichen und analysiert.
-Als gemeinsame Basis für alle Messergebnisse dient hierbei das mit GCC's Optimierungsstufe 3 kompilierte Programm, das auf einem AMD Ryzen 5 1600 mit 6 Kernen und 12 Threads ausgeführt wurde.
+Als gemeinsame Basis für alle Messergebnisse dient hierbei das mit GCC's Optimierungsstufe 3 kompilierte Programm, das auf einem AMD Ryzen-5 1600 mit 6 Kernen und 12 Threads ausgeführt wurde.
 Bei den Messungen wurde großen Wert auf die Mindestlaufzeit von über einer Sekunde gelegt, um Messungenauigkeiten möglichst zu vermeiden.
 Als Testdaten dienen Bilder mit verschiedenen gängigen Größenverhaltnissen (4:3, 16:9, 1:1, 3:4, 9:16, etc) und entsprechenden Auflösungen (1024x768, 1920x1080, 256x256, etc).
 Diese Bilder werden mit zufälligen Pixeln gefüllt, was die Performanz jedoch nicht beeinflusst, da die Berechnung der Sobel-Werte unabhängig von den Pixelwerten ausgeführt wird.
@@ -231,7 +232,7 @@ Die Threading-Implementierung kann durch ihren noch paralleleren Ansatz gegenüb
 Da unsere Messungen ergeben haben, dass die optimale Anzahl an Streifen, in die das Bild aufgeteilt werden soll, den durch die CPU bereitgestellten Threads entspricht, kann der Speedup (theoretisch) durch Hinzufügen beliebig vieler Kerne beliebig groß werden.
 Dadurch, dass jeder Thread in der Theorie genau einen Streifen bearbeiten kann, kann die Parallelität von modernen CPUs bestmöglich ausgenutzt werden, während der Overhead für die Verwaltung der Threads möglichst gering bleibt.
 Der maximal zu erwartende Speedup gegenüber der Single-Thread-SIMD-Implementierung entspricht also der Anzahl der durch die CPU bereitgestellten Threads.
-Da jedoch üblicherweise nicht alle Threads dieselbe Rechenleistung liefern können, bzw. das Programm aufgrund des Schedulers nicht zu allen Zeitpunkten vollständig parallel arbeiten kann, weicht der gemessene Speedup stark vom theoretischen Maximum ab.
+Da jedoch üblicherweise nicht alle Threads dieselbe Rechenleistung liefern können, bzw.\ das Programm aufgrund des Schedulers nicht zu allen Zeitpunkten vollständig parallel arbeiten kann, weicht der gemessene Speedup stark vom theoretischen Maximum ab.
 Des Weiteren ist es wichtig anzumerken, dass für besonders kleine Bilder die Threading-Implementierung - aufgrund des Thread-Verwaltungsoverheads - langsamer als die SIMD-Implementierung sein kann.
 
 Bei der Rechereche zum Sobel-Operator fiel auf, dass so gut wie jede Implementierung Graustufenbilder zur Berechnung verwendet.
@@ -249,6 +250,7 @@ Wie in der Einleitung bereits erwähnt, wird die Berechnung der Sobel-Werte norm
 Durch diesen de-facto-Industriestandard produzieren die zusätzlichen Versionen (3-5) analog zu den Versionen 0-2 Graustufenbilder.
 Da hierbei jedoch der einzige Unterschied die Pixelbreite - nämlich 8, statt 24 Bit - ist, entspricht der erwartete Speedup von 24/8 = 3 gegenüber der entsprechenden 24-Bit Implementierung genau dem gemessenen.
 \section{Zusammenfassung und Ausblick}
+\label{sec:zusammenfassung}
 Der Sobel-Filter ist eine gängige Methode, um effizient Kanten in Bildern zu erkennen.
 Er funktioniert, indem die vertikalen und horizontalen eines Bildes mit einer Matrix berechnet und anschließend zusammengefügt werden.
 %Dabei ist sein Hauptanwendungsgebiet die Computer-Vision, er wird aber bspw. auch in der Medizin verwendet, um die Sichtbarkeit von Tumoren in MRT-Aufnahmen zu verbessern.
