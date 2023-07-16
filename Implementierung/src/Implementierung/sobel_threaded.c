@@ -54,7 +54,7 @@ static void *compute_sobel_for_height_interval(void *args) {
 
 #define LINES_PER_THREAD_NO_NPROC 300
 
-void sobel_thread(const uint8_t *img_in, size_t width, size_t height, uint8_t *img_out) {
+void sobel_threaded(const uint8_t *img_in, size_t width, size_t height, uint8_t *img_out) {
     size_t lines_per_thread = LINES_PER_THREAD_NO_NPROC;
     if (__linux__) {
         size_t hw_threads = get_nprocs();
@@ -103,7 +103,7 @@ void sobel_thread(const uint8_t *img_in, size_t width, size_t height, uint8_t *i
     }
 }
 
-void sobel_thread_graysc(const uint8_t *img_in, size_t width, size_t height, uint8_t *img_out) {
+void sobel_threaded_graysc(const uint8_t *img_in, size_t width, size_t height, uint8_t *img_out) {
     size_t lines_per_thread = 300;
     if (__linux__) {
         size_t hw_threads = get_nprocs();

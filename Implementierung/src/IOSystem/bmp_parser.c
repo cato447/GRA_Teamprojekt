@@ -235,7 +235,7 @@ static void copy_pixel_data(const uint8_t *px_array, size_t px_array_size, uint3
 }
 
 /*
-Return a pointer to a buffer containing a complete BMP image.
+Return a pointer to a buffer containing a complete BMP image or NULL on failure.
 Writes size of buffer to parameter "_size".
 */
 char *array_to_bmp(const s_image *bmp_img, size_t *_size) {

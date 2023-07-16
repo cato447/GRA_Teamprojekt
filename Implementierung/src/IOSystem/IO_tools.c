@@ -12,6 +12,7 @@
 
 /*
 Returns a pointer to the data buffer of the file read at parameter "path" or a null pointer on failure.
+User should free data buffer after use!
 Sets "_buf_size" accordingly on successful read.
 */
 char *read_file(const char *path, size_t *_buf_size) {
@@ -54,6 +55,7 @@ char *read_file(const char *path, size_t *_buf_size) {
 }
 
 /*
+Returns 0 on success and 1 on failure.
 Writes "buf_size" bytes from buffer at parameter "buf" to file at location "path", creates files if doesn't exist prior.
 */
 int write_file(const char *path, char *buf, size_t buf_size) {

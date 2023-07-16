@@ -8,13 +8,12 @@
 #include "../Implementierung/sobel_basic.h"
 #include "../Testsystem/unittest.h"
 #include "../Testsystem/image_similarity.h"
-#include "../IOSystem/bmp_loader.h"
+#include "../IOSystem/load_save_util.h"
 
 #define MUSTER_PATH "../res/raw/muster.bmp"
 #define MUSTER_REF_PATH "../res/reference/muster_sobel.bmp"
 
 // Data tests are run on
-static size_t buffer_size;
 static s_image *bmp_image;
 
 static int free_bmp_image(s_image *img) {
@@ -71,18 +70,10 @@ void test_sobel(void) {
     }
     sobel((uint8_t *) bmp_image->px_array, bmp_image->px_width, bmp_image->px_height, (uint8_t *) new_pixels);
 
-    s_image *reference_bmp_image = malloc(sizeof(s_image));
+    s_image *reference_bmp_image = load_image(MUSTER_REF_PATH, 0);
     if (reference_bmp_image == NULL) {
-        FAIL("Failed allocating memory for reference_bmp_image\n");
+        fprintf(stderr, "Failed to load refernce image\n");
         free(new_pixels);
-        return;
-    }
-    
-    size_t reference_buffer_size = load_picture(MUSTER_REF_PATH, reference_bmp_image);
-    if (reference_buffer_size == 0) {
-        FAIL("Failed loading reference picture\n");
-        free(new_pixels);
-        free(reference_bmp_image);
         return;
     }
 
@@ -96,14 +87,9 @@ void test_sobel(void) {
 }
 
 static int setup(void) {
-    bmp_image = malloc(sizeof(s_image));
+    bmp_image = load_image(MUSTER_PATH, 0);
     if (bmp_image == NULL) {
-        fprintf(stderr, "Failed allocating memory for bmp_image\n");
-        return 1;
-    }
-    buffer_size = load_picture(MUSTER_PATH, bmp_image);
-    if (buffer_size == 0) {
-        free(bmp_image);
+        fprintf(stderr, "Failed to load test image\n");
         return 1;
     }
     return 0;

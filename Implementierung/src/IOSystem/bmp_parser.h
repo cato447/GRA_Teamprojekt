@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 
-#include "bmp_definitions.h"
+#include "s_image.h"
 
 int bmp_to_array(const char *buf, size_t buf_size, s_image *_bmp_img_buf);
 int bmp_to_array_graysc(const char *buf, size_t buf_size, s_image *_bmp_img_buf);
