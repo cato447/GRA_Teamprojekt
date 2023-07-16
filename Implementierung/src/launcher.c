@@ -368,7 +368,7 @@ int main(int argc, char *argv[]) {
         printf("Sobel calculation from version %d took on average %.9fs\n", config_params.version,
                avg_exec_time);
         printf("Loading the image took on average %.9fs\n", avg_io_read_time);
-        printf("Writing the image took on average %.9fs\n", avg_io_write_time);
+        printf("Saving the image took on average %.9fs\n", avg_io_write_time);
         printf("Percentage io/calc = %f%% \n", ((avg_io_read_time + avg_io_write_time) / avg_exec_time) * 100);
     }
     dealloc_config_params(&config_params);
