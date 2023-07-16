@@ -14,15 +14,13 @@
 #endif
 
 #include "IOSystem/s_image.h"
-#include "IOSystem/IO_tools.h"
-#include "IOSystem/bmp_parser.h"
 #include "IOSystem/load_save_util.h"
 #include "Implementierung/sobel_basic.h"
 #include "Implementierung/sobel_simd.h"
 #include "Implementierung/sobel_threaded.h"
+#include "IOSystem/test_IO_parser.h"
 #include "Implementierung/test_sobel_basic.h"
 #include "Implementierung/test_similarity.h"
-#include "IOSystem/test_IO_parser.h"
 
 #define BMP_FILE_EXT ".bmp"
 #define OUT_FILE_SUFFIX "_out" BMP_FILE_EXT
@@ -92,7 +90,7 @@ int parse_args(int argc, char *argv[], config *config_params) {
                     return 1;
                 }
                 config_params->version = (uint8_t) strtoul(optarg, NULL, 10);
-                // check if version is 0, 1 or 2
+                // check if version is 0, 1, 2, 3, 4 or 5
                 if (config_params->version > 5) {
                     print_arg_error("Version number is not valid");
                     return 1;
@@ -200,6 +198,29 @@ static void (*const sobel_implementations[6])(const uint8_t *, size_t, size_t, u
         sobel, sobel_simd, sobel_threaded, sobel_graysc, sobel_simd_graysc, sobel_threaded_graysc
 };
 
+static double run_performance_tests_calc(unsigned long cycles, uint8_t version, s_image *bmp_image, uint8_t *new_pixels) {
+    struct timespec t_start_sobel_calc;
+    struct timespec t_stop_sobel_calc;
+    printf("\n");
+    printf("Running performance tests for calculation\n");
+    if (clock_gettime(CLOCK_MONOTONIC, &t_start_sobel_calc) != 0) {
+        fprintf(stderr, "Couldn't get t_start_sobel_calc time\n");
+        return 1;
+    }
+    for (unsigned long i = 0; i < cycles; ++i) {
+        sobel_implementations[version](bmp_image->px_array, bmp_image->px_width, bmp_image->px_height, new_pixels);
+    }
+    if(clock_gettime(CLOCK_MONOTONIC, &t_stop_sobel_calc) != 0) {
+        fprintf(stderr, "Couldn't get t_stop_sobel_calc time\n");
+        return 1;
+    }
+    double calculation_time = t_stop_sobel_calc.tv_sec - t_start_sobel_calc.tv_sec + 1e-9 * (t_stop_sobel_calc.tv_nsec - t_start_sobel_calc.tv_nsec);
+    printf(" ❯ Sobel calc performance testing took %.9fs to run %ld iterations\n", calculation_time, cycles);
+    printf("\n");
+    return calculation_time;
+}   
+
+
 int main(int argc, char *argv[]) {
     config config_params = {
         .version = 0,
@@ -274,30 +295,7 @@ int main(int argc, char *argv[]) {
     
     double calculation_time = 0;
     if (config_params.measure_performance) {
-        struct timespec t_start_sobel_calc;
-        struct timespec t_stop_sobel_calc;
-        printf("\n");
-        printf("Running performance tests for calculation\n");
-        if (clock_gettime(CLOCK_MONOTONIC, &t_start_sobel_calc) != 0) {
-            fprintf(stderr, "Couldn't get t_start_sobel_calc time\n");
-            free_image(bmp_image);
-            free(new_pixels);
-            dealloc_config_params(&config_params);
-            return 1;
-        }
-        for (unsigned long i = 0; i < config_params.measure_performance_cycles; ++i) {
-            sobel_implementations[config_params.version](bmp_image->px_array, bmp_image->px_width, bmp_image->px_height, new_pixels);
-        }
-        if(clock_gettime(CLOCK_MONOTONIC, &t_stop_sobel_calc) != 0) {
-            fprintf(stderr, "Couldn't get t_stop_sobel_calc time\n");
-            free_image(bmp_image);
-            free(new_pixels);
-            dealloc_config_params(&config_params);
-            return 1;
-        }
-        calculation_time = t_stop_sobel_calc.tv_sec - t_start_sobel_calc.tv_sec + 1e-9 * (t_stop_sobel_calc.tv_nsec - t_start_sobel_calc.tv_nsec);
-        printf(" ❯ Sobel calc performance testing took %.9fs to run %ld iterations\n", calculation_time, config_params.measure_performance_cycles);
-        printf("\n");
+        calculation_time = run_performance_tests_calc(config_params.measure_performance_cycles, config_params.version, bmp_image, new_pixels);
     }
 
     s_image export_image = {.px_array = new_pixels, .px_array_size = bmp_image->px_array_size, .px_height = bmp_image->px_height, .px_width = bmp_image->px_width};
