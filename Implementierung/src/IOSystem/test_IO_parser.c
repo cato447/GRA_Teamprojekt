@@ -28,7 +28,7 @@ void parse_failure(const char *path) {
 
 void test_file_error(void) {
     size_t buf_size;
-    char *buf = read_file("/mostLikelyDoesntExist", &buf_size);
+    char *buf = read_file("/most_likely_doesnt_exist.bmp", &buf_size);
     if (buf != NULL) {
         FAIL("Managed to read non-existing file");
         free(buf);
@@ -45,20 +45,20 @@ void test_file_error(void) {
 }
 
 void test_invalid_header_signature(void) {
-    parse_failure("../res/parserTests/invalidHeaderSignature.bmp");
+    parse_failure("../res/parser_tests/invalid_header_signature.bmp");
 }
 
 void test_too_small_for_header(void) {
-    parse_failure("../res/parserTests/tooSmallForHeader.bmp");
+    parse_failure("../res/parser_tests/too_small_for_header.bmp");
 }
 
 void test_pic_too_small(void) {
-    parse_failure("../res/parserTests/picTooSmall.bmp");
+    parse_failure("../res/parser_tests/pic_too_small.bmp");
 }
 
 void test_width_height(void) {
     size_t buf_size;
-    char *buf = read_file("../res/parserTests/testWidthHeight.bmp", &buf_size);
+    char *buf = read_file("../res/parser_tests/test_width_height.bmp", &buf_size);
     if (buf == NULL) {
         FAIL("Failed to load test file");
         return;
@@ -81,14 +81,14 @@ void test_width_height(void) {
 
 void test_negative_width_height(void) {
     size_t buf_size_test;
-    char *buf_test = read_file("../res/parserTests/negativeHeight.bmp", &buf_size_test);
+    char *buf_test = read_file("../res/parser_tests/negative_width_height.bmp", &buf_size_test);
     if (buf_test == NULL) {
         FAIL("Failed to load test file");
         return;
     }
 
     size_t buf_size_ref;
-    char *buf_ref = read_file("../res/parserTests/negativeHeightRef.bmp", &buf_size_ref);
+    char *buf_ref = read_file("../res/parser_tests/ref_negative_width_height.bmp", &buf_size_ref);
     if (buf_ref == NULL) {
         free(buf_test);
         FAIL("Failed to load reference file");
@@ -103,8 +103,6 @@ void test_negative_width_height(void) {
         return;
     }
     free(buf_test);
-
-    
 
     s_image bmp_img_ref;
     if (bmp_to_array(buf_ref, buf_size_ref, &bmp_img_ref)) {
@@ -132,7 +130,7 @@ void test_negative_width_height(void) {
 
 void test_grayscale(void) {
     size_t buf_size_test;
-    char *buf_test = read_file("../res/parserTests/testRef.bmp", &buf_size_test);
+    char *buf_test = read_file("../res/parser_tests/ref_test.bmp", &buf_size_test);
     if (buf_test == NULL) {
         FAIL("Failed to load test file");
         return;
@@ -157,6 +155,31 @@ void test_grayscale(void) {
     ASSERT_EQUAL_UINT32(bmp_img_ref.px_height, bmp_img_test.px_height);
     ASSERT_EQUAL_SIZE_T(bmp_img_ref.px_array_size / 3, bmp_img_test.px_array_size);
     ASSERT_EQUAL_DOUBLE(bmp_img_ref.px_array[0]  *.0722 + bmp_img_ref.px_array[1]  *.7152 + bmp_img_ref.px_array[2]  *.2126, bmp_img_test.px_array[0], 0.9999);
+
+    free(bmp_img_test.px_array);
+    free(bmp_img_ref.px_array);
+}
+
+void test_coreheader(void) {
+    size_t buf_size;
+    char *buf = read_file("../res/parser_tests/coreheader.bmp", &buf_size);
+    if (buf == NULL) {
+        FAIL("Failed to load file");
+        return;
+    }
+
+    s_image bmp_img;
+    if (bmp_to_array(buf, buf_size, &bmp_img)) {
+        FAIL("Failed to file with coreheader");
+        free(buf);
+        return;
+    }
+    free(buf);
+
+    ASSERT_EQUAL_UINT32(512, bmp_img.px_width);
+    ASSERT_EQUAL_UINT32(512, bmp_img.px_height);
+
+    free(bmp_img.px_array);
 }
 
 void run_tests_IO_parser(void) {
@@ -168,5 +191,6 @@ void run_tests_IO_parser(void) {
     RUN_TEST(test_width_height);
     RUN_TEST(test_negative_width_height);
     RUN_TEST(test_grayscale);
-    STOP_TESTING();
+    RUN_TEST(test_coreheader);
+    STOP_TESTING_QUIET();
 }

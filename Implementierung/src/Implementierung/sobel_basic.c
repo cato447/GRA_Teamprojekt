@@ -1,12 +1,12 @@
-#include "basic_sobel.h"
+#include "sobel_basic.h"
 
 #include <stdlib.h>
 
-const int8_t M_v[3][3] = { { 1, 0, -1 },
+static const int8_t M_v[3][3] = { { 1, 0, -1 },
                            { 2, 0, -2 },
                            { 1, 0, -1 } };
 
-const int8_t M_h[3][3] = { { 1, 2, 1 },
+static const int8_t M_h[3][3] = { { 1, 2, 1 },
                            { 0, 0, 0 },
                            { -1, -2, -1 } };
 
@@ -35,12 +35,12 @@ void sobel(const uint8_t *img_in, size_t width, size_t height, uint8_t *img_out)
                 }
             }
 
-            int32_t A_r = abs(A_v_r) + abs(A_h_r);
-            int32_t A_g = abs(A_v_g) + abs(A_h_g);
-            int32_t A_b = abs(A_v_b) + abs(A_h_b);
+            int32_t G_r = abs(A_v_r) + abs(A_h_r);
+            int32_t G_g = abs(A_v_g) + abs(A_h_g);
+            int32_t G_b = abs(A_v_b) + abs(A_h_b);
 
             //Cap value at 255
-            set_pixel_at(img_out, width, x, y, A_r > 255 ? 255 : A_r, A_g  > 255 ? 255 : A_g, A_b  > 255 ? 255 : A_b);
+            set_pixel_at(img_out, width, x, y, G_r > 255 ? 255 : G_r, G_g  > 255 ? 255 : G_g, G_b  > 255 ? 255 : G_b);
         }
     }
 }
@@ -58,10 +58,10 @@ void sobel_graysc(const uint8_t *img_in, size_t width, size_t height, uint8_t *i
                 }
             }
 
-            int32_t A = abs(A_v) + abs(A_h);
+            int32_t G = abs(A_v) + abs(A_h);
 
             //Cap value at 255
-            img_out[y * width + x] = A > 255 ? 255 : A;
+            img_out[y * width + x] = G > 255 ? 255 : G;
         }
     }
 }

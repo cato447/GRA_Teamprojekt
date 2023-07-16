@@ -9,24 +9,40 @@
 #include <stdlib.h>
 #include <errno.h>
 
-#define BMP_HEADER_SIGN 0x4d42
-#define HEADER_SIZE 14
-#define INFO_HEADER_SIZE 40
+#define BMP_HEADER_SIGNATURE 0x4d42
 
+typedef struct pixel_3 {
+    uint8_t b;
+    uint8_t g;
+    uint8_t r;
+} pixel_3;
+typedef struct pixel_1 {
+    uint8_t v;
+} pixel_1;
 
 //INPUT STUFF
 
 struct __attribute__((__packed__)) bmp_header_parsing {
     uint16_t signature;
     uint32_t file_size;
-    uint32_t _0;
+    uint32_t _;
     uint32_t data_offset;
-    uint32_t _1;
-    int32_t px_width;
-    int32_t px_height;
-};
+    uint32_t info_header_size;
+    union img_size {
+        struct __attribute__((__packed__)) info {
+            int32_t px_width;
+            int32_t px_height;
+        } info;
+        struct __attribute__((__packed__)) core {
+            uint16_t px_width;
+            uint16_t px_height;
+            uint16_t _0;
+            uint16_t _1;
+        } core;
+    } img_size; 
+ };
 
-char *parseHeader(char *buf, size_t buf_size, size_t *_px_data_width, uint32_t *_px_width, uint32_t *_px_height, int *_neg_height) {
+static const char *parseHeader(const char *buf, size_t buf_size, size_t *_px_data_width, uint32_t *_px_width, uint32_t *_px_height, int *_neg_height) {
     if (buf_size < sizeof(struct bmp_header_parsing)) {
         fprintf(stderr, "Error: file too small to contain relevant BMP header information\n");
         return NULL;
@@ -34,7 +50,7 @@ char *parseHeader(char *buf, size_t buf_size, size_t *_px_data_width, uint32_t *
 
     struct bmp_header_parsing *header = (struct bmp_header_parsing *) buf;
 
-    if (header->signature != BMP_HEADER_SIGN) {
+    if (header->signature != BMP_HEADER_SIGNATURE) {
         fprintf(stderr, "Error: Input not a BMP file (header mismatch)\n");
         fprintf(stderr, "  Expected [0x4d42], got [0x%x]\n", header->signature);
         return NULL;
@@ -45,22 +61,28 @@ char *parseHeader(char *buf, size_t buf_size, size_t *_px_data_width, uint32_t *
         printf("  Expected: %uB, got %luB\n", header->file_size, buf_size);
     }
 
-    if (header->px_width < 0) {
-        printf("Warning: negative height value in file header (%d), using absolute value (%d)\n", header->px_width, -header->px_width);
-        *_px_width = -header->px_width;
+    // Header of type BITMAPCOREHEADER, using only 32 instead of 64 bits to represent size
+    if (header->info_header_size == 12) {
+        *_px_width = header->img_size.core.px_width;
+        *_px_height = header->img_size.core.px_height;        
     } else {
-        *_px_width = header->px_width;
+        if (header->img_size.info.px_width < 0) {
+            printf("Warning: negative width value in file header (%d), using absolute value (%d)\n", header->img_size.info.px_width, -header->img_size.info.px_width);
+            *_px_width = -header->img_size.info.px_width;
+        } else {
+            *_px_width = header->img_size.info.px_width;
+        }
+
+        if (header->img_size.info.px_height < 0) {
+            *_px_height = -header->img_size.info.px_height;
+            *_neg_height = 1;
+        } else {
+            *_px_height = header->img_size.info.px_height;
+            *_neg_height = 0;
+        }
     }
 
-    if (header->px_height < 0) {
-        *_px_height = -header->px_height;
-        *_neg_height = 1;
-    } else {
-        *_px_height = header->px_height;
-        *_neg_height = 0;
-    }
-
-    size_t byte_width = header->px_width * sizeof(pixel24_t);
+    size_t byte_width = *_px_width * sizeof(pixel_3);
     *_px_data_width = (byte_width & 0x3) ? ((byte_width & ~0x3) + 4) : byte_width;
 
     if ((header->data_offset + *_px_data_width * (*_px_height)) > buf_size) {
@@ -77,18 +99,18 @@ Returns 0 on success and 1 on failure.
 Sets "width", "height", "px_array_size" and "px_array" of "_bmp_img_buf" to an unpadded copy of the of the parameter "bmpFile".
 Pixelarray starts in bottom left of picture.
 */
-int bmp_to_array(char *buf, size_t buf_size, s_image *_bmp_img_buf) {
+int bmp_to_array(const char *buf, size_t buf_size, s_image *_bmp_img_buf) {
     size_t px_data_rowlength;
     uint32_t px_width;
     uint32_t px_height;
-    int neg_height;
-    char *px_data = parseHeader(buf, buf_size, &px_data_rowlength, &px_width, &px_height, &neg_height);
-    if (px_data == NULL) {
+    int neg_height = 0;
+    const char *buf_px_data = parseHeader(buf, buf_size, &px_data_rowlength, &px_width, &px_height, &neg_height);
+    if (buf_px_data == NULL) {
         fprintf(stderr, " → Failed parsing the file header\n");
         return 1;
     }
 
-    size_t px_array_rowlength = px_width * sizeof(pixel24_t);
+    size_t px_array_rowlength = px_width * sizeof(pixel_3);
 
     size_t px_array_size = px_array_rowlength * px_height;
     uint8_t *px_array = calloc(px_array_size, sizeof(uint8_t));
@@ -100,12 +122,12 @@ int bmp_to_array(char *buf, size_t buf_size, s_image *_bmp_img_buf) {
     uint8_t *px_array_end = px_array + px_array_rowlength * px_height;
 
     if (neg_height) {
-        for (uint8_t *dest = px_array_end - px_array_rowlength; dest >= px_array; dest -= px_array_rowlength, px_data += px_data_rowlength) {
-            memcpy(dest, px_data, px_array_rowlength);
+        for (uint8_t *dest = px_array_end - px_array_rowlength; dest >= px_array; dest -= px_array_rowlength, buf_px_data += px_data_rowlength) {
+            memcpy(dest, buf_px_data, px_array_rowlength);
         }
     } else {
-        for (uint8_t *dest = px_array; dest < px_array_end; dest += px_array_rowlength, px_data += px_data_rowlength) {
-            memcpy(dest, px_data, px_array_rowlength);
+        for (uint8_t *dest = px_array; dest < px_array_end; dest += px_array_rowlength, buf_px_data += px_data_rowlength) {
+            memcpy(dest, buf_px_data, px_array_rowlength);
         }
     }
 
@@ -126,18 +148,18 @@ Returns 0 on success and 1 on failure.
 Sets "width", "height" and "px_array" of "_bmp_img_buf" to an unpadded copy of the of the parameter "bmpFile".
 Pixelarray starts in bottom left of picture.
 */
-int bmp_to_array_graysc (char *buf, size_t buf_size, s_image *_bmp_img_buf) {
+int bmp_to_array_graysc (const char *buf, size_t buf_size, s_image *_bmp_img_buf) {
     size_t px_data_rowlength;
     uint32_t px_width;
     uint32_t px_height;
-    int neg_height;
-    char *px_data = parseHeader(buf, buf_size, &px_data_rowlength, &px_width, &px_height, &neg_height);
-    if (px_data == NULL) {
+    int neg_height = 0;
+    const char *buf_px_data = parseHeader(buf, buf_size, &px_data_rowlength, &px_width, &px_height, &neg_height);
+    if (buf_px_data == NULL) {
         fprintf(stderr, " → Failed parsing the file header\n");
         return 1;
     }
 
-    size_t px_array_rowlength = px_width * sizeof(pixel8_t);
+    size_t px_array_rowlength = px_width * sizeof(pixel_1);
 
     size_t px_array_size = px_array_rowlength * px_height;
     uint8_t *px_array = calloc(px_array_size, sizeof(uint8_t));
@@ -149,17 +171,17 @@ int bmp_to_array_graysc (char *buf, size_t buf_size, s_image *_bmp_img_buf) {
     uint8_t *px_array_end = px_array + px_array_rowlength * px_height;
 
     if (neg_height) {
-        for (uint8_t *dest = px_array_end - px_array_rowlength; dest >= px_array; dest -= px_array_rowlength, px_data += px_data_rowlength) {
-            pixel24_t *px_data_arr = (pixel24_t *) px_data;
+        for (uint8_t *dest = px_array_end - px_array_rowlength; dest >= px_array; dest -= px_array_rowlength, buf_px_data += px_data_rowlength) {
+            pixel_3 *px_data_arr = (pixel_3 *) buf_px_data;
             for (uint32_t i = 0; i < px_width; ++i) {
-                dest[i] = px_data_arr[i].r * R_SCALING + px_data_arr[i].g * G_SCALING + px_data_arr[i].b * B_SCALING;
+                ((pixel_1 *) dest)[i].v = px_data_arr[i].r * R_SCALING + px_data_arr[i].g * G_SCALING + px_data_arr[i].b * B_SCALING;
             }
         }
     } else {
-        for (uint8_t *dest = px_array; dest < px_array_end; dest += px_array_rowlength, px_data += px_data_rowlength) {
-            pixel24_t *px_data_arr = (pixel24_t *) px_data;
+        for (uint8_t *dest = px_array; dest < px_array_end; dest += px_array_rowlength, buf_px_data += px_data_rowlength) {
+            pixel_3 *px_data_arr = (pixel_3 *) buf_px_data;
             for (uint32_t i = 0; i < px_width; ++i) {
-                dest[i] = px_data_arr[i].r * R_SCALING + px_data_arr[i].g * G_SCALING + px_data_arr[i].b * B_SCALING;
+                ((pixel_1 *) dest)[i].v = px_data_arr[i].r * R_SCALING + px_data_arr[i].g * G_SCALING + px_data_arr[i].b * B_SCALING;
             }
         }
     }
@@ -174,6 +196,8 @@ int bmp_to_array_graysc (char *buf, size_t buf_size, s_image *_bmp_img_buf) {
 
 
 //OUTPUT STUFF
+#define HEADER_SIZE 14
+#define INFO_HEADER_SIZE 40
 
 struct __attribute__((__packed__)) bmp_header_writing {
     uint16_t signature;
@@ -200,25 +224,25 @@ struct __attribute__((__packed__)) color_table_entry {
     uint8_t _;
 };
 
-static void copy_pixel_data(uint8_t *px_array, size_t px_array_size, char *px_data, uint32_t byte_width, uint32_t byte_width_padded) {
-    uint8_t *px_array_end = px_array + px_array_size;
+static void copy_pixel_data(const uint8_t *px_array, size_t px_array_size, uint32_t px_array_rowlength, uint32_t px_data_rowlength, char *_px_data) {
+    const uint8_t *px_array_end = px_array + px_array_size;
 
     while (px_array < px_array_end) {
-        memcpy(px_data, px_array, byte_width);
-        px_array += byte_width;
-        px_data += byte_width_padded;
+        memcpy(_px_data, px_array, px_array_rowlength);
+        px_array += px_array_rowlength;
+        _px_data += px_data_rowlength;
     }
 }
 
 /*
-Return a pointer to a buffer containing a complete BMP image.
+Return a pointer to a buffer containing a complete BMP image or NULL on failure.
 Writes size of buffer to parameter "_size".
 */
 char *array_to_bmp(const s_image *bmp_img, size_t *_size) {
-    uint32_t byte_width = bmp_img->px_width * sizeof(pixel24_t);
-    uint32_t byte_width_padded = (byte_width & 0x3) ? ((byte_width & ~0x3) + 4) : byte_width;
+    uint32_t px_array_rowlength = bmp_img->px_width * sizeof(pixel_3);
+    uint32_t buf_px_rowlength = (px_array_rowlength & 0x3) ? ((px_array_rowlength & ~0x3) + 4) : px_array_rowlength;
 
-    *_size = sizeof(struct bmp_header_writing) + byte_width_padded * (bmp_img->px_height);
+    *_size = sizeof(struct bmp_header_writing) + buf_px_rowlength * (bmp_img->px_height);
     char *buf = calloc(*_size, sizeof(uint8_t));
     if (buf == NULL) {
         fprintf(stderr, "Failed allocating memory for buf\n");
@@ -226,16 +250,16 @@ char *array_to_bmp(const s_image *bmp_img, size_t *_size) {
     }
 
     struct bmp_header_writing *header = (struct bmp_header_writing *) buf;
-    header->signature = BMP_HEADER_SIGN;
+    header->signature = BMP_HEADER_SIGNATURE;
     header->file_size = *_size;
     header->data_offset = sizeof(struct bmp_header_writing);
     header->info_header_size = INFO_HEADER_SIZE;
     header->px_width = bmp_img->px_width;
     header->px_height = bmp_img->px_height;
     header->planes = 1;
-    header->bit_depth = 8 * sizeof(pixel24_t);
+    header->bit_depth = 8 * sizeof(pixel_3);
 
-    copy_pixel_data(bmp_img->px_array, bmp_img->px_array_size, buf + sizeof(struct bmp_header_writing), byte_width, byte_width_padded);
+    copy_pixel_data(bmp_img->px_array, bmp_img->px_array_size, px_array_rowlength, buf_px_rowlength, buf + sizeof(struct bmp_header_writing));
     return buf;
 }
 
@@ -244,10 +268,10 @@ Return a pointer to a buffer containing a complete grayscale BMP image.
 Writes size of buffer to parameter "_size".
 */
 char *array_to_bmp_graysc(const s_image *bmp_img, size_t * _size) {
-    uint32_t byte_width = bmp_img->px_width * sizeof(pixel8_t);
-    uint32_t byte_width_padded = (byte_width & 0x3) ? ((byte_width & ~0x3) + 4) : byte_width;
+    uint32_t px_array_rowlength = bmp_img->px_width * sizeof(pixel_1);
+    uint32_t buf_px_rowlength = (px_array_rowlength & 0x3) ? ((px_array_rowlength & ~0x3) + 4) : px_array_rowlength;
 
-    *_size = sizeof(struct bmp_header_writing) + 256 * sizeof(struct color_table_entry) + byte_width_padded * (bmp_img->px_height);
+    *_size = sizeof(struct bmp_header_writing) + 256 * sizeof(struct color_table_entry) + buf_px_rowlength * (bmp_img->px_height);
     char *buf = calloc(*_size, sizeof(uint8_t));
     if (buf == NULL) {
         fprintf(stderr, "Failed allocating memory for buf\n");
@@ -255,14 +279,14 @@ char *array_to_bmp_graysc(const s_image *bmp_img, size_t * _size) {
     }
 
     struct bmp_header_writing *header = (struct bmp_header_writing *) buf;
-    header->signature = BMP_HEADER_SIGN;
+    header->signature = BMP_HEADER_SIGNATURE;
     header->file_size = *_size;
     header->data_offset = sizeof(struct bmp_header_writing) + 256 * sizeof(struct color_table_entry);
     header->info_header_size = INFO_HEADER_SIZE;
     header->px_width = bmp_img->px_width;
     header->px_height = bmp_img->px_height;
     header->planes = 1;
-    header->bit_depth = 8 * sizeof(pixel8_t);
+    header->bit_depth = 8 * sizeof(pixel_1);
 
     struct color_table_entry *color_table = (struct color_table_entry *) (buf + sizeof(struct bmp_header_writing));
     for (int i = 0; i < 256; ++i) {
@@ -271,7 +295,7 @@ char *array_to_bmp_graysc(const s_image *bmp_img, size_t * _size) {
         color_table[i].b = i;
     }
 
-    copy_pixel_data(bmp_img->px_array, bmp_img->px_array_size, buf + 256 * sizeof(struct color_table_entry) + sizeof(struct bmp_header_writing),
-                    byte_width, byte_width_padded);
+    copy_pixel_data(bmp_img->px_array, bmp_img->px_array_size,
+                    px_array_rowlength, buf_px_rowlength, buf + 256 * sizeof(struct color_table_entry) + sizeof(struct bmp_header_writing));
     return buf;
 }
