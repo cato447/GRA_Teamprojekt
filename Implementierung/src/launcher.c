@@ -13,10 +13,10 @@
 #include <pthread_time.h>
 #endif
 
-#include "IOSystem/bmp_definitions.h"
+#include "IOSystem/s_image.h"
 #include "IOSystem/IO_tools.h"
 #include "IOSystem/bmp_parser.h"
-#include "IOSystem/bmp_loader.h"
+#include "IOSystem/load_save_util.h"
 #include "Implementierung/sobel_basic.h"
 #include "Implementierung/sobel_simd.h"
 #include "Implementierung/sobel_threaded.h"
@@ -127,6 +127,10 @@ int parse_args(int argc, char *argv[], config *config_params) {
                     print_arg_error("Output path can't start with a dash");
                     return 1;
                 }
+                if (optarg[0] == '\0') {
+                    print_arg_error("Output path can't be an empty string");
+                    return 1;
+                }
                 size_t output_path_len = strlen(optarg) + 1;
                 config_params->output_file_path = malloc(output_path_len);
                 if (config_params->output_file_path == NULL) {
@@ -152,7 +156,7 @@ int parse_args(int argc, char *argv[], config *config_params) {
     argc -= optind;
     argv += optind;
 
-    if (argc == 0) {
+    if (argc == 0 || strlen(argv[0]) == 0) {
         print_arg_error("No input path was given");
         return 1;
     } else if (argc > 1) {
@@ -177,25 +181,28 @@ int parse_args(int argc, char *argv[], config *config_params) {
             *c = tolower(*c);
         }
 
-        size_t len_input_name;
-        if (strstr(search_string, BMP_FILE_EXT) !=
-            search_string + input_path_len - strlen(BMP_FILE_EXT) - 1) {
-            len_input_name = input_path_len - 1;
+        size_t input_justname_len;
+        if (strstr(search_string, BMP_FILE_EXT) != search_string + input_path_len - strlen(BMP_FILE_EXT) - 1) {
+            input_justname_len = input_path_len;
         } else {
-            len_input_name = input_path_len - strlen(BMP_FILE_EXT) - 1;
+            input_justname_len = input_path_len - strlen(BMP_FILE_EXT);
         }
-        config_params->output_file_path = malloc(len_input_name + strlen(OUT_FILE_SUFFIX) + 1);
+        config_params->output_file_path = malloc(input_justname_len + strlen(OUT_FILE_SUFFIX));
         if (config_params->output_file_path == NULL) {
             fprintf(stderr, "Failed allocating memory for output_file_path\n");
             return 1;
         }
 
-        strncpy(config_params->output_file_path, config_params->input_file_path, len_input_name);
-        strncat(config_params->output_file_path, OUT_FILE_SUFFIX,
-                strlen(OUT_FILE_SUFFIX) + 1);
+        strncpy(config_params->output_file_path, config_params->input_file_path, input_justname_len - 1);
+        config_params->output_file_path[input_justname_len - 1] = '\0';
+        strncat(config_params->output_file_path, OUT_FILE_SUFFIX, strlen(OUT_FILE_SUFFIX)+1);
     }
     return 0;
 }
+
+static void (*const sobel_implementations[6])(const uint8_t *, size_t, size_t, uint8_t *) = {
+        sobel, sobel_simd, sobel_threaded, sobel_graysc, sobel_simd_graysc, sobel_threaded_graysc
+};
 
 int main(int argc, char *argv[]) {
     config config_params = {
@@ -216,95 +223,48 @@ int main(int argc, char *argv[]) {
         run_tests_sobel();
     }
 
-    s_image *bmp_image = malloc(sizeof(s_image));
-    if (bmp_image == NULL) {
-        fprintf(stderr, "Failed allocating memory for bmp_image\n");
-        dealloc_config_params(&config_params);
-        return 1;
-    }
     printf("Loading image from %s\n", config_params.input_file_path);
-
-    size_t img_size;
-    if (config_params.version < 3) {
-        img_size = load_picture(config_params.input_file_path, bmp_image);
-    } else {
-        img_size = load_picture_graysc(config_params.input_file_path, bmp_image);
-    }
-
-    if (img_size == 0) {
-        fprintf(stderr, "Couldn't load picture from input file %s\n", config_params.input_file_path);
-        free(bmp_image);
+    s_image *bmp_image = load_image(config_params.input_file_path, config_params.version >= 3);
+    if (bmp_image == NULL) {
         dealloc_config_params(&config_params);
         return 1;
     }
 
-    struct timespec start_read_io;
-    struct timespec end_read_io;
-    double io_read_time = 0;
+    double input_time = 0;
     size_t read_cycles = (PIXEL_NUM_1SEC_READ / (bmp_image->px_height * bmp_image->px_width));
     read_cycles = read_cycles > 0 ? read_cycles : 1;
     if (config_params.measure_performance) {
-        printf("Running performance tests for Image Read\n");
-        if (clock_gettime(CLOCK_MONOTONIC, &start_read_io) != 0) {
-            fprintf(stderr, "Couldn't get start_read_io time\n");
+        struct timespec t_start_io_load;
+        struct timespec t_stop_io_load;
+
+        printf("\n");
+        printf("Running performance tests for BMP Input\n");
+        if (clock_gettime(CLOCK_MONOTONIC, &t_start_io_load) != 0) {
+            fprintf(stderr, "Couldn't get t_start_io_load time\n");
             free_image(bmp_image);
             dealloc_config_params(&config_params);
             return 1;
         }
         if (config_params.version < 3){
             for (size_t i = 0; i < read_cycles; i++){
-                // This code is nearly the same as the one in load_picture
-                // We had to copy it here to not mess up our memory
-                void *buffer;
-                size_t buffer_size;
-                s_image *test_bmp_image = malloc(sizeof(s_image));
-                //fprintf(stdout, "Loading BMP File: %s\n", path);
-                buffer = read_file(config_params.input_file_path, &buffer_size);
-                if (buffer == NULL) {
-                    fprintf(stderr, "Couldn't read BMP File\n");
-                    free(bmp_image);
-                    return 1;
-                }
-                if (bmp_to_array(buffer, buffer_size, test_bmp_image) == 1) {
-                    fprintf(stderr, "Couldn't parse BMP file\n");
-                    free(buffer);
-                    free(bmp_image);
-                    return 1;
-                }
-                free(buffer);
+                s_image *test_bmp_image = load_image(config_params.input_file_path, 0);
                 free_image(test_bmp_image);
             }
         } else {
             for (size_t i = 0; i < read_cycles; i++){
-                // This code is nearly the same as the one in load_picture
-                // We had to copy it here to not mess up our memory
-                void *buffer;
-                size_t buffer_size;
-                s_image *test_bmp_image = malloc(sizeof(s_image));
-                //fprintf(stdout, "Loading BMP File: %s\n", path);
-                buffer = read_file(config_params.input_file_path, &buffer_size);
-                if (buffer == NULL) {
-                    fprintf(stderr, "Couldn't read BMP File\n");
-                    free(bmp_image);
-                    return 1;
-                }
-                if (bmp_to_array_graysc(buffer, buffer_size, test_bmp_image) == 1) {
-                    fprintf(stderr, "Couldn't parse BMP file\n");
-                    free(buffer);
-                    free(bmp_image);
-                    return 1;
-                }
-                free(buffer);
+                s_image *test_bmp_image = load_image(config_params.input_file_path, 1);
                 free_image(test_bmp_image);
             }
         }
-        if(clock_gettime(CLOCK_MONOTONIC, &end_read_io) != 0) {
-            fprintf(stderr, "Couldn't get end_read_io time\n");
+        if(clock_gettime(CLOCK_MONOTONIC, &t_stop_io_load) != 0) {
+            fprintf(stderr, "Couldn't get t_stop_io_load time\n");
+            free_image(bmp_image);
             dealloc_config_params(&config_params);
             return 1;
         }
-        io_read_time = end_read_io.tv_sec - start_read_io.tv_sec + 1e-9 * (end_read_io.tv_nsec - start_read_io.tv_nsec);
-        printf("IO read performance testing took %.9fs to run %zu iterations\n", io_read_time, read_cycles);
+        input_time = t_stop_io_load.tv_sec - t_start_io_load.tv_sec + 1e-9 * (t_stop_io_load.tv_nsec - t_start_io_load.tv_nsec);
+        printf(" ❯ IO read performance testing took %.9fs to run %zu iterations\n", input_time, read_cycles);
+        printf("\n");
     }
 
     uint8_t *new_pixels = calloc(bmp_image->px_array_size, sizeof(uint8_t));
@@ -315,128 +275,84 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    struct timespec start_exec;
-    struct timespec end_exec;
-    double exec_time = 0;
-    unsigned long num_of_execute_cycles = config_params.measure_performance ? config_params.measure_performance_cycles : 1;
+    printf("Calculating sobel for image using version %d\n", config_params.version);
+    sobel_implementations[config_params.version](bmp_image->px_array, bmp_image->px_width, bmp_image->px_height, new_pixels);
+    
+    double calculation_time = 0;
     if (config_params.measure_performance) {
-        printf("Running performance tests for Calculation\n");
-        if (clock_gettime(CLOCK_MONOTONIC, &start_exec) != 0) {
-            fprintf(stderr, "Couldn't get start_exec time\n");
+        struct timespec t_start_sobel_calc;
+        struct timespec t_stop_sobel_calc;
+        printf("\n");
+        printf("Running performance tests for calculation\n");
+        if (clock_gettime(CLOCK_MONOTONIC, &t_start_sobel_calc) != 0) {
+            fprintf(stderr, "Couldn't get t_start_sobel_calc time\n");
+            free_image(bmp_image);
+            free(new_pixels);
+            dealloc_config_params(&config_params);
             return 1;
         }
-    }
-    switch (config_params.version) {
-        case 0:
-            for (unsigned long i = 0; i < num_of_execute_cycles; ++i) {
-                sobel(bmp_image->px_array, bmp_image->px_width, bmp_image->px_height,
-                                                     new_pixels);
-            }
-            break;
-        case 1:
-            for (unsigned long i = 0; i < num_of_execute_cycles; ++i) {
-                sobel_simd(bmp_image->px_array, bmp_image->px_width, bmp_image->px_height,
-                                                     new_pixels);
-            }
-            break;
-        case 2:
-            for (unsigned long i = 0; i < num_of_execute_cycles; ++i) {
-                sobel_thread(bmp_image->px_array, bmp_image->px_width, bmp_image->px_height,
-                                                     new_pixels);
-            }
-            break;
-        case 3:
-            for (unsigned long i = 0; i < num_of_execute_cycles; ++i) {
-                sobel_graysc(bmp_image->px_array, bmp_image->px_width, bmp_image->px_height,
-                             new_pixels);
-            }
-            break;
-        case 4:
-            for (unsigned long i = 0; i < num_of_execute_cycles; ++i) {
-                sobel_simd_graysc(bmp_image->px_array, bmp_image->px_width, bmp_image->px_height,
-                             new_pixels);
-            }
-            break;
-        case 5:
-            for (unsigned long i = 0; i < num_of_execute_cycles; ++i) {
-                sobel_thread_graysc(bmp_image->px_array, bmp_image->px_width, bmp_image->px_height,
-                             new_pixels);
-            }
-            break;
-
-    }
-    if (config_params.measure_performance) {
-        if(clock_gettime(CLOCK_MONOTONIC, &end_exec) != 0) {
-            fprintf(stderr, "Couldn't get end_exec time\n");
+        for (unsigned long i = 0; i < config_params.measure_performance_cycles; ++i) {
+            sobel_implementations[config_params.version](bmp_image->px_array, bmp_image->px_width, bmp_image->px_height, new_pixels);
+        }
+        if(clock_gettime(CLOCK_MONOTONIC, &t_stop_sobel_calc) != 0) {
+            fprintf(stderr, "Couldn't get t_stop_sobel_calc time\n");
+            free_image(bmp_image);
+            free(new_pixels);
+            dealloc_config_params(&config_params);
             return 1;
         }
-        exec_time = end_exec.tv_sec - start_exec.tv_sec + 1e-9 * (end_exec.tv_nsec - start_exec.tv_nsec);
-        printf("Sobel calc performance testing took %.9fs to run %ld iterations\n", exec_time, config_params.measure_performance_cycles);
+        calculation_time = t_stop_sobel_calc.tv_sec - t_start_sobel_calc.tv_sec + 1e-9 * (t_stop_sobel_calc.tv_nsec - t_start_sobel_calc.tv_nsec);
+        printf(" ❯ Sobel calc performance testing took %.9fs to run %ld iterations\n", calculation_time, config_params.measure_performance_cycles);
+        printf("\n");
     }
-
-    printf("Calculated sobel for image %s using version %d\n", config_params.input_file_path, config_params.version);
 
     s_image export_image = {.px_array = new_pixels, .px_array_size = bmp_image->px_array_size, .px_height = bmp_image->px_height, .px_width = bmp_image->px_width};
-    size_t new_size;
-    char *new_buf;
-    if (config_params.version < 3) {
-        new_buf = array_to_bmp(&export_image, &new_size);
-    } else {
-        new_buf = array_to_bmp_graysc(&export_image, &new_size);
-    }
-
-    printf("Writing to file %s\n", config_params.output_file_path);
-    if (write_file(config_params.output_file_path, new_buf, new_size)) {
-        free_image(bmp_image);
-        dealloc_config_params(&config_params);
-        free(new_buf);
-        return 1;
-    }
-
-    struct timespec start_write_io;
-    struct timespec end_write_io;
-    double io_write_time = 0;
+    printf("Saving image to %s\n", config_params.output_file_path);
+    save_image(&export_image, config_params.version >= 3, config_params.output_file_path);
+    
+    double output_time = 0;
     size_t write_cycles = (PIXEL_NUM_1SEC_WRITE / (bmp_image->px_height * bmp_image->px_width));
     write_cycles = write_cycles > 0 ? write_cycles : 1;
     if (config_params.measure_performance) {
-        char *test_buf;
-        printf("Running performance tests for image write\n");
-        if (clock_gettime(CLOCK_MONOTONIC, &start_write_io) != 0) {
-            fprintf(stderr, "Couldn't get start_write_io time\n");
+        struct timespec t_start_io_save;
+        struct timespec t_stop_io_save;
+        printf("\n");
+        printf("Running performance tests for BMP output\n");
+        if (clock_gettime(CLOCK_MONOTONIC, &t_start_io_save) != 0) {
+            fprintf(stderr, "Couldn't get t_start_io_save time\n");
+            free_image(bmp_image);
+            free(new_pixels);
             dealloc_config_params(&config_params);
             return 1;
         }
 
         if (config_params.version < 3){
             for (size_t i = 0; i < write_cycles; i++){
-                test_buf = array_to_bmp(&export_image, &new_size);
-                write_file(config_params.output_file_path, new_buf, new_size);
-                free(test_buf);
+                save_image(&export_image, 0, config_params.output_file_path);
             }
         } else {
-            write_cycles *= 4;
             for (size_t i = 0; i < write_cycles; i++){
-                test_buf = array_to_bmp_graysc(&export_image, &new_size);
-                write_file(config_params.output_file_path, new_buf, new_size);
-                free(test_buf);
+                save_image(&export_image, 1, config_params.output_file_path);
             }
         }
-        if(clock_gettime(CLOCK_MONOTONIC, &end_write_io) != 0) {
-            fprintf(stderr, "Couldn't get end_write_io time\n");
+        if(clock_gettime(CLOCK_MONOTONIC, &t_stop_io_save) != 0) {
+            fprintf(stderr, "Couldn't get t_stop_io_save time\n");
+            free_image(bmp_image);
+            free(new_pixels);
             dealloc_config_params(&config_params);
             return 1;
         }
-        io_write_time = end_write_io.tv_sec - start_write_io.tv_sec + 1e-9 * (end_write_io.tv_nsec - start_write_io.tv_nsec);
-        printf("IO write testing took %.9fs to run %zu iterations\n", io_write_time, write_cycles);
+        output_time = t_stop_io_save.tv_sec - t_start_io_save.tv_sec + 1e-9 * (t_stop_io_save.tv_nsec - t_start_io_save.tv_nsec);
+        printf(" ❯ IO write testing took %.9fs to run %zu iterations\n", output_time, write_cycles);
+        printf("\n");
     }
-
-    free(new_buf);
 
     if (config_params.run_tests || config_params.measure_performance) {
         uint8_t *sobel_reference_version = calloc(bmp_image->px_array_size, sizeof(uint8_t));
         if (sobel_reference_version == NULL) {
             fprintf(stderr, "Failed allocating memory for sobel_reference_version\n");
             free_image(bmp_image);
+            free(new_pixels);
             dealloc_config_params(&config_params);
             return 1;
         }
@@ -451,19 +367,19 @@ int main(int argc, char *argv[]) {
         free(sobel_reference_version);
     }
 
+    free_image(bmp_image);
     free(new_pixels);
 
     if (config_params.measure_performance) {
-        double avg_exec_time = exec_time / config_params.measure_performance_cycles;
-        double avg_io_read_time = io_read_time / read_cycles;
-        double avg_io_write_time = io_write_time / write_cycles;
+        double avg_exec_time = calculation_time / config_params.measure_performance_cycles;
+        double avg_io_read_time = input_time / read_cycles;
+        double avg_io_write_time = output_time / write_cycles;
         printf("Sobel calculation from version %d took on average %.9fs\n", config_params.version,
                avg_exec_time);
         printf("Loading the image took on average %.9fs\n", avg_io_read_time);
-        printf("Writing the image took on average %.9fs\n", avg_io_write_time);
+        printf("Saving the image took on average %.9fs\n", avg_io_write_time);
         printf("Percentage io/calc = %f%% \n", ((avg_io_read_time + avg_io_write_time) / avg_exec_time) * 100);
     }
-    free_image(bmp_image);
     dealloc_config_params(&config_params);
     return 0;
 }

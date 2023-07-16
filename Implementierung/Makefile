@@ -1,7 +1,8 @@
 TARGET = program
 
 CC = gcc
-CFLAGS = -O3 -g -std=c17 -Wall -Wpedantic -Wextra -msse4.2
+CFLAGS = -O3 -g -std=c17 -Wall -Wpedantic -Wextra -msse4.2 #-fsanitize=address -fsanitize=undefined
+LFLAGS = #-static-libasan -fsanitize=address -fsanitize=undefined
 
 OUTDIR = ./build
 SUBDIR = src src/Implementierung src/IOSystem src/Testsystem
@@ -17,7 +18,7 @@ PHONY := $(TARGET)
 
 $(TARGET): $(OBJS)
 	mkdir -p $(OUTDIR)
-	$(CC) -o $(OUTDIR)/$@ $(OBJS) $(LIBS)
+	$(CC) -o $(OUTDIR)/$@ $(LFLAGS) $(OBJS) $(LIBS)
 
 $(DIR_OBJ)/%.o: %.c $(INCS)
 	mkdir -p $(@D)

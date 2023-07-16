@@ -40,7 +40,7 @@ void sobel_simd(const uint8_t *img_in, size_t width, size_t height, uint8_t *img
 }
 
 void sobel_simd_graysc(const uint8_t *img_in, size_t width, size_t height, uint8_t *img_out) {
-    if (width * height >= 16 + 1 + 1 && height >= 1) {
+    if (width * height >= 16 + 1 + 1 && height >= 3) {
         __m128i zero_even_bytes_mask = _mm_set_epi16(ZERO_EVEN_BYTES_MASK);
         __m128i comparer = _mm_set_epi16(COMP_255);
 
