@@ -1,11 +1,7 @@
 #include "test_similarity.h"
 
-#include <stdlib.h>
-#include <stdio.h>
-
 #include "../Testsystem/unittest.h"
 #include "../Testsystem/image_similarity.h"
-#include "../IOSystem/load_save_util.h"
 
 static uint8_t *sobel_pixels;
 static size_t sobel_buffer_size;

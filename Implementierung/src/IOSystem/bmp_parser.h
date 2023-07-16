@@ -1,8 +1,6 @@
 #ifndef _BMP_PARSER_H_
 #define _BMP_PARSER_H_
 
-#include <stddef.h>
-
 #include "s_image.h"
 
 int bmp_to_array(const char *buf, size_t buf_size, s_image *_bmp_img_buf);

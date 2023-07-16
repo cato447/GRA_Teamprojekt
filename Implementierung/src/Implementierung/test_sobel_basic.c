@@ -3,12 +3,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #include "../Implementierung/sobel_basic.h"
 #include "../Testsystem/unittest.h"
 #include "../Testsystem/image_similarity.h"
-#include "../IOSystem/load_save_util.h"
+#include "../IOSystem/load_save_utils.h"
 
 #define MUSTER_PATH "../res/raw/muster.bmp"
 #define MUSTER_REF_PATH "../res/reference/muster_sobel.bmp"

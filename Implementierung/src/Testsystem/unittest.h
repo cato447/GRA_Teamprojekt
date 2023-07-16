@@ -2,7 +2,7 @@
 #define _UNITTEST_H_
 
 #include <stdbool.h>
-#include <inttypes.h>
+#include <stdint.h>
 #include <stddef.h>
 
 // Controls

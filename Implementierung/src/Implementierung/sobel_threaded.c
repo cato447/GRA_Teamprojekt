@@ -82,8 +82,8 @@ void sobel_threaded(const uint8_t *img_in, size_t width, size_t height, uint8_t 
             int creation_result = pthread_create(&threads[i], PTHREAD_CREATE_JOINABLE, compute_sobel_for_height_interval, args + i);
 
             if (creation_result != 0) {
-                printf("Thread %lu could not be created: %d. Aborting.\n", i, creation_result);
-                abort();
+                printf("Thread %lu could not be created: %d. Exiting execution.\n", i, creation_result);
+                exit(1);
             }
 
             ensure_offset = 0;

@@ -1,8 +1,8 @@
 TARGET = program
 
 CC = gcc
-CFLAGS = -O3 -g -std=c17 -Wall -Wpedantic -Wextra -msse4.2 #-fsanitize=address -fsanitize=undefined
-LFLAGS = #-static-libasan -fsanitize=address -fsanitize=undefined
+CFLAGS = -O3 -g -std=c17 -Wall -Wpedantic -Wextra -msse4.2
+LFLAGS =
 
 OUTDIR = ./build
 SUBDIR = src src/Implementierung src/IOSystem src/Testsystem

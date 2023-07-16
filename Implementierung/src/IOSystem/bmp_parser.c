@@ -1,13 +1,8 @@
 #include "bmp_parser.h"
 
-#include <stdalign.h>
-#include <stddef.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/stat.h>
 #include <stdlib.h>
-#include <errno.h>
 
 #define BMP_HEADER_SIGNATURE 0x4d42
 

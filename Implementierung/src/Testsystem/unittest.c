@@ -256,7 +256,7 @@ int _unit_assert_equal_uint32(const uint32_t expected, const uint32_t actual, co
 int _unit_assert_equal_int64(const int64_t expected, const int64_t actual, const char *func_name, int line_num) {
     if (expected != actual) {
         assert_fail_msg(func_name, line_num);
-        fprintf(tmp_stdout, "Expected %" PRId64 " but was %" PRId64 "\n", expected, actual);
+        fprintf(tmp_stdout, "Expected %ld but was %ld \n", expected, actual);
         return 1;
     } else {
         assert_pass(func_name, line_num);
@@ -267,7 +267,7 @@ int _unit_assert_equal_int64(const int64_t expected, const int64_t actual, const
 int _unit_assert_equal_uint64(const uint64_t expected, const uint64_t actual, const char *func_name, int line_num) {
     if (expected != actual) {
         assert_fail_msg(func_name, line_num);
-        fprintf(tmp_stdout, "Expected %" PRIu64 " but was %" PRIu64 "\n", expected, actual);
+        fprintf(tmp_stdout, "Expected %lu but was %lu\n", expected, actual);
         return 1;
     } else {
         assert_pass(func_name, line_num);
