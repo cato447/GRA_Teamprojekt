@@ -20,7 +20,7 @@
 \section{Einleitung}
 In diesem Projekt haben wir uns damit beschäftigt, den Sobel-Filter Algorithmus zu implementieren.
 Dieser Algorithmus wird verwendet, um Kanten in Bildern zu erkennen und findet beispielsweise Anwendung in der Bildverarbeitung und -analyse, sowie in Computer-Vision.
-So kann er z.B. in der Medizin eingesetzt werden, um Tumore in MRT Bildern besser erkennbar zu machen \cite{7002427},
+So kann er z.B. in der Medizin eingesetzt werden, um Tumore in MRT-Bildern besser erkennbar zu machen \cite{7002427},
 oder in der Forensik um Fingerabdruckerkennung zu verbessern. \cite{6900702}
 Als Eingabe für den Sobel-Filter wird ein 24-Bit BMP-Bild erwartet.
 Jeder Pixel in einem Bild wird dabei durch drei Bytes repräsentiert, die die Farbwerte für Blau, Grün und Rot enthalten.
@@ -249,8 +249,17 @@ Wie in der Einleitung bereits erwähnt, wird die Berechnung der Sobel-Werte norm
 Durch diesen de-facto-Industriestandard produzieren die zusätzlichen Versionen (3-5) analog zu den Versionen 0-2 Graustufenbilder.
 Da hierbei jedoch der einzige Unterschied die Pixelbreite - nämlich 8, statt 24 Bit - ist, entspricht der erwartete Speedup von 24/8 = 3 gegenüber der entsprechenden 24-Bit Implementierung genau dem gemessenen.
 \section{Zusammenfassung und Ausblick}
+Der Sobel-Filter ist eine gängige Methode, um effizient Kanten in Bildern zu erkennen.
+Er funktioniert, indem die vertikalen und horizontalen eines Bildes mit einer Matrix berechnet und anschließend zusammengefügt werden.
+%Dabei ist sein Hauptanwendungsgebiet die Computer-Vision, er wird aber bspw. auch in der Medizin verwendet, um die Sichtbarkeit von Tumoren in MRT-Aufnahmen zu verbessern.
+Wir haben in insgesamt 6 verschiedenen Versionen die Berechnung des Sobel-Filters implementiert und deren Laufzeiten ausgiebig analysiert.
+Während Version 0 schlicht die mathematische Definition des Filters in C-Code übersetzt, verwendet Version 1 ausgeklügelte Methoden, um mehr als 5 Pixel simultan zu berechnen.
+Version 2 wiederum bringt diese Parallelität auf ein komplett anderes Niveau, indem es alle Vorteile von Version 1 mit mittels Multithreading mit der hohen Parallelität von modernen Rechenkernen kombiniert.
+Die Versionen 3 bis 5 funktionieren gleich wie Versionen 0 bis 2 respektive, arbeiten dagegen aber auf Graustufenbildern, die eine 3-mal geringere Pixelbreite aufweisen und damit auch verlässlich dreimal so schnell abgearbeitet werden können.
 
-Eine weitere Optimierung, die bei der Arbeit mit Bildmaterial natürlich naheliegt, ist die Verwendung der
+Ausblickend lässt sich sagen, dass eine weitere Optimierung, die bei der Arbeit mit Bildmaterial natürlich naheläge, jedoch leider den Rahmen gesprengt hätte, die Verwendung von Grafikkarten wäre.
+Von der dadurch gewonnenen Parallelität würden vor allem Video- und Echtzeitanwendungen profitieren, da unsere CPU-basierten Implementierungen zwar bereits nur wenige Sekundenbruchteile benötigen, um selbst Bilder mit sehr hohen Auflösungen zu berechnen, jedoch vor allem von >60 Frames/Sekunde .
+
 TODO: Geben Sie hier eine kurze Zusammenfassung und einen Ausblick ein.
 % TODO: Fuegen Sie Ihre Quellen der Datei Ausarbeitung.bib hinzu
 % Referenzieren Sie diese dann mit \cite{}.
