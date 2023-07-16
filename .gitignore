@@ -9,3 +9,5 @@ Implementierung/res/performance_pics/
 Implementierung/performance/sample_images/*.bmp
 
 Implementierung/.venv/
+
+Implementierung/performance/output_images/

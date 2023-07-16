@@ -26,7 +26,11 @@
 
 #define BMP_FILE_EXT ".bmp"
 #define OUT_FILE_SUFFIX "_out" BMP_FILE_EXT
-#define IO_PERFORMANCE_TEST_CYCLES 100
+
+// Number of pixel an image must have to cause a 1 sec read/write
+// Set this accordingly to your specs for testing. These values fit our testsetup
+#define PIXEL_NUM_1SEC_READ 1000000000
+#define PIXEL_NUM_1SEC_WRITE 105000000
 
 typedef struct config {
     uint8_t version;
@@ -237,6 +241,8 @@ int main(int argc, char *argv[]) {
     struct timespec start_read_io;
     struct timespec end_read_io;
     double io_read_time = 0;
+    size_t read_cycles = (PIXEL_NUM_1SEC_READ / (bmp_image->px_height * bmp_image->px_width));
+    read_cycles = read_cycles > 0 ? read_cycles : 1;
     if (config_params.measure_performance) {
         printf("Running performance tests for Image Read\n");
         if (clock_gettime(CLOCK_MONOTONIC, &start_read_io) != 0) {
@@ -246,7 +252,7 @@ int main(int argc, char *argv[]) {
             return 1;
         }
         if (config_params.version < 3){
-            for (size_t i = 0; i < IO_PERFORMANCE_TEST_CYCLES; i++){
+            for (size_t i = 0; i < read_cycles; i++){
                 // This code is nearly the same as the one in load_picture
                 // We had to copy it here to not mess up our memory
                 void *buffer;
@@ -269,7 +275,7 @@ int main(int argc, char *argv[]) {
                 free_image(test_bmp_image);
             }
         } else {
-            for (size_t i = 0; i < IO_PERFORMANCE_TEST_CYCLES; i++){
+            for (size_t i = 0; i < read_cycles; i++){
                 // This code is nearly the same as the one in load_picture
                 // We had to copy it here to not mess up our memory
                 void *buffer;
@@ -298,7 +304,7 @@ int main(int argc, char *argv[]) {
             return 1;
         }
         io_read_time = end_read_io.tv_sec - start_read_io.tv_sec + 1e-9 * (end_read_io.tv_nsec - start_read_io.tv_nsec);
-        printf("IO read performance testing took %.9fs to run %d iterations\n", io_read_time, IO_PERFORMANCE_TEST_CYCLES);
+        printf("IO read performance testing took %.9fs to run %zu iterations\n", io_read_time, read_cycles);
     }
 
     uint8_t *new_pixels = calloc(bmp_image->px_array_size, sizeof(uint8_t));
@@ -390,6 +396,8 @@ int main(int argc, char *argv[]) {
     struct timespec start_write_io;
     struct timespec end_write_io;
     double io_write_time = 0;
+    size_t write_cycles = (PIXEL_NUM_1SEC_WRITE / (bmp_image->px_height * bmp_image->px_width));
+    write_cycles = write_cycles > 0 ? write_cycles : 1;
     if (config_params.measure_performance) {
         char *test_buf;
         printf("Running performance tests for image write\n");
@@ -398,14 +406,16 @@ int main(int argc, char *argv[]) {
             dealloc_config_params(&config_params);
             return 1;
         }
+
         if (config_params.version < 3){
-            for (size_t i = 0; i < IO_PERFORMANCE_TEST_CYCLES; i++){
+            for (size_t i = 0; i < write_cycles; i++){
                 test_buf = array_to_bmp(&export_image, &new_size);
                 write_file(config_params.output_file_path, new_buf, new_size);
                 free(test_buf);
             }
         } else {
-            for (size_t i = 0; i < IO_PERFORMANCE_TEST_CYCLES; i++){
+            write_cycles *= 4;
+            for (size_t i = 0; i < write_cycles; i++){
                 test_buf = array_to_bmp_graysc(&export_image, &new_size);
                 write_file(config_params.output_file_path, new_buf, new_size);
                 free(test_buf);
@@ -417,7 +427,7 @@ int main(int argc, char *argv[]) {
             return 1;
         }
         io_write_time = end_write_io.tv_sec - start_write_io.tv_sec + 1e-9 * (end_write_io.tv_nsec - start_write_io.tv_nsec);
-        printf("IO write testing took %.9fs to run %d iterations\n", io_write_time, IO_PERFORMANCE_TEST_CYCLES);
+        printf("IO write testing took %.9fs to run %zu iterations\n", io_write_time, write_cycles);
     }
 
     free(new_buf);
@@ -445,8 +455,8 @@ int main(int argc, char *argv[]) {
 
     if (config_params.measure_performance) {
         double avg_exec_time = exec_time / config_params.measure_performance_cycles;
-        double avg_io_read_time = io_read_time / IO_PERFORMANCE_TEST_CYCLES;
-        double avg_io_write_time = io_write_time / IO_PERFORMANCE_TEST_CYCLES;
+        double avg_io_read_time = io_read_time / read_cycles;
+        double avg_io_write_time = io_write_time / write_cycles;
         printf("Sobel calculation from version %d took on average %.9fs\n", config_params.version,
                avg_exec_time);
         printf("Loading the image took on average %.9fs\n", avg_io_read_time);
