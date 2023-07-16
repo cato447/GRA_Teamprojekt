@@ -1,0 +1,5 @@
+fileName,execTime,avg_exec_time,ioTime,pixelNum,version
+../performance/sample_images/dwsample-bmp-640.bmp,0.725366908,0.00033046328382688,0.00057618,273280,2
+../performance/sample_images/dwsample-bmp-1280.bmp,0.46224516800000004,0.00084197662659381,0.002236114,1091840,2
+../performance/sample_images/dwsample-bmp-1920.bmp,0.391840328,0.00160590298360656,0.003994874,2457600,2
+../performance/sample_images/dwsample-bmp-4k.bmp,0.381526601,0.00529898056944444,0.018146059000000003,8294400,2

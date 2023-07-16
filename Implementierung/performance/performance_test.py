@@ -7,7 +7,6 @@ import re
 import pandas as pd
 import matplotlib.pyplot as plt
 import time
-from tqdm import tqdm
 
 
 def get_pixel_count(path: str):
@@ -52,7 +51,10 @@ if __name__ == "__main__":
     for test_file in test_files:
         print(f"Running program for input {test_file}")
         pixel_count = get_pixel_count(test_file)
-        process = subprocess.run(["./program", "-V", version, f"-B{int((1/pixel_count)*1800000000)}", "-o", f"../performance/output_images/{test_file.split('/')[-1]}", test_file], stdout=subprocess.PIPE)
+        cycles = int((1/pixel_count)*10000000000)
+        if pixel_count < 5000:
+             cycles = 50000
+        process = subprocess.run(["./program", "-V", version, f"-B{cycles}", "-o", f"../performance/output_images/{test_file.split('/')[-1]}", test_file], stdout=subprocess.PIPE)
         output = process.stdout.decode('utf-8')
         if process.returncode != 0:
             print(output)
@@ -70,6 +72,7 @@ if __name__ == "__main__":
         avg_io_read_times.append(avg_io_read_time)
         ioReadTimes.append(ioReadTime)
         pixelNum.append(pixel_count)
+        print(f"ioReadTime: {ioReadTime}, ioWriteTime: {ioWriteTime}, execTime: {execTime}")
 
     df = pd.DataFrame({'fileName': test_files, 'execTime': execTimes, 'avg_exec_time': avg_exec_times,
                        'ioReadTime': ioReadTimes, 'avg_io_read_time': avg_io_read_times,
