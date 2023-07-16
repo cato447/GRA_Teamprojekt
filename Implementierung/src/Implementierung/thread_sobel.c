@@ -59,7 +59,7 @@ void thread_sobel(uint8_t *img_in, size_t width, size_t height, uint8_t *img_out
     if (__linux__) {
         size_t hw_threads = get_nprocs();
         if (hw_threads > 1) {
-            lines_per_thread = height / (hw_threads - 1);
+            lines_per_thread = height / (hw_threads - 1) > 3 ? height / (hw_threads - 1) : 3;
         }
     }
 
@@ -108,7 +108,7 @@ void thread_sobel_graysc(uint8_t *img_in, size_t width, size_t height, uint8_t *
     if (__linux__) {
         size_t hw_threads = get_nprocs();
         if (hw_threads > 1) {
-            lines_per_thread = height / (hw_threads-1);
+            lines_per_thread = height / (hw_threads - 1) > 3 ? height / (hw_threads - 1) : 3;
         }
     }
 
