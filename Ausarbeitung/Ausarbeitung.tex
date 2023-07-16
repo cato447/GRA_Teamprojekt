@@ -94,8 +94,11 @@ Version Eins verwendet dafür Single Instruction Multiple Data (SIMD) Instruktio
 Dabei werden die Farbwerte von mehr als 5 Pixeln simultan berechnet und gespeichert.
 Version Zwei kombiniert besagte erhöhte Bandbreite mit Multithreading, um die hohe Parallelität moderner Prozessoren optimal auszunutzen.
 
+Bei der Rechereche zum Sobel-Operator fiel auf, dass so gut wie jede Implementierung Graustufenbilder zur Berechnung verwendet.
 Jede der drei Versionen hat ein Gegenstück (Version 3 - Version 5 respektive), das mit Graustufenbildern (8-Bit BMPs) arbeitet.
 Diese Versionen sind für diesen Teil nicht weiter interessant, da sie exakt dieselbe Funktionsweise haben und sich lediglich in der Anzahl der Bits pro Pixel, nämlich 8 statt 24, unterscheiden - wodurch sich natürlich auch die Anzahl der nötigen Berechnungen um Faktor 3 reduziert.
+In der Performanzanalyse \ref{sec:performanzanalyse} wird auf diese Eigenschaft weiter eingaganen.
+\label{text:grayscale}
 
 \subsection{Vergleichsimplementierung - Version 0}
 \label{subsec:vergleichsimplementierung}
@@ -171,7 +174,7 @@ Beispielsweise würde somit ein Bild mit den Dimensionen 1920x1080 (Full-HD), au
 Im folgenden wird die Genauigkeit unseres Lösungsansatzes analysiert, da es beim Sobel Operator keine fest definierte \enquote{source of truth}, wie zum Beispiel bei einer Addition, gibt.
 Die öffentlich existierende Sobel-Filter Implementierung von OpenCV liefert beispielsweise Ergebnisse, die sich leicht in der Helligkeit von unserer unterscheiden.
 Desweiteren arbeitet diese auf Graustufenbildern, wohingegen unsere Implementierung auf RGB-Bildern arbeitet.
-Wir haben die Implementierung von OpenCV\cite{opencvsobel} so angepasst, dass sie ebenfalls auf RGB-Bildern arbeiten kann, um die Ergebnisse mit unseren zu vergleichen.
+Wir haben die Implementierung von OpenCV\cite{sobelopencv} so angepasst, dass sie ebenfalls auf RGB-Bildern arbeiten kann, um die Ergebnisse mit unseren zu vergleichen.
 \begin{figure}[H]
     \begin{subfigure}{.5\columnwidth}
         \centering
@@ -209,37 +212,26 @@ Diese Bilder werden mit zufälligen Pixeln gefüllt, was die Performanz jedoch n
 Das ist insbesondere deshalb der Fall, weil der Algorithmus - sofern er auf unkomprimierten Bildern arbeitet - den Wert jedes Pixels einmal berechnen muss, wodurch auch die Laufzeit in $\mathcal{O}(n)$ liegen muss.
 
 \begin{figure}[H]
-    \label{fig:results}
-    \begin{subfigure}{.5\columnwidth}
-        \centering
-        \includegraphics[width=\columnwidth]{graphics/version_0_3.png}
-        \caption{Vergleichsimplementierung}
-        \label{fig:basic}
-    \end{subfigure}
-    \begin{subfigure}{.5\columnwidth}
-        \centering
-        \includegraphics[width=\columnwidth]{graphics/version_1_4.png}
-        \caption{SIMD Versionen}
-        \label{fig:simd}
-    \end{subfigure}
-    \begin{subfigure}{.5\columnwidth}
-        \centering
-        \includegraphics[width=\columnwidth]{graphics/version_2_5.png}
-        \caption{SIMD+Threading Versionen}
-        \label{fig:simd_threading}
-    \end{subfigure}
-    \begin{subfigure}{.5\columnwidth}
-        \centering
-        \includegraphics[width=\columnwidth]{graphics/all_without_spike.png}
-        \caption{Alle Versionen im Vergleich}
-        \label{fig:all}
-    \end{subfigure}
-    \caption{Ergebnisse der Performanzanalyse}
+    \centering
+    \includegraphics[width=.75\columnwidth]{graphics/version_0_3.png}
+    \caption{Vergleichsimplementierung}
+    \label{fig:basic}
 \end{figure}
 Die Vergleichsimplementierung (\ref{fig:basic} blaue Linie) ist die langsamsten Versionen. Dies liegt daran, dass sie schlicht nach der mathematischen Definition implementiert ist.
 Diese arbeitet von Spalte zu Spalte wodurch der Cache nicht effizient genutzt werden kann, da die Daten des Bildes Zeile für Zeile gespeichert sind.
 Würde man den Speicherzugriff optimieren würde es die Laufzeit der Vergleichsimplementierung um Faktor 2 beschleunigen.
-Auffällig ist der Ausreißer bei der Bildgröße 4096x2160 (in etwa 0,9e7 Pixel).
+
+Auffällig ist der Ausreißer bei der Bildgröße 4096x2160 (in etwa 0,9e7 Pixel). Dieser ist nicht wie zuerst vermutet auf eine erhöte Rate von Cache-Misses zurückzuführen, sondern auf eine um 3 Fach erhöte Anzahl an stalled cycles per Instruction, wobei 80\% dieser im backend stallen, im Vergleich zu anderen Bildgrößen.
+Normalerweise sollte die gemessene Ausführungsdauer für 0,9e7 Pixel bei ungefähr 0,1 Sekunden liegen. Die gemessene Ausführungsdauer beträgt jedoch 0,3 Sekunden. Dies deckt sich mit der 3 Fach erhöten Anzahl an stalled cycles per Instruction.
+Diese hohe Anzahl von backend stalls tritt auf, wenn die CPU auf Daten wartet oder lang laufende Instuktionen durchführt. Warum genau das Programm sich nur für diese Bildauflösung und nur in den Vergleichsimplementierung so verhält ist nicht klar.
+Da dieses Verhalten in unseren Messdaten nur einmal auftritt wird dies als Ausreißer behandelt und aus den weiteren Betrachtungen ausgeschlossen.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=.75\columnwidth]{graphics/version_1_4.png}
+    \caption{SIMD Versionen}
+    \label{fig:simd}
+\end{figure}
 
 Die SIMD-Implementierungen (\ref{fig:simd} blaue Linie) erzielt in Relation zu den Vergleichsimplementierungen einen Speedup von circa 10.
 Dies ist darauf zurückzuführen, dass zum einen die Berechnung der Sobel-Werte vektorisiert zum anderen aber auch die Speicherzugriffe optimiert werden (zeilenweiser statt spaltenweiser Zugriff).
@@ -249,20 +241,33 @@ Auf Assembly-Ebene entspricht dieser Overhead fast der Hälfte der Instruktionen
 Optimiert man die Speicherzugriffe der Vergleichsimplementierung, kann GCC ab Optimierungsstufe 3 interessanterweise die hohe Vektorisierbarkeit des Problems eigenständig erkennen und übersetzt diese ebenfalls in Vektorinstruktionen.
 Da der durch GCC generierte Ansatz jedoch nur 8 Byte gleichzeitig verarbeiten kann, ist unsere SIMD-Implementierung immer noch in etwa doppelt so schnell.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=.5\columnwidth]{graphics/version_2_5.png}
+    \caption{SIMD+Threading Versionen}
+    \label{fig:simd_threading}
+\end{figure}
+
 Die Threading-Implementierung (\ref{fig:simd_threading} blaue Linie) kann durch ihren noch paralleleren Ansatz gegenüber der SIMD-Implementierung eine noch bessere Laufzeit mit einem theoretisch unendlichen Speedup erzielen.
 Da unsere Messungen ergeben haben, dass die optimale Anzahl an Streifen, in die das Bild aufgeteilt werden soll, den durch die CPU bereitgestellten Threads entspricht, kann der Speedup (theoretisch) durch Hinzufügen beliebig vieler Kerne beliebig groß werden.
 Dadurch, dass jeder Thread in der Theorie genau einen Streifen bearbeiten kann, kann die Parallelität von modernen CPUs bestmöglich ausgenutzt werden, während der Overhead für die Verwaltung der Threads möglichst gering bleibt.
 Der maximal zu erwartende Speedup gegenüber der Single-Thread-SIMD-Implementierung entspricht also der Anzahl der durch die CPU bereitgestellten Threads.
 Da jedoch üblicherweise nicht alle Threads dieselbe Rechenleistung liefern können, bzw.\ das Programm aufgrund des Schedulers nicht zu allen Zeitpunkten vollständig parallel arbeiten kann, weicht der gemessene Speedup stark vom theoretischen Maximum ab.
-Des Weiteren ist es wichtig anzumerken, dass für besonders kleine Bilder die Threading-Implementierung - aufgrund des Thread-Verwaltungsoverheads - langsamer als die SIMD-Implementierung sein kann.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=.5\columnwidth]{graphics/version1_2_closeup.png}
+    \caption{Ausschnitt aus Vergleich der SIMD-Implementierung und der Threading+SIMD Implementierung}
+    \label{fig:small_threading}
+\end{figure}
+In Abbildung \ref{fig:small_threading} ist ein Ausschnitt aus dem Vergleich der SIMD und der Threading+SIMD Implementierung zu sehen.
+Hier ist deutlich sichtbar, dass bis zu einer Pixelanzahl von in etwa 2,5 Millionen die SIMD-Implementierung schneller ist als die Threading+SIMD Implementierung.
+Dies liegt daran, dass die Threading-Implementierung einen Overhead für die Thread-Verwaltung hat, der erst ab einer gewissen Anzahl an Pixeln durch die Parallelisierung wieder ausgeglichen wird.
 
-Bei der Rechereche zum Sobel-Operator fiel auf, dass so gut wie jede Implementierung Graustufenbilder zur Berechnung verwendet.
-Deswegen wurden alle drei Versionen auch für Graustufenbilder implementiert (Versionen 3 bis 5).
+Im Lösungsansatz (\ref{text:grayscale}) wurde erwähnt, dass jede Version auch für Graustufenbilder implementiert wurde.
 Ihre Performanz ist in den Abbildungen \ref{fig:basic} \ref{fig:simd} \ref{fig:simd_threading} in orange dargestellt.
-Es zeigt sich, dass die Ausführungszeit auf den Graustufenbildern rund 1/3 der Ausführungszeit auf Farbbildern beträgt.
-Dies lässt sich dadurch erklären, dass durch die Beschränkung auf einen Farbkanal die Anzahl der zu verarbeitenden Daten um den Faktor 3 reduziert wird.
+Es zeigt sich, dass die Ausführungszeit auf den Graustufenbildern rund 1/3 der Ausführungszeit auf Farbbildern beträgt, was auf die geringere Anzahl an Farbchannel zurückzuführen ist.
 Somit wäre die Beschränkung auf Graustufenbilder ein einfacher Weg um eine signifikante Optimierung der Ausführungszeit zu erreichen.
-Des Weiteren leidet die Kantenerkennung unter dem Fehlen der Farbe nicht, sondern sind sogar einfacher zu erkennen.
+Des Weiteren leidet die Kantenerkennung unter dem Fehlen der Farbe nicht. Die Kanten sind weiterhin klar zu erkennen.
 \begin{figure}[H]
     \label{fig:simd_threading_results}
     \begin{subfigure}{.5\columnwidth}
@@ -278,7 +283,29 @@ Des Weiteren leidet die Kantenerkennung unter dem Fehlen der Farbe nicht, sonder
         \label{fig:correct_graysc}
     \end{subfigure}
 \end{figure}
-Dies erklärt, warum so gut wie jede Impelementierung Graustufenbilder zur Berechnung benutzt.
+Dies erklärt, warum praktisch jede Impelementierung Graustufenbilder zur Berechnung benutzt.
+\subsection{IO-Operations}
+Es wurde desweiteren getestet wie viel Anteil die IO-Operationen an der Gesamtlaufzeit haben.
+\begin{figure}[H]
+    \begin{subfigure}{.5\columnwidth}
+        \centering
+        \includegraphics[width=\columnwidth]{graphics/version0_memory.png}
+        \caption{Version 0}
+        \label{fig:version0}
+    \end{subfigure}
+    \begin{subfigure}{.5\columnwidth}
+        \centering
+        \includegraphics[width=\columnwidth]{graphics/version3_memory.png}
+        \caption{Version 3}
+        \label{fig:version3}
+    \end{subfigure}
+    \caption{IO-Operationen}
+    \label{fig:io}
+\end{figure}
+In Abbildung \ref{fig:io} ist zu sehen, dass die IO-Operationen einen signifikanten Anteil an der Gesamtlaufzeit haben.
+In Version 3 \ref{fig:version3} ist die Writezeit drei mal kleiner als in Version 0 \ref{fig:version0}, da in Version 3 nur ein Drittel der Daten geschrieben werden müssen.
+Die Readzeiten bleiben gleich. Für alle andern Versionen sind die IO-Operationen gleich, da diese nicht von der Implementierung abhängen.
+
 \section{Zusammenfassung und Ausblick}
 \label{sec:zusammenfassung}
 Der Sobel-Filter ist eine gängige Methode, um effizient Kanten in Bildern zu erkennen.
@@ -286,10 +313,10 @@ Er funktioniert, indem die vertikalen und horizontalen Kanten eines Bildes mit e
 Wir haben in insgesamt 6 verschiedenen Versionen die Berechnung des Sobel-Filters implementiert und deren Laufzeiten ausgiebig analysiert.
 Während Version 0 schlicht die mathematische Definition des Filters in C-Code übersetzt, verwendet Version 1 ausgeklügelte Methoden, um mit SIMD-Instruktionen mehr als 5 Pixel simultan zu berechnen.
 Version 2 wiederum bringt diese Parallelität auf ein komplett anderes Niveau, indem es alle Vorteile von Version 1 mittels Multithreading mit der hohen Parallelität von modernen Rechenkernen kombiniert.
-Die Versionen 3 bis 5 funktionieren gleich wie Versionen 0 bis 2 respektive, arbeiten dagegen aber auf Graustufenbildern, die in der Kantenerkennung nicht nur der de-facto Industriestandard sind, sondern eine 3-mal geringere Pixelbreite aufweisen und damit auch verlässlich dreimal so schnell abgearbeitet werden können, um selbst Bilder jenseits von 4K in wenigen Sekundenbruchteilen zu berechnen.
+Die Versionen 3 bis 5 sind nochmals schneller als ihre Gegenparts, da diese mit weniger Daten aufgrund der Verwendung von Graustufenbildern arbeiten.
+Die wohl beste Optimierung wäre der Einsatz von schnelleren Speichermedien, da die IO-Operationen den größten Anteil an der Gesamtlaufzeit haben.
 
 Ausblickend lässt sich sagen, dass eine weitere Optimierung, die bei der Arbeit mit Bildmaterial natürlich naheläge, jedoch leider den Rahmen gesprengt hätte, die Verwendung von Grafikkarten wäre.
-Da unsere Implementierungen Einzelbilder jedoch problemlos sehr schnell berechnen können, würden durch die dadurch gewonnene Parallelität vor allem Video- und Echtzeitanwendungen profitieren.
 
 % TODO: Fuegen Sie Ihre Quellen der Datei Ausarbeitung.bib hinzu
 % Referenzieren Sie diese dann mit \cite{}.
