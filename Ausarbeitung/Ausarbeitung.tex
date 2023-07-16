@@ -20,7 +20,7 @@
 \section{Einleitung}
 \label{sec:einleitung}
 In diesem Projekt haben wir uns damit beschäftigt, den Sobel-Filter Algorithmus zu implementieren.
-Dieser Algorithmus wird verwendet, um Kanten in Bildern zu erkennen und findet beispielsweise Anwendung in der Bildverarbeitung und -analyse, sowie in Computer-Vision.
+Dieser wird verwendet, um Kanten in Bildern zu erkennen und findet beispielsweise Anwendung in der Bildverarbeitung und -analyse, sowie in Computer-Vision.
 So kann er z.B. in der Medizin eingesetzt werden, um Tumore in MRT-Bildern besser erkennbar zu machen\cite{7002427},
 oder in der Forensik um Fingerabdruckerkennung zu verbessern\cite{6900702}.
 Als Eingabe für den Sobel-Filter wird ein 24-Bit BMP-Bild erwartet.
@@ -64,7 +64,7 @@ Um letztendlich den konkreten Sobelwert für einen Pixel zu berechnen, wird der 
     O^{F}_{x,y} = \sqrt{(A^{v,F}_{x,y})^2 + (A^{h,F}_{x,y})^2}
     \label{eq:wurzel}
 \end{equation}
-Die hieraus resultierenden Werte werden dann in einem neuen Bild O gespeichert.
+Die hieraus resultierenden Werte werden dann in einem neuen Bild $O$ gespeichert.
 \begin{figure}[H]
     \begin{subfigure}{.5\columnwidth}
         \centering
@@ -89,10 +89,10 @@ Unser gewählter Lösungsansatz besteht aus drei verschiedenen Versionen:
 Die Basisversion (Version 0) übersetzt die mathematische Definition des Sobel-Filters aus \ref{subsec:math-def} schlicht in C-Code (mit einer kleinen Anpassung, siehe \ref{subsec:vergleichsimplementierung}).
 Um diese Version als verlässliche Vergleichsimplementierung verwenden zu können, ist sie so einfach und leserlich wie möglich.
 
-Version Eins und Zwei bauen jeweils aufeinander auf und zielen darauf ab, die Laufzeit der Basisversion bedeutend zu verbessern:
-Version Eins verwendet dafür Single Instruction Multiple Data (SIMD) Instruktionen, um eine größere Bandbreite bei der Berechnung des Filters zu erreichen.
+Version 1 und 2 bauen jeweils aufeinander auf und zielen darauf ab, die Laufzeit der Basisversion bedeutend zu verbessern:
+Version 1 verwendet dafür Single Instruction Multiple Data (SIMD) Instruktionen, um eine größere Bandbreite bei der Berechnung des Filters zu erreichen.
 Dabei werden die Farbwerte von mehr als 5 Pixeln simultan berechnet und gespeichert.
-Version Zwei kombiniert besagte erhöhte Bandbreite mit Multithreading, um die hohe Parallelität moderner Prozessoren optimal auszunutzen.
+Version 2 kombiniert besagte erhöhte Bandbreite mit Multithreading, um die hohe Parallelität moderner Prozessoren optimal auszunutzen.
 
 Bei der Rechereche zum Sobel-Operator fiel auf, dass so gut wie jede Implementierung Graustufenbilder zur Berechnung verwendet.
 Jede der drei Versionen hat ein Gegenstück (Version 3 - Version 5 respektive), das mit Graustufenbildern (8-Bit BMPs) arbeitet.
@@ -147,6 +147,7 @@ Durch die Verdunkelung wird der Überlauf zwar verhindert, das Resultat ist jedo
         \caption{Vergleichsimplementierung\ref{subsec:vergleichsimplementierung}}
         \label{fig:correct}
     \end{subfigure}
+    \caption{SIMD Ansatz | Quelle Ausgangsbild:\cite{flowerpicture}}
 \end{figure}
 Um trotz Vektorinstruktionen und sehr kleinen Wertebereichen ein Ergebnis zu erzielen,
 das exakt der Vergleichsimplementierung entspricht, werden die Daten aus einem 16-Byte-Speicherbereich so in zwei Vektoren geladen, dass während der Berechnung je 8 Byte
@@ -217,7 +218,7 @@ Das ist insbesondere deshalb der Fall, weil der Algorithmus - sofern er auf unko
     \caption{Vergleichsimplementierung}
     \label{fig:basic}
 \end{figure}
-Die Vergleichsimplementierung (\ref{fig:basic} blaue Linie) ist die langsamsten Versionen. Dies liegt daran, dass sie schlicht nach der mathematischen Definition implementiert ist.
+Die Vergleichsimplementierung (\ref{fig:basic} blaue Linie) ist die langsamste Versionen. Dies liegt daran, dass sie schlicht nach der mathematischen Definition implementiert ist.
 Diese arbeitet von Spalte zu Spalte wodurch der Cache nicht effizient genutzt werden kann, da die Daten des Bildes Zeile für Zeile gespeichert sind.
 Würde man den Speicherzugriff optimieren würde es die Laufzeit der Vergleichsimplementierung um Faktor 2 beschleunigen.
 
